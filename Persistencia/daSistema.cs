@@ -6,12 +6,6 @@ namespace Persistencia
     public class daSistema
     {
 
-        public void FecharConexao(int conexao)
-        {
-            if (Conexao.RetornaConexao(conexao).State == ConnectionState.Open)
-                Conexao.RetornaConexao(conexao).Close();
-        }
-
         public voSistema ConsultarConexao()
         {
 

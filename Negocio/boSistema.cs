@@ -5,12 +5,6 @@ namespace Negocio
 {
     public class boSistema
     {
-        public void FecharConexao(int conexao)
-        {
-            daSistema da = new daSistema();
-            da.FecharConexao(conexao);
-        }
-
         public voSistema ConsultarConexao()
         {
             daSistema da = new daSistema();

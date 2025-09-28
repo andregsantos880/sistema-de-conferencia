@@ -95,23 +95,5 @@ namespace App.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Endpoint=sb://sisconf.servicebus.windows.net/;SharedAccessKeyName=RootManageShare" +
-            "dAccessKey;SharedAccessKey=wCSkTKdjbLUJd1YFMzQrbzrgnVD22BMF/+ASbDCPVWU=")]
-        public string connectionString {
-            get {
-                return ((string)(this["connectionString"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("pedido")]
-        public string queueName {
-            get {
-                return ((string)(this["queueName"]));
-            }
-        }
     }
 }

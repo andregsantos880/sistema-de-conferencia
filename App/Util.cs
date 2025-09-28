@@ -4,8 +4,6 @@ namespace App
 {
     class Util
     {
-        public static int nivel = 0;
-
         public static Stream GetSom(string cSom)
         {
             switch (cSom)

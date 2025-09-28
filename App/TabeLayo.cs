@@ -28,11 +28,14 @@ namespace App
 
         private void TabeLayo_Load(object sender, EventArgs e)
         {
-            var fabricas = Conexao.RetornaConexao().Query<Fabrica>("SELECT NOME, CONTROLE FROM LAYOUT WHERE LAYOUT.FlAtivo = 1;");
-            cboLayout.Items.Add(new Fabrica("SELECIONE A FABRICA", 0));
-            foreach (var item in fabricas)
+            using (var connection = Conexao.CreateConnection())
             {
-                cboLayout.Items.Add(item);
+                var fabricas = connection.Query<Fabrica>("SELECT NOME, CONTROLE FROM LAYOUT WHERE LAYOUT.FlAtivo = 1;").ToList();
+                cboLayout.Items.Add(new Fabrica("SELECIONE A FABRICA", 0));
+                foreach (var item in fabricas)
+                {
+                    cboLayout.Items.Add(item);
+                }
             }
             cboLayout.SelectedIndex = 0;
 

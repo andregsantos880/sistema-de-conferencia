@@ -110,7 +110,13 @@ namespace App
         {
             SetaBanco();
 
-            var usuarios = Conexao.RetornaConexao().ExecuteScalar<int>($"SELECT COUNT(*) FROM USUARIO WHERE LOGIN='{usuarioTextBox.Text}' AND SENHA='{senhaTextBox.Text}';");
+            int usuarios;
+            using (var connection = Conexao.CreateConnection())
+            {
+                usuarios = connection.ExecuteScalar<int>(
+                    "SELECT COUNT(*) FROM USUARIO WHERE LOGIN = @login AND SENHA = @senha;",
+                    new { login = usuarioTextBox.Text, senha = senhaTextBox.Text });
+            }
             if (usuarios == 0)
             {
                 MessageBox.Show("Usuário ou senha estão inválidos", "Autenticação", MessageBoxButtons.OK,MessageBoxIcon.Exclamation);

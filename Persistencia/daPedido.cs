@@ -20,20 +20,18 @@ namespace Persistencia
             DataTableReader reader = CollectionHelper
                        .ConvertTo<T>(_listVoPedido).CreateDataReader();
 
-            using (SqlBulkCopy bulkCopy =
-           new SqlBulkCopy(Conexao.RetornaConexao(conexao)))
+            using (var connection = Conexao.CreateConnection())
+            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection))
             {
-                bulkCopy.DestinationTableName =
-                    "dbo.Pedido";
+                bulkCopy.DestinationTableName = "dbo.Pedido";
                 try
                 {
-                    // Write from the source to the destination.
                     bulkCopy.WriteToServer(reader);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
-                    throw ex;
+                    throw;
                 }
                 finally
                 {

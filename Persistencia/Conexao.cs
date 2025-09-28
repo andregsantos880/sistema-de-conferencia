@@ -5,20 +5,20 @@ namespace Persistencia
 {
     public static class Conexao
     {
-        private static SqlConnection instancia;
-
-        public static SqlConnection RetornaConexao(int conexao = 0)
+        public static SqlConnection CreateConnection()
         {
-            var connectionString = string.Format("Data Source={0};Initial Catalog={1};Persist Security Info=True;User ID={2};Password={3}", Properties.Settings.Default.servidor, Properties.Settings.Default.banco, Properties.Settings.Default.usuario, Properties.Settings.Default.senha);
+            var builder = new SqlConnectionStringBuilder
+            {
+                DataSource = Properties.Settings.Default.servidor,
+                InitialCatalog = Properties.Settings.Default.banco,
+                PersistSecurityInfo = true,
+                UserID = Properties.Settings.Default.usuario,
+                Password = Properties.Settings.Default.senha
+            };
 
-            if (instancia == null)
-                instancia = new SqlConnection(connectionString);
-
-            if (instancia.State == System.Data.ConnectionState.Closed)
-                instancia.Open();
-
-            return instancia;
+            var connection = new SqlConnection(builder.ConnectionString);
+            connection.Open();
+            return connection;
         }
-
     }
 }

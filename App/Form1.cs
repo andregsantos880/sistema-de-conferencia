@@ -1,46 +1,121 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Drawing;
 using System.Linq;
+using System.Media;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
-using System.Drawing;
-using System.Threading.Tasks;
-using System.Reflection;
-using Persistencia;
-using Dapper;
 using App.Models;
-using Microsoft.ServiceBus.Messaging;
-using System.Net;
-using System.IO;
-using Newtonsoft.Json;
+using Dapper;
+using Persistencia;
 
 namespace App
 {
     public partial class Form1 : Form
     {
+        private const string StatusColumnName = "STATUS";
+        private const string DsStatusColumnName = "DsStatus";
+        private const string EtiquetaColumnName = "ETIQUETA";
+        private const string ClienteColumnName = "CLIENTE";
+        private const string DescricaoColumnName = "DESCRICAO1";
 
-        #region "Variáveis"
+        private enum PedidoStatus
+        {
+            Normal = 0,
+            Conferencia = 1,
+            Saida = 2,
+            Entrega = 3
+        }
 
-        int conexao;
+        private sealed class StatusVisual
+        {
+            public StatusVisual(Color color, string description)
+            {
+                Color = color;
+                Description = description;
+            }
 
-        #endregion
+            public Color Color { get; }
+            public string Description { get; }
+        }
 
-        #region "Métodos"
+        private static readonly IReadOnlyDictionary<PedidoStatus, StatusVisual> StatusVisuals =
+            new Dictionary<PedidoStatus, StatusVisual>
+            {
+                { PedidoStatus.Normal, new StatusVisual(Color.White, "NORMAL") },
+                { PedidoStatus.Conferencia, new StatusVisual(Color.LightGreen, "CONFERENCIA") },
+                { PedidoStatus.Saida, new StatusVisual(Color.LightCoral, "SAIDA") },
+                { PedidoStatus.Entrega, new StatusVisual(Color.Blue, "ENTREGA") }
+            };
 
-        private void MontarGrid(List<Pedido> pedidos)
+        private readonly int conexao;
+
+        public Form1(int conexao)
+        {
+            InitializeComponent();
+            this.conexao = conexao;
+        }
+
+        private static PedidoStatus? ParseStatus(object value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            if (int.TryParse(value.ToString(), out int statusCode) && Enum.IsDefined(typeof(PedidoStatus), statusCode))
+            {
+                return (PedidoStatus)statusCode;
+            }
+
+            return null;
+        }
+
+        private static PedidoStatus? GetPreviousStatus(PedidoStatus status)
+        {
+            switch (status)
+            {
+                case PedidoStatus.Conferencia:
+                    return PedidoStatus.Normal;
+                case PedidoStatus.Saida:
+                    return PedidoStatus.Conferencia;
+                case PedidoStatus.Entrega:
+                    return PedidoStatus.Saida;
+                default:
+                    return null;
+            }
+        }
+
+        private IEnumerable<DataGridViewRow> GetDataRows()
+        {
+            return dtlGeral.Rows.Cast<DataGridViewRow>().Where(row => !row.IsNewRow);
+        }
+
+        private PedidoStatus? GetSelectedStatus()
+        {
+            if (Enum.IsDefined(typeof(PedidoStatus), conferenciaComboBox.SelectedIndex))
+            {
+                return (PedidoStatus)conferenciaComboBox.SelectedIndex;
+            }
+
+            return null;
+        }
+
+        private void MontarGrid(IEnumerable<Pedido> pedidos)
         {
             dtlGeral.Rows.Clear();
             foreach (var pedido in pedidos)
             {
                 AdicionarPedidoNaGrid(pedido);
             }
+
             AtualizarGrid();
         }
 
         private void AdicionarPedidoNaGrid(Pedido pedido)
         {
-            dtlGeral.Rows.Add(
+            int index = dtlGeral.Rows.Add(
                 pedido.Id,
                 pedido.Arquivo,
                 pedido.Nmlayout,
@@ -59,253 +134,348 @@ namespace App
                 pedido.IdBox,
                 pedido.Box,
                 false,
-                pedido.PeComputador
-            );
+                pedido.PeComputador);
+
+            AtualizarLinhaVisual(dtlGeral.Rows[index]);
         }
 
         private void AtualizarGrid()
         {
-            int normal = dtlGeral.Rows.OfType<DataGridViewRow>().Count(x => x.Cells["status"].Value.ToString() == "0");
-            int conferido = dtlGeral.Rows.OfType<DataGridViewRow>().Count(x => x.Cells["status"].Value.ToString() == "1");
-            int saida = dtlGeral.Rows.OfType<DataGridViewRow>().Count(x => x.Cells["status"].Value.ToString() == "2");
-            int entrega = dtlGeral.Rows.OfType<DataGridViewRow>().Count(x => x.Cells["status"].Value.ToString() == "3");
+            var rows = GetDataRows().ToList();
+
+            int normal = rows.Count(row => ParseStatus(row.Cells[StatusColumnName].Value) == PedidoStatus.Normal);
+            int conferido = rows.Count(row => ParseStatus(row.Cells[StatusColumnName].Value) == PedidoStatus.Conferencia);
+            int saida = rows.Count(row => ParseStatus(row.Cells[StatusColumnName].Value) == PedidoStatus.Saida);
+            int entrega = rows.Count(row => ParseStatus(row.Cells[StatusColumnName].Value) == PedidoStatus.Entrega);
 
             normalToolStripStatusLabel.Text = normal.ToString();
             conferidoToolStripStatusLabel.Text = conferido.ToString();
             saidaToolStripStatusLabel.Text = saida.ToString();
             entregaToolStripStatusLabel.Text = entrega.ToString();
 
-            normalLabel.Text = normal.ToString();
-            conferidoLabel.Text = conferido.ToString();
-            saidaLabel.Text = saida.ToString();
-            entregaLabel.Text = entrega.ToString();
+            normalLabel.Text = normalToolStripStatusLabel.Text;
+            conferidoLabel.Text = conferidoToolStripStatusLabel.Text;
+            saidaLabel.Text = saidaToolStripStatusLabel.Text;
+            entregaLabel.Text = entregaToolStripStatusLabel.Text;
+        }
+
+        private void AtualizarLinhaStatus(DataGridViewRow row, PedidoStatus status)
+        {
+            row.Cells[StatusColumnName].Value = ((int)status).ToString();
+            AtualizarLinhaVisual(row);
+        }
+
+        private void AtualizarLinhaVisual(DataGridViewRow row)
+        {
+            var status = ParseStatus(row.Cells[StatusColumnName].Value);
+            if (status == null)
+            {
+                return;
+            }
+
+            if (StatusVisuals.TryGetValue(status.Value, out StatusVisual visual))
+            {
+                row.DefaultCellStyle.BackColor = visual.Color;
+                row.Cells[DsStatusColumnName].Value = visual.Description;
+            }
         }
 
         private bool ValidaRestante()
         {
-            int status = conferenciaComboBox.SelectedIndex;
-            var statusAtual = dtlGeral.Rows.OfType<DataGridViewRow>().Count(x => x.Cells["status"].Value.ToString() != status.ToString());
-            var statusSeguinte = dtlGeral.Rows.OfType<DataGridViewRow>().Count(x => x.Cells["status"].Value.ToString() == (status + 1).ToString());
+            var selectedStatus = GetSelectedStatus();
+            if (selectedStatus == null)
+            {
+                lblRestatnte.Text = "Restante: 0 de 0";
+                return false;
+            }
 
-            lblRestatnte.Text = "Restante: " + statusSeguinte + " de " + (statusAtual + statusSeguinte);
+            var previousStatus = GetPreviousStatus(selectedStatus.Value);
+            if (previousStatus == null)
+            {
+                lblRestatnte.Text = "Restante: 0 de 0";
+                return false;
+            }
 
-            return (statusSeguinte == (statusAtual + statusSeguinte));
+            var rows = GetDataRows().ToList();
+            int pendentes = rows.Count(row => ParseStatus(row.Cells[StatusColumnName].Value) == previousStatus);
+            int processados = rows.Count(row => ParseStatus(row.Cells[StatusColumnName].Value) == selectedStatus);
+            int total = pendentes + processados;
+
+            lblRestatnte.Text = $"Restante: {pendentes} de {total}";
+            return pendentes == 0 && total > 0;
         }
 
         private void ChecarEtiqueta()
         {
-            string cSom = "";
-
-            clienteLabel.Text = "";
-            produtoLabel.Text = "";
-            boxLabel.Text = "";
-
             etiquetaTextBox.UseSystemPasswordChar = true;
+            string etiqueta = etiquetaTextBox.Text.Trim();
 
-            if (etiquetaTextBox.Text.Length == 0) return;
+            clienteLabel.Text = string.Empty;
+            produtoLabel.Text = string.Empty;
+            boxLabel.Text = string.Empty;
 
-            var linhaEncontrada = Consultar(etiquetaTextBox.Text);
-            if (linhaEncontrada != null)
+            if (string.IsNullOrWhiteSpace(etiqueta))
             {
-                if (linhaEncontrada.Cells["status"].Value.ToString().Equals(conferenciaComboBox.SelectedIndex.ToString()))
+                return;
+            }
+
+            var selectedStatus = GetSelectedStatus();
+            var row = Consultar(etiqueta);
+
+            if (row == null || selectedStatus == null)
+            {
+                PlaySound("Error");
+                MostrarMensagemEtiquetaNaoEncontrada();
+                return;
+            }
+
+            var rowStatus = ParseStatus(row.Cells[StatusColumnName].Value);
+            if (rowStatus == selectedStatus)
+            {
+                clienteLabel.Text = "Etiqueta já lida !";
+                produtoLabel.Text = row.Cells[DescricaoColumnName].Value?.ToString();
+                boxLabel.Text = "BOX 1";
+                PlaySound("Exclamation");
+            }
+            else if (rowStatus == GetPreviousStatus(selectedStatus.Value))
+            {
+                clienteLabel.Text = row.Cells[ClienteColumnName].Value?.ToString();
+                produtoLabel.Text = row.Cells[DescricaoColumnName].Value?.ToString();
+                boxLabel.Text = "BOX 1";
+
+                AtualizarLinhaStatus(row, selectedStatus.Value);
+                AtualizarGrid();
+
+                if (ValidaRestante())
                 {
-                    clienteLabel.Text = "Etiqueta já lida !";
-                    produtoLabel.Text = linhaEncontrada.Cells["DESCRICAO1"].Value.ToString();
-                    boxLabel.Text = "BOX 1";
-                    cSom = "Exclamation";
-                }
-                else if (linhaEncontrada.Cells["status"].Value.ToString().Equals((conferenciaComboBox.SelectedIndex - 1).ToString()))
-                {
-
-                    clienteLabel.Text = linhaEncontrada.Cells["CLIENTE"].Value.ToString();
-                    produtoLabel.Text = linhaEncontrada.Cells["DESCRICAO1"].Value.ToString();
-                    boxLabel.Text = "BOX 1";
-
-                    linhaEncontrada.Cells["status"].Value = conferenciaComboBox.SelectedIndex.ToString();
-
-                    var pedidoSend = new PedidoSB()
-                    {
-                        Etiqueta = etiquetaTextBox.Text.Trim(),
-                        FabricaId = ((Fabrica)cboFabrica.SelectedItem).Controle,
-                        StatusId = linhaEncontrada.Cells["status"].Value.ToString()
-                    };
-
-                    //SendMessagesAsync(Properties.Settings.Default.connectionString, Properties.Settings.Default.queueName, pedidoSend)
-                    //    .GetAwaiter();
-
-                    if (linhaEncontrada.Cells["status"].Value.ToString() == "1")
-                    {
-                        linhaEncontrada.DefaultCellStyle.BackColor = Color.LightGreen;
-                        linhaEncontrada.Cells["DsStatus"].Value = "CONFERENCIA";
-                    }
-                    if (linhaEncontrada.Cells["status"].Value.ToString() == "2")
-                    {
-                        linhaEncontrada.DefaultCellStyle.BackColor = Color.LightCoral;
-                        linhaEncontrada.Cells["DsStatus"].Value = "SAIDA";
-                    }
-                    if (linhaEncontrada.Cells["status"].Value.ToString() == "3")
-                    {
-                        linhaEncontrada.DefaultCellStyle.BackColor = Color.Blue;
-                        linhaEncontrada.Cells["DsStatus"].Value = "ENTREGA";
-                    }
-
-                    cSom = "success";
-
-                    AtualizarGrid();
-                    if (ValidaRestante())
-                    {
-                        cSom = "Air_Horn";
-                    }
+                    PlaySound("Air_Horn");
                 }
                 else
                 {
-                    clienteLabel.Text = "Esta etiqueta está para " + linhaEncontrada.Cells["DsStatus"].Value.ToString();
-                    produtoLabel.Text = linhaEncontrada.Cells["DESCRICAO1"].Value.ToString();
-                    boxLabel.Text = "BOX 1";
-                    cSom = "ringout";
+                    PlaySound("success");
                 }
             }
             else
             {
-                clienteLabel.Text = "Etiqueta não encontrada !";
-                cSom = "Error";
-            }
-
-            System.Media.SoundPlayer mySom = new System.Media.SoundPlayer(Util.GetSom(cSom));
-            mySom.Play();
-
-            if (cSom == "Error")
-            {
-                etiquetaTextBox.ReadOnly = true;
-            inicio:
-                if (MessageBox.Show("Etiqueta não encontrada ! \nContinuar conferindo ?", "ATENÇÃO", MessageBoxButtons.YesNo, MessageBoxIcon.Error, MessageBoxDefaultButton.Button2) == DialogResult.No) goto inicio;
-                etiquetaTextBox.ReadOnly = false;
+                clienteLabel.Text = $"Esta etiqueta está para {row.Cells[DsStatusColumnName].Value}";
+                produtoLabel.Text = row.Cells[DescricaoColumnName].Value?.ToString();
+                boxLabel.Text = "BOX 1";
+                PlaySound("ringout");
             }
 
             etiquetaTextBox.Focus();
             etiquetaTextBox.SelectAll();
-
         }
+
+        private void PlaySound(string soundKey)
+        {
+            var soundStream = Util.GetSom(soundKey);
+            var player = new SoundPlayer(soundStream);
+            player.Play();
+        }
+
+        private void MostrarMensagemEtiquetaNaoEncontrada()
+        {
+            etiquetaTextBox.ReadOnly = true;
+            while (MessageBox.Show("Etiqueta não encontrada ! \nContinuar conferindo ?", "ATENÇÃO", MessageBoxButtons.YesNo,
+                       MessageBoxIcon.Error, MessageBoxDefaultButton.Button2) == DialogResult.No)
+            {
+            }
+
+            etiquetaTextBox.ReadOnly = false;
+            etiquetaTextBox.Focus();
+            etiquetaTextBox.SelectAll();
+        }
+
         private DataGridViewRow Consultar(string etiqueta)
         {
-            return dtlGeral.Rows.OfType<DataGridViewRow>().Where(x => x.Cells["Etiqueta"].Value.ToString().Trim() == etiqueta).FirstOrDefault();
+            return GetDataRows()
+                .FirstOrDefault(x => string.Equals(x.Cells[EtiquetaColumnName].Value?.ToString().Trim(), etiqueta,
+                    StringComparison.InvariantCultureIgnoreCase));
         }
 
-        #endregion
-
-        #region "Eventos"
-
-        public Form1(int conexao)
-        {
-
-            InitializeComponent();
-
-            this.conexao = conexao;
-
-        }
-
-        string GetVersion()
+        private string GetVersion()
         {
             try
             {
                 return System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
             }
-            catch (Exception ex)
+            catch
             {
                 return Assembly.GetExecutingAssembly().GetName().Version.ToString();
             }
         }
 
+        private IEnumerable<ItemValue> BuscarFiltros(int fabricaId, string filtro)
+        {
+            string coluna = filtro switch
+            {
+                "ORD.COMPRA" => "ORDCOMPRA",
+                "PEDIDO" => "PECLIENTE",
+                "CARGA" => "ARQUIVO",
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(coluna))
+            {
+                return Enumerable.Empty<ItemValue>();
+            }
+
+            var sql = new StringBuilder();
+            sql.Append($"SELECT {coluna} + ' (' + CAST(COUNT({coluna}) AS VARCHAR(5)) + ')' AS Descricao, {coluna} AS Valor FROM PEDIDO WHERE Idlayout = @fabricaId ");
+
+            var parameters = new DynamicParameters();
+            parameters.Add("fabricaId", fabricaId);
+
+            if (coluna == "ARQUIVO")
+            {
+                sql.Append("AND DATAINC >= @dataMin ");
+                parameters.Add("dataMin", new DateTime(2023, 12, 10));
+            }
+
+            sql.Append($"GROUP BY {coluna} ORDER BY {coluna};");
+
+            using (var connection = Conexao.CreateConnection())
+            {
+                return connection.Query<ItemValue>(sql.ToString(), parameters).ToList();
+            }
+        }
+
+        private IEnumerable<Pedido> BuscarPedidos(int fabricaId, string filtro, IReadOnlyCollection<string> valores)
+        {
+            if (valores == null || valores.Count == 0)
+            {
+                return Enumerable.Empty<Pedido>();
+            }
+
+            string coluna = filtro switch
+            {
+                "ORD.COMPRA" => "ORDCOMPRA",
+                "PEDIDO" => "PECLIENTE",
+                "CARGA" => "ARQUIVO",
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(coluna))
+            {
+                return Enumerable.Empty<Pedido>();
+            }
+
+            var sql = new StringBuilder();
+            sql.Append("SELECT PEDIDO.*, LAYOUT.Nome AS Nmlayout FROM PEDIDO JOIN LAYOUT ON PEDIDO.Idlayout = LAYOUT.CONTROLE WHERE PEDIDO.Idlayout = @fabricaId");
+            sql.Append($" AND RTRIM(LTRIM({coluna})) IN @valores;");
+
+            using (var connection = Conexao.CreateConnection())
+            {
+                return connection.Query<Pedido>(sql.ToString(), new { fabricaId, valores }).ToList();
+            }
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.Text = @"Sistema de Conferência - Versão: " + GetVersion();
+            Text = $"Sistema de Conferência - Versão: {GetVersion()}";
 
-            conferenciaComboBox.Items.Add("");
-            conferenciaComboBox.Items.Add("CONFERENCIA");
-            conferenciaComboBox.Items.Add("SAIDA");
-            conferenciaComboBox.Items.Add("ENTREGA");
+            conferenciaComboBox.Items.Clear();
+            conferenciaComboBox.Items.AddRange(new object[] { string.Empty, "CONFERENCIA", "SAIDA", "ENTREGA" });
 
             cboBuscaLista.SelectedIndex = 1;
 
-            var fabricas = Conexao.RetornaConexao().Query<Fabrica>("SELECT NOME, CONTROLE FROM LAYOUT WHERE LAYOUT.FlAtivo = 1 ORDER BY NOME;");
-            foreach (var item in fabricas)
+            using (var connection = Conexao.CreateConnection())
             {
-                cboFabrica.Items.Add(item);
+                var fabricas = connection.Query<Fabrica>("SELECT NOME, CONTROLE FROM LAYOUT WHERE LAYOUT.FlAtivo = 1 ORDER BY NOME;").ToList();
+                foreach (var item in fabricas)
+                {
+                    cboFabrica.Items.Add(item);
+                }
             }
-            cboFabrica.SelectedIndex = 0;
+
+            if (cboFabrica.Items.Count > 0)
+            {
+                cboFabrica.SelectedIndex = 0;
+            }
 
             toolStripTextBoxUsuarioLogado.Text = $"Logado com: {Program.UsuarioLogado.ToUpper()}";
-
-            // ReceiveMessagesAsync(Properties.Settings.Default.connectionString, Properties.Settings.Default.queueName)
-            //         .GetAwaiter();
         }
 
         private void conferir(object sender, EventArgs e)
         {
+            if (!GetDataRows().Any())
+            {
+                return;
+            }
 
-            if (dtlGeral.Rows.Count == 0) return;
-
-            FrameGroupBox.Left = (this.Width - FrameGroupBox.Width) / 2;
-            FrameGroupBox.Top = (this.Height - FrameGroupBox.Height) / 2;
-
+            FrameGroupBox.Left = (Width - FrameGroupBox.Width) / 2;
+            FrameGroupBox.Top = (Height - FrameGroupBox.Height) / 2;
             FrameGroupBox.Visible = true;
 
-            etiquetaTextBox.Text = "";
-            clienteLabel.Text = "";
-            produtoLabel.Text = "";
-            boxLabel.Text = "";
+            etiquetaTextBox.Text = string.Empty;
+            clienteLabel.Text = string.Empty;
+            produtoLabel.Text = string.Empty;
+            boxLabel.Text = string.Empty;
 
             etiquetaTextBox.Focus();
             etiquetaTextBox.SelectAll();
 
-            ToolStripMenuItem ctl = (ToolStripMenuItem)sender;
-
-            switch (ctl.Name)
+            if (sender is ToolStripMenuItem menuItem)
             {
-                case "conferênciaToolStripMenuItem1":
-                    conferenciaComboBox.SelectedIndex = 1;
-                    break;
-                case "saidaToolStripMenuItem":
-                    conferenciaComboBox.SelectedIndex = 2;
-                    break;
-                case "entregaToolStripMenuItem":
-                    conferenciaComboBox.SelectedIndex = 3;
-                    break;
-                default:
-                    break;
+                switch (menuItem.Name)
+                {
+                    case "conferênciaToolStripMenuItem1":
+                        conferenciaComboBox.SelectedIndex = (int)PedidoStatus.Conferencia;
+                        break;
+                    case "saidaToolStripMenuItem":
+                        conferenciaComboBox.SelectedIndex = (int)PedidoStatus.Saida;
+                        break;
+                    case "entregaToolStripMenuItem":
+                        conferenciaComboBox.SelectedIndex = (int)PedidoStatus.Entrega;
+                        break;
+                }
             }
 
             ValidaRestante();
-
         }
 
         private void etiquetaTextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyValue == 13)
+            if (e.KeyCode == Keys.Enter)
             {
                 ChecarEtiqueta();
             }
         }
+
         private void FecharButton_Click(object sender, EventArgs e)
         {
-            try
+            var selectedStatus = GetSelectedStatus();
+            if (selectedStatus == null)
             {
-                List<int> ids = new List<int>();
-                foreach (DataGridViewRow item in dtlGeral.Rows)
-                {
-                    if (Convert.ToInt32(item.Cells["STATUS"].Value) == conferenciaComboBox.SelectedIndex)
-                        ids.Add(Convert.ToInt32(item.Cells["ID"].Value));
-                }
-
-                if (ids.Any())
-                    Conexao.RetornaConexao().Execute($"UPDATE PEDIDO SET STATUS={conferenciaComboBox.SelectedIndex} where ID IN({string.Join(",", ids)})");
-
                 FrameGroupBox.Visible = false;
+                return;
             }
-            catch (Exception)
+
+            var ids = GetDataRows()
+                .Where(row => ParseStatus(row.Cells[StatusColumnName].Value) == selectedStatus)
+                .Select(row => row.Cells["ID"].Value?.ToString())
+                .Where(value => long.TryParse(value, out _))
+                .Select(long.Parse)
+                .Distinct()
+                .ToList();
+
+            if (ids.Any())
             {
-                throw;
+                try
+                {
+                    using (var connection = Conexao.CreateConnection())
+                    {
+                        connection.Execute("UPDATE PEDIDO SET STATUS = @status WHERE ID IN @ids;", new { status = (int)selectedStatus.Value, ids });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Sistema de Conferência", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
+
+            FrameGroupBox.Visible = false;
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -313,23 +483,41 @@ namespace App
             Application.Exit();
         }
 
-        #endregion
-
         private void AlterarStatus(int status)
         {
+            if (!Enum.IsDefined(typeof(PedidoStatus), status))
+            {
+                return;
+            }
 
-            if (dtlGeral.Rows.Count == 0) return;
+            var novoStatus = (PedidoStatus)status;
+            var etiquetas = dtlGeral.SelectedRows.Cast<DataGridViewRow>()
+                .Where(row => !row.IsNewRow)
+                .Select(row => row.Cells[EtiquetaColumnName].Value?.ToString())
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value.Trim())
+                .Distinct()
+                .ToList();
+
+            if (!etiquetas.Any())
+            {
+                return;
+            }
 
             try
             {
-                List<string> listBarcode = new List<string>();
-                foreach (DataGridViewRow item in dtlGeral.SelectedRows)
+                using (var connection = Conexao.CreateConnection())
                 {
-                    listBarcode.Add(item.Cells["ETIQUETA"].Value.ToString());
-                    item.Cells["STATUS"].Value = status.ToString();
+                    connection.Execute("UPDATE PEDIDO SET STATUS = @status WHERE ETIQUETA IN @etiquetas;", new { status, etiquetas });
                 }
 
-                Conexao.RetornaConexao().Execute($"UPDATE PEDIDO SET STATUS={status} where ETIQUETA IN('{string.Join("','", listBarcode)}')");
+                foreach (DataGridViewRow row in dtlGeral.SelectedRows)
+                {
+                    if (!row.IsNewRow)
+                    {
+                        AtualizarLinhaStatus(row, novoStatus);
+                    }
+                }
 
                 AtualizarGrid();
             }
@@ -351,17 +539,17 @@ namespace App
 
         private void alterarParaNormalToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AlterarStatus(0);
+            AlterarStatus((int)PedidoStatus.Normal);
         }
 
         private void alterarParaConferênciaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AlterarStatus(1);
+            AlterarStatus((int)PedidoStatus.Conferencia);
         }
 
         private void alterarParaSaidaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AlterarStatus(2);
+            AlterarStatus((int)PedidoStatus.Saida);
         }
 
         private void toolStripButtonImportar_Click(object sender, EventArgs e)
@@ -371,47 +559,27 @@ namespace App
 
         private void dtlGeral_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.ColumnIndex == dtlGeral.Columns["status"]?.Index)
+            if (e.RowIndex >= 0 && e.ColumnIndex == dtlGeral.Columns[StatusColumnName]?.Index)
             {
-                var row = dtlGeral[e.ColumnIndex, e.RowIndex];
-                var grid_status = int.Parse(row.Value.ToString());
-
-                if (grid_status == 0)
-                {
-                    dtlGeral.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.White;
-                    dtlGeral.Rows[e.RowIndex].Cells["DsStatus"].Value = "NORMAL";
-                }
-                else if (grid_status == 1)
-                {
-                    dtlGeral.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.LightGreen;
-                    dtlGeral.Rows[e.RowIndex].Cells["DsStatus"].Value = "CONFERENCIA";
-                }
-                else if (grid_status == 2)
-                {
-                    dtlGeral.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.LightCoral;
-                    dtlGeral.Rows[e.RowIndex].Cells["DsStatus"].Value = "SAIDA";
-                }
-                else if (grid_status == 3)
-                {
-                    dtlGeral.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.Blue;
-                    dtlGeral.Rows[e.RowIndex].Cells["DsStatus"].Value = "ENTREGA";
-                }
+                AtualizarLinhaVisual(dtlGeral.Rows[e.RowIndex]);
             }
         }
 
         private void dtlGeral_RegionChanged(object sender, EventArgs e)
         {
-
         }
 
         private void dtlGeral_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
         {
-            dtlGeral_CellValueChanged(sender, new DataGridViewCellEventArgs(dtlGeral.Columns["status"].Index, e.RowIndex));
+            if (e.RowIndex >= 0)
+            {
+                AtualizarLinhaVisual(dtlGeral.Rows[e.RowIndex]);
+            }
         }
 
         private void mnuImportar_Click(object sender, EventArgs e)
         {
-            new TabeLayo(0).ShowDialog();
+            new TabeLayo(conexao).ShowDialog();
         }
 
         private void txtBusca_Enter(object sender, EventArgs e)
@@ -424,46 +592,33 @@ namespace App
 
         private void cboBuscaLista_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var fabricaId = ((Fabrica)cboFabrica.SelectedItem)?.Controle ?? 0;
-            if (fabricaId == 0)
+            var fabrica = cboFabrica.SelectedItem as Fabrica;
+            if (fabrica == null || fabrica.Controle == 0)
+            {
                 return;
-
-            string _queryParam = "";
-
-            switch (cboBuscaLista.Text)
-            {
-                case "ORD.COMPRA":
-                    _queryParam = $"SELECT ORDCOMPRA + ' (' + CAST(COUNT(ORDCOMPRA) AS VARCHAR(5)) + ')' AS Descricao, ORDCOMPRA AS Valor FROM PEDIDO WHERE Idlayout = {fabricaId} GROUP BY ORDCOMPRA ORDER BY ORDCOMPRA";
-                    break;
-                case "PEDIDO":
-                    _queryParam = $"SELECT PECLIENTE + ' (' + CAST(COUNT(PECLIENTE) AS VARCHAR(5)) + ')' AS Descricao, PECLIENTE AS Valor FROM PEDIDO WHERE Idlayout = {fabricaId} GROUP BY PECLIENTE ORDER BY PECLIENTE";
-                    break;
-                case "CARGA":
-                    _queryParam = $"SELECT ARQUIVO + ' (' + CAST(COUNT(ARQUIVO) AS VARCHAR(5)) + ')' AS Descricao, ARQUIVO AS Valor FROM PEDIDO WHERE Idlayout = {fabricaId} AND DATAINC >= '2023-12-10 00:00:00.000' GROUP BY ARQUIVO ORDER BY ARQUIVO";
-                    break;
-                default:
-                    break;
             }
 
-            var pedidos = Conexao.RetornaConexao().Query<ItemValue>(_queryParam).ToList();
-            checkedListBoxBuscar.Items.Clear();
-            foreach (var item in pedidos)
-            {
-                checkedListBoxBuscar.Items.Add(item);
-            }
-            checkedListBoxBuscar.Tag = pedidos;
-        }
+            var itens = BuscarFiltros(fabrica.Controle, cboBuscaLista.Text).ToList();
 
-        private void textBoxCampoBusca_TextChanged(object sender, EventArgs e)
-        {
             checkedListBoxBuscar.Items.Clear();
-
-            var result = ((List<ItemValue>)checkedListBoxBuscar.Tag).Where(x => x.Descricao.Contains(textBoxCampoBusca.Text)).ToList();
-            foreach (var item in result)
+            foreach (var item in itens)
             {
                 checkedListBoxBuscar.Items.Add(item, item.Checked);
             }
 
+            checkedListBoxBuscar.Tag = itens;
+        }
+
+        private void textBoxCampoBusca_TextChanged(object sender, EventArgs e)
+        {
+            if (checkedListBoxBuscar.Tag is List<ItemValue> itens)
+            {
+                checkedListBoxBuscar.Items.Clear();
+                foreach (var item in itens.Where(x => x.Descricao?.IndexOf(textBoxCampoBusca.Text, StringComparison.InvariantCultureIgnoreCase) >= 0))
+                {
+                    checkedListBoxBuscar.Items.Add(item, item.Checked);
+                }
+            }
         }
 
         private void btnFecharBusca_Click(object sender, EventArgs e)
@@ -473,61 +628,39 @@ namespace App
 
         private void btnBuscar_Click(object sender, EventArgs e)
         {
-            List<string> selectedItems = new List<string>();
-            foreach (var item in ((List<ItemValue>)checkedListBoxBuscar.Tag).Where(x => x.Checked))
+            if (checkedListBoxBuscar.Tag is not List<ItemValue> itens)
             {
-                selectedItems.Add(((ItemValue)item).Valor.Trim());
+                return;
             }
-            txtBusca.Text = string.Join(",", selectedItems);
 
-            var fabricaId = ((Fabrica)cboFabrica.SelectedItem)?.Controle ?? 0;
-            if (fabricaId == 0)
+            var selecionados = itens.Where(x => x.Checked).Select(x => x.Valor?.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+
+            txtBusca.Text = string.Join(",", selecionados);
+
+            var fabrica = cboFabrica.SelectedItem as Fabrica;
+            if (fabrica == null || fabrica.Controle == 0)
             {
                 MessageBox.Show("Selecione a Fábrica.");
                 cboFabrica.Focus();
                 return;
             }
 
-            if (string.IsNullOrEmpty(txtBusca.Text))
-                return;
-
-            string[] _arrQuery = txtBusca.Text.Split(',');
-            for (int i = 0; i < _arrQuery.Length; i++)
-                _arrQuery[i] = _arrQuery[i].Trim();
-
-            if (!_arrQuery.Any())
-                return;
-
-            StringBuilder sqlBuilder = new StringBuilder("SELECT PEDIDO.*, LAYOUT.Nome AS Nmlayout FROM PEDIDO JOIN LAYOUT ON PEDIDO.Idlayout=LAYOUT.CONTROLE WHERE Idlayout = ")
-                .Append(fabricaId);
-
-            string _queryParam = $"'{string.Join("','", _arrQuery)}'";
-
-            switch (cboBuscaLista.Text)
+            if (!selecionados.Any())
             {
-                case "ORD.COMPRA":
-                    sqlBuilder.Append($" AND TRIM(ORDCOMPRA) IN({_queryParam})");
-                    break;
-                case "PEDIDO":
-                    sqlBuilder.Append($" AND TRIM(PECLIENTE) IN({_queryParam})");
-                    break;
-                case "CARGA":
-                    sqlBuilder.Append($" AND TRIM(ARQUIVO) IN({_queryParam})");
-                    break;
-                default:
-                    break;
+                return;
             }
 
-            var pedidos = Conexao.RetornaConexao().Query<Pedido>(sqlBuilder.ToString()).ToList();
+            var pedidos = BuscarPedidos(fabrica.Controle, cboBuscaLista.Text, selecionados).ToList();
             if (!pedidos.Any())
+            {
                 MessageBox.Show("Nada encontrado.");
+            }
 
             groupBoxBusca.Visible = false;
-
             MontarGrid(pedidos);
 
-            labelBuscaQtde.Text = $"{0} Iten(s) selecionados.";
-            textBoxCampoBusca.Text = "";
+            labelBuscaQtde.Text = $"{selecionados.Count} Iten(s) selecionados.";
+            textBoxCampoBusca.Text = string.Empty;
 
             cboFabrica_SelectedIndexChanged(null, null);
         }
@@ -549,75 +682,20 @@ namespace App
 
         private void checkedListBoxBuscar_ItemCheck(object sender, ItemCheckEventArgs e)
         {
-            var valor = (ItemValue)checkedListBoxBuscar.Items[e.Index];
-
-            ((List<ItemValue>)checkedListBoxBuscar.Tag).Where(x => x.Valor == valor.Valor).FirstOrDefault().Checked = (e.NewValue == CheckState.Checked);
-
-            int qtde = ((List<ItemValue>)checkedListBoxBuscar.Tag).Where(x => x.Checked).Count();
-
-            labelBuscaQtde.Text = $"{qtde} Iten(s) selecionados.";
-        }
-
-        async Task SendMessagesAsync(string connectionString, string queueName, PedidoSB data)
-        {
-            var conexao = Conexao.RetornaConexao();
-
-            var senderFactory = MessagingFactory.CreateFromConnectionString(connectionString);
-
-            var sender = await senderFactory.CreateMessageSenderAsync(queueName);
-
-            var message = new BrokeredMessage(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))))
+            if (checkedListBoxBuscar.Tag is not List<ItemValue> itens || e.Index < 0 || e.Index >= checkedListBoxBuscar.Items.Count)
             {
-                ContentType = "application/json",
-                Label = conexao.DataSource,
-                //MessageId = i.ToString(),
-                TimeToLive = TimeSpan.FromMinutes(2)
-            };
-
-            await sender.SendAsync(message);
-        }
-
-        async Task ReceiveMessagesAsync(string connectionString, string queueName)
-        {
-            while (true)
-            {
-                var receiverFactory = MessagingFactory.CreateFromConnectionString(connectionString);
-                var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
-
-                try
-                {
-                    var message = await receiver.ReceiveAsync(TimeSpan.FromMinutes(2));
-                    if (message != null)
-                    {
-                        var conexao = Conexao.RetornaConexao();
-                        var getBody = message.GetBody<Stream>();
-                        var pedidoSB = JsonConvert.DeserializeObject<PedidoSB>(new StreamReader(getBody, true).ReadToEnd());
-
-                        string data = $"UPDATE PEDIDO SET STATUS={pedidoSB.StatusId} where TRIM(ETIQUETA) = '{pedidoSB.Etiqueta}' AND IdLayout = {pedidoSB.FabricaId}";
-                        if (message.Label.Equals(conexao.DataSource, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            int result = conexao.Execute(data);
-                            if (result > 0)
-                                await message.CompleteAsync();
-                        }
-                        else
-                        {
-                            int result = conexao.Execute(data);
-                            if (result > 0)
-                                await message.CompleteAsync();
-                        }
-                    }
-                }
-                catch (MessagingException e)
-                {
-                    if (!e.IsTransient)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                }
+                return;
             }
-        }
 
+            var valor = (ItemValue)checkedListBoxBuscar.Items[e.Index];
+            var item = itens.FirstOrDefault(x => x.Valor == valor.Valor);
+            if (item != null)
+            {
+                item.Checked = e.NewValue == CheckState.Checked;
+            }
+
+            int quantidade = itens.Count(x => x.Checked);
+            labelBuscaQtde.Text = $"{quantidade} Iten(s) selecionados.";
+        }
     }
 }
-
