@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-SisConf.Workers-e7018ea5-c7a3-427f-bedb-7b98a87d8733</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SisConf.Application\SisConf.Application.csproj" />
+    <ProjectReference Include="..\SisConf.Infrastructure\SisConf.Infrastructure.csproj" />
+    <ProjectReference Include="..\SisConf.Domain\SisConf.Domain.csproj" />
+  </ItemGroup>
+</Project>
