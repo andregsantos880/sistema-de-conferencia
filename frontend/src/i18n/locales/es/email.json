@@ -1,0 +1,37 @@
+{
+  "title": "Correo",
+  "newMessage": "Nuevo Mensaje",
+  "search": "Buscar correo…",
+  "trays": {
+    "inbox": "Bandeja de entrada",
+    "starred": "Destacados",
+    "drafts": "Borradores",
+    "sent": "Enviados",
+    "trash": "Papelera",
+    "archive": "Archivo"
+  },
+  "filters": {
+    "unread": "No leídos",
+    "starred": "Destacados",
+    "attachments": "Con archivos adjuntos"
+  },
+  "labels": "Etiquetas",
+  "loadMore": "Cargar más",
+  "noResults": "No se encontraron mensajes",
+  "noMessages": "No hay mensajes en esta carpeta",
+  "selectMessage": "Selecciona un mensaje",
+  "selectMessageDesc": "Elige un mensaje de la lista para leer",
+  "back": "Atrás",
+  "attachments": "Archivos adjuntos",
+  "compose": {
+    "newMessage": "Nuevo Mensaje",
+    "to": "Para",
+    "cc": "Cc",
+    "bcc": "Cco",
+    "subject": "Asunto",
+    "body": "Mensaje",
+    "send": "Enviar",
+    "saveDraft": "Guardar Borrador",
+    "cancel": "Cancelar"
+  }
+}

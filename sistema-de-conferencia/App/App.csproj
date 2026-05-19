@@ -1,0 +1,472 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{FEC12E9D-EE2E-4042-B3E8-ED9EF02E9B6B}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>App</RootNamespace>
+    <AssemblyName>App</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <PublishUrl>C:\Pusblish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Background</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <UpdateUrl>\\Davi\bulk\Publish\</UpdateUrl>
+    <SupportUrl>http://www.cyrax.com.br</SupportUrl>
+    <ProductName>SisConf</ProductName>
+    <PublisherName>Cyrax</PublisherName>
+    <MinimumRequiredVersion>1.0.0.0</MinimumRequiredVersion>
+    <WebPage>publish.htm</WebPage>
+    <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
+    <ApplicationRevision>62</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <CreateDesktopShortcut>true</CreateDesktopShortcut>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <BootstrapperComponentsUrl>ftp://ftp.cyrax.com.br/public_html/updates/request_v2/</BootstrapperComponentsUrl>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Icojam-Blue-Bits-Database-settings.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>DAAF57A671760E65F8CBA3CACB1D5EC5A3ED0BA7</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>
+    </ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DelaySign>false</DelaySign>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>SisConf_key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Entity" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Speech" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CadaLayouts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CadaLayouts.Designer.cs">
+      <DependentUpon>CadaLayouts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CadaGrup.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CadaGrup.Designer.cs">
+      <DependentUpon>CadaGrup.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CadaUsua.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CadaUsua.Designer.cs">
+      <DependentUpon>CadaUsua.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmConfig.Designer.cs">
+      <DependentUpon>frmConfig.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmImportWeb.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmImportWeb.Designer.cs">
+      <DependentUpon>frmImportWeb.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormFiltro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormFiltro.Designer.cs">
+      <DependentUpon>FormFiltro.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormImportados.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormImportados.Designer.cs">
+      <DependentUpon>FormImportados.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormLogin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormLogin.Designer.cs">
+      <DependentUpon>FormLogin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="OpcTextoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="OpcTextoForm.designer.cs">
+      <DependentUpon>OpcTextoForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TabeLayouts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TabeLayouts.Designer.cs">
+      <DependentUpon>TabeLayouts.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TabeLayo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TabeLayo.Designer.cs">
+      <DependentUpon>TabeLayo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TabeGrup.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TabeGrup.Designer.cs">
+      <DependentUpon>TabeGrup.cs</DependentUpon>
+    </Compile>
+    <Compile Include="TabeUsua.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TabeUsua.Designer.cs">
+      <DependentUpon>TabeUsua.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Util.cs" />
+    <EmbeddedResource Include="CadaLayouts.resx">
+      <DependentUpon>CadaLayouts.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CadaGrup.resx">
+      <DependentUpon>CadaGrup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CadaUsua.resx">
+      <DependentUpon>CadaUsua.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormFiltro.resx">
+      <DependentUpon>FormFiltro.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormImportados.resx">
+      <DependentUpon>FormImportados.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormLogin.resx">
+      <DependentUpon>FormLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmConfig.resx">
+      <DependentUpon>frmConfig.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmImportWeb.resx">
+      <DependentUpon>frmImportWeb.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="OpcTextoForm.resx">
+      <DependentUpon>OpcTextoForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="TabeLayouts.resx">
+      <DependentUpon>TabeLayouts.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TabeLayo.resx">
+      <DependentUpon>TabeLayo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TabeGrup.resx">
+      <DependentUpon>TabeGrup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TabeUsua.resx">
+      <DependentUpon>TabeUsua.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config" />
+    <None Include="Properties\app.manifest" />
+    <None Include="Properties\DataSources\DataSet1.datasource" />
+    <None Include="Properties\DataSources\Entidade.voPedido.datasource" />
+    <None Include="Properties\DataSources\EtiquetasEntities.datasource" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <None Include="SisConf_key.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5.1">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5.1 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.4.5">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 4.5</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="audio\1.wav" />
+    <Content Include="audio\10.wav" />
+    <Content Include="audio\11.wav" />
+    <Content Include="audio\12.wav" />
+    <Content Include="audio\13.wav" />
+    <Content Include="audio\14.wav" />
+    <Content Include="audio\15.wav" />
+    <Content Include="audio\16.wav" />
+    <Content Include="audio\17.wav" />
+    <Content Include="audio\18.wav" />
+    <Content Include="audio\19.wav" />
+    <Content Include="audio\2.wav" />
+    <Content Include="audio\20.wav" />
+    <Content Include="audio\21.wav" />
+    <Content Include="audio\22.wav" />
+    <Content Include="audio\23.wav" />
+    <Content Include="audio\24.wav" />
+    <Content Include="audio\25.wav" />
+    <Content Include="audio\26.wav" />
+    <Content Include="audio\27.wav" />
+    <Content Include="audio\28.wav" />
+    <Content Include="audio\29.wav" />
+    <Content Include="audio\3.wav" />
+    <Content Include="audio\30.wav" />
+    <Content Include="audio\31.wav" />
+    <Content Include="audio\32.wav" />
+    <Content Include="audio\33.wav" />
+    <Content Include="audio\34.wav" />
+    <Content Include="audio\35.wav" />
+    <Content Include="audio\36.wav" />
+    <Content Include="audio\37.wav" />
+    <Content Include="audio\38.wav" />
+    <Content Include="audio\39.wav" />
+    <Content Include="audio\4.wav" />
+    <Content Include="audio\40.wav" />
+    <Content Include="audio\41.wav" />
+    <Content Include="audio\42.wav" />
+    <Content Include="audio\43.wav" />
+    <Content Include="audio\44.wav" />
+    <Content Include="audio\45.wav" />
+    <Content Include="audio\46.wav" />
+    <Content Include="audio\47.wav" />
+    <Content Include="audio\48.wav" />
+    <Content Include="audio\49.wav" />
+    <Content Include="audio\5.wav" />
+    <Content Include="audio\50.wav" />
+    <Content Include="audio\51.wav" />
+    <Content Include="audio\52.wav" />
+    <Content Include="audio\53.wav" />
+    <Content Include="audio\54.wav" />
+    <Content Include="audio\55.wav" />
+    <Content Include="audio\56.wav" />
+    <Content Include="audio\57.wav" />
+    <Content Include="audio\58.wav" />
+    <Content Include="audio\59.wav" />
+    <Content Include="audio\6.wav" />
+    <Content Include="audio\60.wav" />
+    <Content Include="audio\61.wav" />
+    <Content Include="audio\62.wav" />
+    <Content Include="audio\63.wav" />
+    <Content Include="audio\64.wav" />
+    <Content Include="audio\65.wav" />
+    <Content Include="audio\66.wav" />
+    <Content Include="audio\67.wav" />
+    <Content Include="audio\68.wav" />
+    <Content Include="audio\69.wav" />
+    <Content Include="audio\7.wav" />
+    <Content Include="audio\70.wav" />
+    <Content Include="audio\71.wav" />
+    <Content Include="audio\72.wav" />
+    <Content Include="audio\73.wav" />
+    <Content Include="audio\74.wav" />
+    <Content Include="audio\75.wav" />
+    <Content Include="audio\76.wav" />
+    <Content Include="audio\77.wav" />
+    <Content Include="audio\78.wav" />
+    <Content Include="audio\79.wav" />
+    <Content Include="audio\8.wav" />
+    <Content Include="audio\80.wav" />
+    <Content Include="audio\9.wav" />
+    <Content Include="audio\BOX.wav" />
+    <Content Include="audio\Error.wav" />
+    <Content Include="audio\Exclamation.wav" />
+    <Content Include="audio\Information.wav" />
+    <Content Include="audio\success.wav" />
+    <Content Include="Barcode.ico" />
+    <Content Include="Icojam-Blue-Bits-Database-settings.ico" />
+    <None Include="Resources\add.png" />
+    <None Include="Resources\affiliation-employee.png" />
+    <None Include="Resources\consulta.png" />
+    <None Include="Resources\consultar.png" />
+    <None Include="Resources\delete_01.png" />
+    <None Include="Resources\log_out_97235.jpg" />
+    <None Include="Resources\New.png" />
+    <None Include="Resources\petition-icon.png" />
+    <None Include="Resources\tick.png" />
+    <Content Include="layouts\tmp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="audio\Air_Horn.wav" />
+    <None Include="Resources\Icons-Land-Vista-Flags-Solid-Color-White-Flag-3.ico" />
+    <None Include="Resources\Custom-Icon-Design-Pretty-Office-8-Flag-yellow.ico" />
+    <None Include="Resources\Custom-Icon-Design-Pretty-Office-8-Flag-green.ico" />
+    <None Include="Resources\Custom-Icon-Design-Pretty-Office-8-Flag-blue.ico" />
+    <None Include="Resources\Icons-Land-Vista-Flags-Solid-Color-White-Flag-31.ico" />
+    <None Include="Resources\Flag-blue-icon.png" />
+    <None Include="Resources\Flag-red-icon.png" />
+    <None Include="Resources\Solid-Color-White-Flag-3-icon.png" />
+    <None Include="Resources\Flag-green-icon.png" />
+    <None Include="Resources\Flag-white-icon.png" />
+    <Content Include="updates\updates.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Include="Resources\Drive-Local-icon.png" />
+    <None Include="Resources\Home-Server-icon.png" />
+    <None Include="Resources\Download-icon.png" />
+    <None Include="Resources\Box-icon.png" />
+    <None Include="Resources\Apps-system-software-update-icon.png" />
+    <None Include="Resources\logo-mini.png" />
+    <None Include="Resources\settings.png" />
+    <None Include="Resources\Folder open.png" />
+    <None Include="Resources\find.png" />
+    <None Include="Resources\file_add.png" />
+    <None Include="Resources\baixar.jpg" />
+    <None Include="Resources\bandeira azul branco vermelho.ico" />
+    <None Include="Resources\bandeira verde.ico" />
+    <None Include="Resources\bandeira branca.ico" />
+    <None Include="Resources\bandeira azul.ico" />
+    <None Include="Resources\bandeira amarela.ico" />
+    <None Include="audio\SOM_ERRO_EFEITO_SONORO.wav" />
+    <None Include="Resources\LoginRed.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="Microsoft.Office.Interop.Excel">
+      <Guid>{00020813-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>6</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Entidade\Entidade.csproj">
+      <Project>{006c54e8-bdc1-4dab-a4af-a0572de1ce1b}</Project>
+      <Name>Entidade</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Negocio\Negocio.csproj">
+      <Project>{BDBA37FE-7695-4E5C-A498-59FBDEE28597}</Project>
+      <Name>Negocio</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Relatorio\Relatorio.csproj">
+      <Project>{aab02516-6fea-4059-a0cb-7a85828c2657}</Project>
+      <Name>Relatorio</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

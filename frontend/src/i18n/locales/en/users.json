@@ -1,0 +1,310 @@
+{
+  "title": "Users",
+  "subtitle": "Manage user accounts, invitations, and permissions",
+  "routes": {
+    "list": "Users",
+    "create": "New User",
+    "view": "User",
+    "edit": "Edit User"
+  },
+  "list": {
+    "live": {
+      "filter_changed": "Filter changed"
+    }
+  },
+  "new": "New User",
+  "view": "View",
+  "search": "Search...",
+  "name": "Name",
+  "email": "Email",
+  "role": "Role",
+  "edit": "Edit",
+  "delete": "Delete",
+  "editUser": "Edit User",
+  "newUser": "New User",
+  "viewUser": "User Profile",
+  "backToList": "Back to list",
+  "save": "Save",
+  "cancel": "Cancel",
+  "loading": "Loading...",
+  "notFound": "User not found",
+  "since": "Since",
+  "form": {
+    "basic": "Basic",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "department": "Department",
+    "select_department": "Select department",
+    "role": "Role",
+    "status": "Status",
+    "status_active": "Active",
+    "status_pending": "Pending",
+    "status_inactive": "Inactive",
+    "role_permissions": "Role & Permissions",
+    "role_help": "Roles come with default capabilities. You can refine permissions later.",
+    "security": "Security",
+    "password": "Password",
+    "confirm_password": "Confirm Password",
+    "security_actions": "You can send reset email, require password change, or revoke sessions from the user actions."
+  },
+  "columns": {
+    "user": "User",
+    "email": "Email",
+    "role": "Role",
+    "department": "Department",
+    "status": "Status",
+    "permissions": "Permissions",
+    "last_active": "Last Active",
+    "lastLogin": "Last Login",
+    "created": "Created",
+    "never": "Never"
+  },
+  "actionsBar": {
+    "filter": "Filter",
+    "export": "Export",
+    "add_user": "Add User"
+  },
+  "actions": {
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "add_user": "Add User",
+    "inviteUser": "Invite User",
+    "viewDetails": "View Details",
+    "resendInvitation": "Resend Invitation",
+    "resendVerification": "Resend Verification",
+    "sendPasswordReset": "Send Password Reset",
+    "suspend": "Suspend",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "restore": "Restore",
+    "deleteUser": "Delete User"
+  },
+  "filters": {
+    "searchPlaceholder": "Search by name or email...",
+    "status": "Status",
+    "role": "Role",
+    "lastActive": "Last Active",
+    "allStatus": "All Status",
+    "allRoles": "All Roles",
+    "anyTime": "Any Time",
+    "last7Days": "Last 7 days",
+    "last30Days": "Last 30 days",
+    "last90Days": "Last 90 days",
+    "lastDays": "Last {{days}} days",
+    "clearAll": "Clear all"
+  },
+  "status": {
+    "active": "Active",
+    "invited": "Invited",
+    "suspended": "Suspended",
+    "deactivated": "Deactivated"
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "member": "Member",
+    "viewer": "Viewer"
+  },
+  "bulk": {
+    "selected": "{{count}} selected",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "resendInvite": "Resend Invite",
+    "delete": "Delete"
+  },
+  "empty": {
+    "title": "No users yet",
+    "description": "Invite your first team member to get started",
+    "noResults": "No results found",
+    "noResultsDescription": "Try adjusting your search or filters"
+  },
+  "errors": {
+    "loadFailed": "Failed to load users",
+    "loadFailedDescription": "There was an error loading the users list. Please try again."
+  },
+  "dialogs": {
+    "deleteUser": {
+      "title": "Delete User",
+      "description": "Are you sure you want to delete {{name}}? This action cannot be undone."
+    },
+    "bulkDelete": {
+      "title": "Delete {{count}} Users",
+      "description": "Are you sure you want to delete {{count}} users? This action cannot be undone.",
+      "confirm": "Delete All"
+    }
+  },
+  "invite": {
+    "title": "Invite User",
+    "description": "Send an invitation email to add a new team member",
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "user@example.com",
+      "firstName": "First Name",
+      "firstNamePlaceholder": "John",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Doe",
+      "role": "Role",
+      "rolePlaceholder": "Select role",
+      "team": "Team (optional)",
+      "teamPlaceholder": "e.g., Platform, Growth",
+      "sendInvite": "Send invitation email",
+      "sendInviteDescription": "User will receive an email with a link to set up their account",
+      "submit": "Send Invitation",
+      "sending": "Sending..."
+    },
+    "success": {
+      "title": "Invitation Sent",
+      "description": "An invitation has been sent to {{email}}",
+      "inviteAnother": "Invite Another"
+    }
+  },
+  "import": {
+    "title": "Import Users",
+    "description": "Import multiple users from a CSV file",
+    "steps": {
+      "upload": "Upload",
+      "mapcolumns": "Map Columns",
+      "validate": "Validate",
+      "import": "Import"
+    },
+    "upload": {
+      "dropHere": "Drop your CSV file here",
+      "orBrowse": "or click to browse",
+      "downloadTemplate": "Download Template",
+      "rowsFound": "{{count}} rows found"
+    },
+    "mapping": {
+      "description": "Map your CSV columns to user fields",
+      "emailColumn": "Email Column",
+      "firstNameColumn": "First Name Column",
+      "lastNameColumn": "Last Name Column",
+      "roleColumn": "Role Column",
+      "selectColumn": "Select column",
+      "none": "None"
+    },
+    "validate": {
+      "valid": "{{count}} valid",
+      "invalid": "{{count}} invalid",
+      "status": "Status",
+      "email": "Email",
+      "name": "Name",
+      "role": "Role"
+    },
+    "confirm": {
+      "ready": "Ready to import {{count}} users",
+      "skipped": "{{count}} invalid entries will be skipped. ",
+      "review": "Review your import settings below.",
+      "sendInvites": "Send invitation emails",
+      "sendInvitesDescription": "Each imported user will receive an invitation email"
+    },
+    "errors": {
+      "emailRequired": "Email is required",
+      "invalidEmail": "Invalid email format",
+      "invalidRole": "Invalid role: {{role}}"
+    },
+    "success": {
+      "title": "Import Complete",
+      "description": "Successfully imported {{count}} users",
+      "invitesSent": "Invitation emails have been sent"
+    },
+    "back": "Back",
+    "next": "Next",
+    "importing": "Importing...",
+    "importButton": "Import {{count}} Users"
+  },
+  "detail": {
+    "actions": {
+      "edit": "Edit User"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "profile": "Profile",
+      "security": "Security",
+      "activity": "Activity",
+      "roles": "Roles"
+    },
+    "overview": {
+      "loginCount": "Login Count",
+      "lastLogin": "Last Login",
+      "userInfo": "User Information",
+      "email": "Email",
+      "phone": "Phone",
+      "jobTitle": "Job Title",
+      "department": "Department",
+      "team": "Team",
+      "created": "Created",
+      "invitedBy": "Invited By"
+    },
+    "profile": {
+      "personalInfo": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone",
+      "jobTitle": "Job Title",
+      "department": "Department",
+      "selectDepartment": "Select department",
+      "preferences": "Preferences",
+      "timezone": "Timezone",
+      "selectTimezone": "Select timezone",
+      "locale": "Locale",
+      "selectLocale": "Select locale"
+    },
+    "security": {
+      "status": "Security Status",
+      "emailVerified": "Email Verified",
+      "emailVerifiedYes": "Email has been verified",
+      "emailVerifiedNo": "Email not verified",
+      "resend": "Resend",
+      "mfa": "Two-Factor Authentication",
+      "mfaEnabled": "MFA is enabled",
+      "mfaDisabled": "MFA is not enabled",
+      "activeSessions": "Active Sessions",
+      "active": "active",
+      "noSessions": "No active sessions",
+      "current": "Current",
+      "lastUsed": "Last used",
+      "signOut": "Sign Out"
+    },
+    "activity": {
+      "title": "Activity Log",
+      "by": "by"
+    },
+    "roles": {
+      "currentRole": "Current Role",
+      "descriptions": {
+        "admin": "Full access to all features and settings",
+        "manager": "Can manage team members and projects",
+        "member": "Standard access to projects and features",
+        "viewer": "Read-only access to most features"
+      },
+      "rbac": "Role-Based Access Control",
+      "comingSoon": "Coming Soon",
+      "comingSoonDescription": "Advanced RBAC with granular permissions will be available in a future update."
+    }
+  },
+  "stats": {
+    "aria": "User status tabs",
+    "labels": {
+      "total": "Total Users",
+      "active": "Active Users",
+      "pending": "Pending",
+      "inactive": "Inactive"
+    },
+    "hints": {
+      "total": "{{count}} new this month",
+      "active": "Currently active",
+      "pending": "Awaiting approval",
+      "inactive": "Disabled accounts"
+    }
+  },
+  "table": {
+    "actions": "Actions",
+    "loading": "Loading...",
+    "no_data": "No data",
+    "rows_per_page": "Rows per page",
+    "select_all": "Select all",
+    "select_row": "Select row {{n}}"
+  }
+}

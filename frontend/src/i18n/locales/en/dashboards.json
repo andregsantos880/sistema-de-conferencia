@@ -1,0 +1,245 @@
+{
+  "executive": {
+    "title": "Executive Overview",
+    "subtitle": "Key metrics and performance indicators for executive decision-making",
+    "summary": "Executive Summary",
+    "risksOpportunities": "Risks & Opportunities",
+    "risks": "Risks",
+    "opportunities": "Opportunities"
+  },
+  "ecommerce": {
+    "title": "E-commerce",
+    "subtitle": "Revenue, orders, products, and real-time store activity",
+    "kpi": {
+      "revenue": "Total Revenue",
+      "orders": "Total Orders",
+      "aov": "Avg Order Value",
+      "conversion": "Conversion Rate",
+      "refunds": "Refund Rate"
+    },
+    "widgets": {
+      "revenue": "Revenue Overview",
+      "channels": "Sales by Channel",
+      "products": "Top Products",
+      "funnel": "Conversion Funnel",
+      "realtimeOrders": "Live Orders",
+      "liveVisitors": "Live Visitors"
+    }
+  },
+  "projects": {
+    "title": "Projects & Delivery",
+    "subtitle": "Track progress, risks, and team workload in real time",
+    "filters": {
+      "team": "Team",
+      "owner": "Owner",
+      "status": "Status"
+    },
+    "kpi": {
+      "active": "Active Projects",
+      "onTrack": "On Track",
+      "atRisk": "At Risk",
+      "delayed": "Delayed",
+      "overdueTasks": "Overdue Tasks",
+      "avgUtilization": "Avg Utilization",
+      "avgCycleTime": "Avg Cycle Time"
+    },
+    "widgets": {
+      "health": "Project Health",
+      "burn": "Burn Chart",
+      "workloadTeam": "Team Workload",
+      "workloadMember": "Member Workload",
+      "milestones": "Upcoming Milestones",
+      "risks": "Project Risks",
+      "velocity": "Velocity Trend",
+      "budget": "Budget Overview"
+    },
+    "status": {
+      "onTrack": "On Track",
+      "atRisk": "At Risk",
+      "delayed": "Delayed",
+      "completed": "Completed"
+    }
+  },
+  "sales": {
+    "title": "Sales & CRM",
+    "filters": {
+      "team": "Team",
+      "region": "Region",
+      "owner": "Owner"
+    },
+    "kpi": {
+      "pipeline": "Pipeline",
+      "commit": "Commit",
+      "bestCase": "Best Case",
+      "closedWon": "Closed Won",
+      "winRate": "Win Rate",
+      "avgDealSize": "Avg Deal Size",
+      "cycleLength": "Sales Cycle"
+    },
+    "widgets": {
+      "pipelineFunnel": "Pipeline Funnel",
+      "forecast": "Forecast vs Quota",
+      "winRate": "Win Rate Trend",
+      "avgDealSize": "Average Deal Size",
+      "cycleLength": "Sales Cycle Length",
+      "repLeaderboard": "Rep Leaderboard",
+      "activitiesHeatmap": "Activities Heatmap",
+      "atRisk": "Opportunities at Risk",
+      "topAccounts": "Top Accounts",
+      "locations": {
+        "title": "Sales by Location",
+        "subtitle": "Where your revenue is coming from",
+        "country": "Country",
+        "orders": "Orders",
+        "revenue": "Revenue"
+      }
+    }
+  },
+  "shipments": {
+    "title": "Shipment Tracking",
+    "subtitle": "Monitor real-time shipment locations, status, and delivery progress",
+    "kpi": {
+      "active": "Active Shipments",
+      "inTransit": "In Transit",
+      "delivered": "Delivered Today",
+      "delayed": "Delayed"
+    },
+    "filters": {
+      "search": "Search by tracking ID or destination",
+      "allStatus": "All Status",
+      "allCarriers": "All Carriers",
+      "anyDate": "Any Date",
+      "moreFilters": "More Filters",
+      "today": "Today",
+      "week": "Last 7 Days",
+      "month": "Last 30 Days",
+      "custom": "Custom Range"
+    },
+    "status": {
+      "pending": "Pending",
+      "picked_up": "Picked Up",
+      "in_transit": "In Transit",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered",
+      "delayed": "Delayed",
+      "exception": "Exception",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "trackOnCarrier": "Track on Carrier Site",
+      "createShipment": "Create Shipment",
+      "import": "Import",
+      "export": "Export"
+    },
+    "tabs": {
+      "all": "All",
+      "transit": "In Transit",
+      "delivered": "Delivered",
+      "delayed": "Delayed"
+    },
+    "live": {
+      "live": "LIVE",
+      "autoRefresh": "Auto refresh",
+      "refresh": "Refresh"
+    },
+    "empty": {
+      "title": "No shipments found",
+      "description": "Try adjusting your filters or create a new shipment"
+    },
+    "errors": {
+      "loadFailed": "Failed to load shipments",
+      "loadFailedDescription": "An error occurred while loading shipment data. Please try again."
+    },
+    "table": {
+      "recentShipments": "Recent Shipments",
+      "trackingId": "Tracking ID",
+      "status": "Status",
+      "origin": "Origin",
+      "destination": "Destination",
+      "eta": "ETA",
+      "updated": "Updated",
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking Number",
+      "postalCode": "Postal Code",
+      "fullAddress": "Full Address",
+      "progress": "Progress",
+      "route": "Route",
+      "distance": "Distance",
+      "duration": "Duration",
+      "lateDuration": "{{minutes}} min late",
+      "onTime": "On Time",
+      "viewInMap": "View in Map",
+      "rescheduleDelivery": "Reschedule Delivery",
+      "contactCustomer": "Contact Customer"
+    },
+    "stats": {
+      "onTimeDeliveryRate": "On-Time Delivery Rate",
+      "avgDeliveryTime": "Avg Delivery Time",
+      "delayed": "Delayed",
+      "recentActivity": "Recent Activity",
+      "processing": "Processing",
+      "inTransit": "In Transit",
+      "delivered": "Delivered",
+      "last14Days": "Last 14 Days",
+      "etaDueIn": "ETA: Due in {{hours}}h",
+      "onTime": "On Time",
+      "exception": "Exception",
+      "shipments": "Shipments"
+    },
+    "details": {
+      "orderId": "Order ID",
+      "shippingDate": "Shipping date",
+      "cancelOrder": "Cancel Order",
+      "notifyCustomer": "Notify Customer",
+      "totalTime": "Total Time",
+      "departureTime": "Departure Time",
+      "expectedArrival": "Expected Arrival",
+      "shipmentStatus": "Shipment Status",
+      "days": "{{count}} days",
+      "hours": "{{count}} hours",
+      "daysHours": "{{days}} days, {{hours}} hours",
+      "orderPlaced": "Order Placed",
+      "preparingToShip": "Preparing to ship",
+      "confirmShipment": "Confirm Shipment",
+      "pickedUp": "Picked up",
+      "inTransitEvent": "In Transit",
+      "outForDeliveryEvent": "Out for Delivery",
+      "deliveredEvent": "Delivered"
+    }
+  },
+  "common": {
+    "compare": "Compare to previous period",
+    "range": "Range",
+    "export": "Export",
+    "refresh": "Refresh",
+    "seeAll": "See all",
+    "showing": "Showing {{count}} of {{total}} shipments",
+    "justNow": "Just now"
+  },
+  "kpi": {
+    "mrr": "MRR",
+    "netRevenue": "Net Revenue",
+    "activeCustomers": "Active Customers",
+    "churn": "Churn",
+    "ltvCac": "LTV:CAC",
+    "nps": "NPS",
+    "deltaVsPrevious": "vs previous period"
+  },
+  "widgets": {
+    "revenueVsTarget": "Revenue vs Target",
+    "mrrMovements": "MRR Movements",
+    "retention": "Customer Retention",
+    "cohortRetention": "Cohort Retention",
+    "regions": "Revenue by Region",
+    "topProducts": "Top Products",
+    "pipeline": "Sales Pipeline"
+  }
+}

@@ -1,0 +1,27 @@
+/* Scoped Scrollbar for Kanban Board */
+.kanban-board {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.kanban-board::-webkit-scrollbar {
+    height: 8px;
+    /* Slimmer horizontal track */
+}
+
+.kanban-board::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 20px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background 0.2s ease;
+}
+
+.kanban-board::-webkit-scrollbar-thumb:hover {
+    background: var(--border);
+    background-clip: content-box;
+}

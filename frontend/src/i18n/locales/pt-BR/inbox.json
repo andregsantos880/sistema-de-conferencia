@@ -1,0 +1,97 @@
+{
+  "title": "Caixa de Entrada",
+  "unread": "não lidas",
+  "search": "Pesquisar notificações...",
+  "back": "Voltar",
+  "tabs": {
+    "all": "Todas",
+    "inbox": "Caixa de Entrada",
+    "following": "Seguindo",
+    "archived": "Arquivadas"
+  },
+  "groups": {
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "earlier": "Anteriores"
+  },
+  "filters": {
+    "type": "Tipo",
+    "priority": "Prioridade",
+    "clearAll": "Limpar filtros"
+  },
+  "actions": {
+    "markAsRead": "Marcar como lida",
+    "markAsUnread": "Marcar como não lida",
+    "archive": "Arquivar",
+    "unarchive": "Desarquivar",
+    "markAllAsRead": "Marcar todas como lidas",
+    "viewDetails": "Ver detalhes"
+  },
+  "bulk": {
+    "selected": "{{count}} selecionadas",
+    "markAsRead": "Marcar como lidas",
+    "archive": "Arquivar",
+    "clearSelection": "Limpar"
+  },
+  "detail": {
+    "selectNotification": "Selecione uma notificação",
+    "selectNotificationDesc": "Escolha uma notificação da lista para ver seus detalhes",
+    "triggeredBy": "Acionou esta notificação",
+    "details": "Detalhes",
+    "attachments": "Anexos",
+    "actions": "Ações"
+  },
+  "empty": {
+    "noNotifications": "Sem notificações",
+    "noNotificationsDescription": "Você está em dia! Volte mais tarde para novas atualizações.",
+    "noUnread": "Tudo em dia!",
+    "noUnreadDescription": "Você não tem notificações não lidas.",
+    "noFollowing": "Não seguindo nada",
+    "noFollowingDescription": "Siga itens para ver atualizações aqui.",
+    "noArchived": "Sem notificações arquivadas",
+    "noArchivedDescription": "Notificações arquivadas aparecerão aqui.",
+    "noResults": "Nenhum resultado encontrado",
+    "tryDifferentSearch": "Tente um termo de pesquisa diferente",
+    "checkBackLater": "Volte mais tarde para atualizações"
+  },
+  "errors": {
+    "loadFailed": "Falha ao carregar notificações",
+    "loadFailedDescription": "Algo deu errado. Por favor, tente novamente mais tarde.",
+    "updateFailed": "Falha ao atualizar notificação"
+  },
+  "preferences": {
+    "title": "Preferências de Notificação",
+    "description": "Gerencie como você recebe notificações",
+    "muteAll": "Silenciar todas as notificações",
+    "muteAllDescription": "Desativar temporariamente todas as notificações",
+    "categories": "Categorias de Notificação",
+    "inApp": "No app",
+    "email": "E-mail",
+    "system": "Notificações do sistema",
+    "systemDescription": "Atualizações sobre status do sistema e manutenção",
+    "task": "Notificações de tarefas",
+    "taskDescription": "Atualizações sobre tarefas atribuídas a você",
+    "comment": "Notificações de comentários",
+    "commentDescription": "Quando alguém comenta ou menciona você",
+    "social": "Notificações sociais",
+    "socialDescription": "Seguidores, atualizações de equipe e atividade social",
+    "security": "Notificações de segurança",
+    "securityDescription": "Alertas de login e atualizações de segurança",
+    "approval": "Notificações de aprovação",
+    "approvalDescription": "Solicitações que precisam de sua aprovação"
+  },
+  "types": {
+    "system": "Sistema",
+    "task": "Tarefa",
+    "comment": "Comentário",
+    "social": "Social",
+    "security": "Segurança",
+    "approval": "Aprovação"
+  },
+  "priorities": {
+    "low": "Baixa",
+    "normal": "Normal",
+    "high": "Alta",
+    "critical": "Crítica"
+  }
+}

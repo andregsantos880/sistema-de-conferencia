@@ -1,0 +1,37 @@
+{
+  "title": "Email",
+  "newMessage": "New Message",
+  "search": "Search mail…",
+  "trays": {
+    "inbox": "Inbox",
+    "starred": "Starred",
+    "drafts": "Drafts",
+    "sent": "Sent",
+    "trash": "Trash",
+    "archive": "Archive"
+  },
+  "filters": {
+    "unread": "Unread",
+    "starred": "Starred",
+    "attachments": "Has attachments"
+  },
+  "labels": "Labels",
+  "loadMore": "Load more",
+  "noResults": "No messages found",
+  "noMessages": "No messages in this folder",
+  "selectMessage": "Select a message",
+  "selectMessageDesc": "Choose a message from the list to read",
+  "back": "Back",
+  "attachments": "Attachments",
+  "compose": {
+    "newMessage": "New Message",
+    "to": "To",
+    "cc": "Cc",
+    "bcc": "Bcc",
+    "subject": "Subject",
+    "body": "Message",
+    "send": "Send",
+    "saveDraft": "Save Draft",
+    "cancel": "Cancel"
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "title": "E-mail e Notificações",
+  "subtitle": "Gerencie modelos de e-mail e configurações de notificação para seu espaço de trabalho",
+  "routes": {
+    "home": "E-mail e Notificações",
+    "settings": "Configurações Globais de E-mail",
+    "templates": "Modelos de E-mail",
+    "editor": "Editar Modelo"
+  },
+  "warnings": {
+    "providerNotConfigured": "Provedor de e-mail não configurado",
+    "providerNotConfiguredDesc": "E-mails podem falhar ao serem enviados. Configure as definições do seu provedor."
+  },
+  "actions": {
+    "configure": "Configurar"
+  },
+  "metrics": {
+    "providerStatus": "Status do Provedor",
+    "connected": "Conectado",
+    "notSet": "Não Definido",
+    "customized": "Personalizado",
+    "usingDefaults": "{{count}} usando padrões",
+    "activeTemplates": "Modelos Ativos",
+    "drafts": "{{count}} rascunhos",
+    "lastTestSent": "Último Teste Enviado",
+    "never": "Nunca"
+  },
+  "nav": {
+    "settings": {
+      "title": "Configurações Globais de E-mail",
+      "description": "Configure informações do remetente, endereço de resposta, conteúdo do rodapé e configurações do provedor de e-mail",
+      "from": "De"
+    },
+    "templates": {
+      "title": "Modelos de E-mail",
+      "description": "Edite, visualize e personalize modelos de e-mail para todos os eventos de notificação em todo o app",
+      "users": "Usuários",
+      "auth": "Auth",
+      "billing": "Cobrança",
+      "teams": "Equipes"
+    }
+  },
+  "settings": {
+    "title": "Configurações Globais de E-mail",
+    "subtitle": "Configure opções de e-mail em todo o aplicativo",
+    "save": "Salvar Configurações",
+    "sender": {
+      "title": "Informações do Remetente",
+      "description": "Configure os detalhes do remetente padrão para todos os e-mails",
+      "fromName": "Nome do Remetente",
+      "fromNamePlaceholder": "Nome do Seu App",
+      "fromEmail": "E-mail do Remetente",
+      "fromEmailPlaceholder": "naoresponda@seuapp.com",
+      "replyTo": "E-mail de Resposta",
+      "replyToPlaceholder": "suporte@seuapp.com"
+    },
+    "provider": {
+      "title": "Provedor de E-mail",
+      "description": "Configure seu serviço de entrega de e-mail",
+      "provider": "Provedor",
+      "selectProvider": "Selecione um provedor",
+      "apiKey": "Chave da API",
+      "apiKeyPlaceholder": "Insira sua chave da API",
+      "region": "Região",
+      "selectRegion": "Selecione a região",
+      "test": "Testar configuração",
+      "testing": "Testando conexão...",
+      "verified": "Conexão verificada",
+      "retry": "Tentar novamente"
+    },
+    "footer": {
+      "title": "Rodapé Padrão",
+      "description": "Conteúdo HTML para incluir na parte inferior de todos os e-mails",
+      "placeholder": "<p>© 2025 Sua Empresa. Todos os direitos reservados.</p>",
+      "preview": "Visualizar"
+    },
+    "toasts": {
+      "saved": "Configurações salvas",
+      "savedDesc": "Suas configurações de e-mail foram atualizadas com sucesso.",
+      "error": "Erro ao salvar configurações",
+      "errorDesc": "Falha ao salvar configurações. Por favor, tente novamente.",
+      "testSuccess": "Conexão bem-sucedida",
+      "testFailed": "Conexão falhou",
+      "testFailedDesc": "Falha ao conectar. Por favor, verifique suas configurações."
+    }
+  },
+  "templates": {
+    "title": "Modelos de E-mail",
+    "subtitle": "Gerencie e personalize modelos de notificação",
+    "searchPlaceholder": "Pesquisar por nome ou ID do evento...",
+    "tableTitle": "Modelos ({{count}})",
+    "filters": {
+      "title": "Filtros",
+      "featureArea": "Área de Recurso",
+      "allAreas": "Todas as Áreas",
+      "users": "Usuários",
+      "auth": "Auth",
+      "billing": "Cobrança",
+      "teams": "Equipes",
+      "status": "Status",
+      "allStatus": "Todos os Status",
+      "active": "Ativo",
+      "draft": "Rascunho",
+      "default": "Padrão"
+    },
+    "columns": {
+      "name": "Nome do Modelo",
+      "eventId": "ID do Evento",
+      "featureArea": "Área de Recurso",
+      "status": "Status",
+      "lastModified": "Última Modificação"
+    },
+    "actions": {
+      "edit": "Editar",
+      "restoreDefault": "Restaurar padrão",
+      "disable": "Desativar"
+    },
+    "empty": {
+      "noResults": "Nenhum modelo corresponde aos seus filtros",
+      "noTemplates": "Nenhum modelo disponível",
+      "adjustFilters": "Tente ajustar sua pesquisa ou filtros",
+      "willAppear": "Os modelos aparecerão aqui quando criados"
+    }
+  },
+  "editor": {
+    "history": "Histórico",
+    "sendTest": "Testar",
+    "save": "Salvar",
+    "locale": "Localidade",
+    "status": "Status",
+    "useCustom": "Usar modelo personalizado",
+    "useCustomDesc": "Substituir o modelo padrão",
+    "lastUpdated": "Atualizado {{time}}",
+    "insertVariable": "Inserir variável",
+    "togglePreview": "Alternar visualização ao vivo",
+    "togglePanel": "Alternar painel lateral",
+    "panel": "Painel",
+    "settingsTab": "Configurações",
+    "switchToHtml": "Mudar para HTML",
+    "editPlainText": "Editar Texto Simples",
+    "locales": {
+      "en": "Inglês (Padrão)",
+      "es": "Espanhol",
+      "fr": "Francês",
+      "de": "Alemão"
+    },
+    "statuses": {
+      "active": "Ativo",
+      "draft": "Rascunho",
+      "default": "Padrão"
+    },
+    "warnings": {
+      "undefinedVariables": "Variáveis indefinidas detectadas",
+      "undefinedVariablesDesc": "As seguintes variáveis são usadas, mas não definidas: {{variables}}"
+    },
+    "subject": {
+      "title": "Linha de Assunto",
+      "placeholder": "Insira o assunto do e-mail...",
+      "preview": "Visualizar"
+    },
+    "htmlBody": {
+      "title": "Corpo HTML"
+    },
+    "plainText": {
+      "title": "Corpo em Texto Simples (Opcional)",
+      "placeholder": "Versão em texto simples do e-mail..."
+    },
+    "preview": {
+      "title": "Visualização Ao Vivo",
+      "plainText": "Texto Simples"
+    },
+    "variables": {
+      "title": "Variáveis",
+      "clickToInsert": "Clique para inserir no cursor",
+      "copy": "Copiar para a área de transferência"
+    },
+    "testDialog": {
+      "title": "Enviar E-mail de Teste",
+      "description": "Envie um e-mail de teste para verificar como ficará na caixa de entrada",
+      "recipient": "E-mail do Destinatário",
+      "placeholder": "seu-email@exemplo.com",
+      "send": "Enviar Teste"
+    },
+    "historyDialog": {
+      "title": "Histórico de Versões",
+      "description": "Visualize e restaure versões anteriores deste modelo",
+      "noVersions": "Nenhuma versão anterior disponível",
+      "restore": "Restaurar"
+    }
+  }
+}

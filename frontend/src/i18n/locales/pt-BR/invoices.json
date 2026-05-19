@@ -1,0 +1,146 @@
+{
+  "title": "Faturas",
+  "subtitle": "Gerencie suas faturas e rastreie pagamentos",
+  "routes": {
+    "list": "Faturas",
+    "detail": "Fatura",
+    "new": "Nova Fatura",
+    "edit": "Editar Fatura"
+  },
+  "columns": {
+    "number": "Fatura nº",
+    "customer": "Cliente",
+    "status": "Status",
+    "issueDate": "Data de Emissão",
+    "dueDate": "Data de Vencimento",
+    "total": "Total",
+    "actions": "Ações"
+  },
+  "status": {
+    "draft": "Rascunho",
+    "sent": "Enviada",
+    "paid": "Paga",
+    "overdue": "Vencida",
+    "cancelled": "Cancelada"
+  },
+  "filters": {
+    "searchPlaceholder": "Pesquisar faturas...",
+    "status": "Status",
+    "allStatuses": "Todos os Status",
+    "clear": "Limpar"
+  },
+  "actions": {
+    "new": "Nova Fatura",
+    "view": "Ver",
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "delete": "Excluir",
+    "markAsSent": "Marcar como Enviada",
+    "markAsPaid": "Marcar como Paga",
+    "downloadPdf": "Baixar PDF",
+    "back": "Voltar",
+    "backToInvoices": "Voltar para Faturas",
+    "saveDraft": "Salvar como Rascunho",
+    "saveAndSend": "Salvar e Enviar"
+  },
+  "detail": {
+    "createdOn": "Criada em {{date}}",
+    "totalAmount": "Valor Total",
+    "billedTo": "Faturado Para",
+    "summary": "Resumo",
+    "items": "Itens",
+    "subtotal": "Subtotal",
+    "tax": "Imposto ({{rate}}%)",
+    "total": "Total",
+    "currency": "Moeda",
+    "notes": "Notas",
+    "terms": "Termos e Condições"
+  },
+  "lineItems": {
+    "title": "Itens da Fatura",
+    "description": "Descrição",
+    "quantity": "Qtd",
+    "unitPrice": "Preço Unitário",
+    "discount": "Desconto %",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "addItem": "Adicionar Item",
+    "removeItem": "Remover item",
+    "noItems": "Nenhum item ainda. Clique em \"Adicionar Item\" para adicionar um."
+  },
+  "form": {
+    "customerInfo": "Informações do Cliente",
+    "customerName": "Nome do Cliente",
+    "customerNamePlaceholder": "João Silva ou Nome da Empresa",
+    "email": "E-mail",
+    "emailPlaceholder": "cliente@exemplo.com",
+    "company": "Empresa",
+    "companyPlaceholder": "Nome da empresa (opcional)",
+    "taxId": "CNPJ/CPF",
+    "taxIdPlaceholder": "Número de identificação fiscal",
+    "addressLine1": "Endereço Linha 1",
+    "addressLine1Placeholder": "Endereço",
+    "addressLine2": "Endereço Linha 2",
+    "addressLine2Placeholder": "Apartamento, conjunto, etc. (opcional)",
+    "city": "Cidade",
+    "cityPlaceholder": "Cidade",
+    "country": "País",
+    "countryPlaceholder": "País",
+    "invoiceDetails": "Detalhes da Fatura",
+    "issueDate": "Data de Emissão",
+    "dueDate": "Data de Vencimento",
+    "currency": "Moeda",
+    "currencyPlaceholder": "Selecione a moeda",
+    "taxRate": "Taxa de Imposto (%)",
+    "notesTerms": "Notas e Termos",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas adicionais para o cliente...",
+    "terms": "Termos e Condições",
+    "termsPlaceholder": "Termos e condições de pagamento..."
+  },
+  "validation": {
+    "customerNameRequired": "Nome do cliente é obrigatório",
+    "emailRequired": "E-mail é obrigatório",
+    "emailInvalid": "Endereço de e-mail inválido",
+    "issueDateRequired": "Data de emissão é obrigatória",
+    "dueDateRequired": "Data de vencimento é obrigatória",
+    "currencyRequired": "Moeda é obrigatória",
+    "lineItemRequired": "Pelo menos um item de linha é obrigatório",
+    "descriptionRequired": "Item de linha {{index}}: Descrição é obrigatória",
+    "quantityRequired": "Item de linha {{index}}: Quantidade deve ser maior que 0",
+    "unitPriceRequired": "Item de linha {{index}}: Preço unitário não pode ser negativo"
+  },
+  "empty": {
+    "title": "Nenhuma fatura ainda",
+    "description": "Crie sua primeira fatura para começar.",
+    "noResults": "Nenhuma fatura encontrada"
+  },
+  "errors": {
+    "loadFailed": "Falha ao carregar faturas",
+    "loadFailedDescription": "Houve um erro ao carregar suas faturas. Por favor, tente novamente.",
+    "notFound": "Fatura não encontrada",
+    "notFoundDescription": "A fatura que você está procurando não existe ou foi excluída.",
+    "createFailed": "Falha ao criar fatura",
+    "updateFailed": "Falha ao atualizar fatura",
+    "deleteFailed": "Falha ao excluir fatura",
+    "markAsPaidFailed": "Falha ao marcar fatura como paga",
+    "markAsSentFailed": "Falha ao marcar fatura como enviada",
+    "duplicateFailed": "Falha ao duplicar fatura"
+  },
+  "success": {
+    "created": "Fatura criada com sucesso",
+    "updated": "Fatura atualizada com sucesso",
+    "deleted": "Fatura excluída",
+    "markedAsPaid": "Fatura marcada como paga",
+    "markedAsSent": "Fatura marcada como enviada",
+    "duplicated": "Fatura duplicada"
+  },
+  "pagination": {
+    "showing": "Mostrando {{start}} a {{end}} de {{total}} faturas"
+  },
+  "table": {
+    "selectAll": "Selecionar todas as faturas",
+    "selectRow": "Selecionar fatura {{number}}",
+    "openMenu": "Abrir menu"
+  }
+}

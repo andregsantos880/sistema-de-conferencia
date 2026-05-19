@@ -1,0 +1,82 @@
+{
+  "title": "Tableros Kanban",
+  "description": "Administra tus proyectos con tableros Kanban",
+  "favorites": "Favoritos",
+  "allBoards": "Todos los Tableros",
+  "columns": "columnas",
+  "cards": "tarjetas",
+  "updated": "Actualizado",
+  "addColumn": "Agregar Columna",
+  "addCard": "Agregar una tarjeta...",
+  "createBoard": "Crear Tablero",
+  "noColumnsYet": "Sin columnas aún",
+  "noColumnsDescription": "Agrega tu primera columna para comenzar a organizar tarjetas en este tablero.",
+  "cardDetails": "Detalles de Tarjeta",
+  "loading": "Cargando...",
+  "board": {
+    "notFound": "Tablero no encontrado",
+    "notFoundDescription": "El tablero que buscas no existe o no tienes acceso a él.",
+    "goBack": "Volver a tableros"
+  },
+  "empty": {
+    "title": "Sin tableros aún",
+    "description": "Crea tu primer tablero Kanban para comenzar a organizar tus proyectos y tareas."
+  },
+  "errors": {
+    "loadFailed": "Error al cargar tableros",
+    "loadFailedDescription": "Ocurrió un error al cargar los tableros.",
+    "saveFailed": "Error al guardar cambios"
+  },
+  "filters": {
+    "search": "Buscar tarjetas...",
+    "filters": "Filtros",
+    "labels": "Etiquetas",
+    "assignees": "Asignados",
+    "priority": "Prioridad",
+    "clear": "Limpiar"
+  },
+  "card": {
+    "description": "Descripción",
+    "descriptionPlaceholder": "Agregar una descripción...",
+    "clickToAddDescription": "Clic para agregar una descripción...",
+    "labels": "Etiquetas",
+    "assignees": "Asignados",
+    "addAssignee": "Agregar asignado",
+    "removeAssignee": "Clic para eliminar",
+    "selectAssignees": "Seleccionar asignados",
+    "priority": "Prioridad",
+    "dueDate": "Fecha de Vencimiento",
+    "selectDate": "Seleccionar fecha",
+    "activity": "Actividad",
+    "noActivity": "Sin actividad aún",
+    "subtasks": "Subtareas",
+    "attachments": "Archivos Adjuntos",
+    "coverImage": "Imagen de Portada",
+    "setCover": "Establecer Imagen de Portada",
+    "changeCover": "Cambiar",
+    "removeCover": "Eliminar",
+    "addSubtask": "Agregar Tarea",
+    "upload": "Subir",
+    "due": "Vence"
+  },
+  "priority": {
+    "low": "Baja",
+    "medium": "Media",
+    "high": "Alta",
+    "critical": "Crítica"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "add": "Agregar",
+    "delete": "Eliminar"
+  },
+  "time": {
+    "justNow": "Ahora mismo",
+    "minutesAgo": "hace {{count}}m",
+    "hoursAgo": "hace {{count}}h",
+    "daysAgo": "hace {{count}}d",
+    "overdue": "Vencido",
+    "dueSoon": "Vence pronto"
+  }
+}

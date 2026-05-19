@@ -1,0 +1,191 @@
+{
+  "title": "Email y Notificaciones",
+  "subtitle": "Gestiona plantillas de email y configuración de notificaciones para tu espacio de trabajo",
+  "routes": {
+    "home": "Email y Notificaciones",
+    "settings": "Configuración Global de Email",
+    "templates": "Plantillas de Email",
+    "editor": "Editar Plantilla"
+  },
+  "warnings": {
+    "providerNotConfigured": "El proveedor de email no está configurado",
+    "providerNotConfiguredDesc": "Los emails pueden fallar al enviarse. Configura tu proveedor."
+  },
+  "actions": {
+    "configure": "Configurar"
+  },
+  "metrics": {
+    "providerStatus": "Estado del Proveedor",
+    "connected": "Conectado",
+    "notSet": "No Configurado",
+    "customized": "Personalizadas",
+    "usingDefaults": "{{count}} usando predeterminadas",
+    "activeTemplates": "Plantillas Activas",
+    "drafts": "{{count}} borradores",
+    "lastTestSent": "Último Test Enviado",
+    "never": "Nunca"
+  },
+  "nav": {
+    "settings": {
+      "title": "Configuración Global de Email",
+      "description": "Configura información del remitente, dirección de respuesta, pie de página y proveedor de email",
+      "from": "De"
+    },
+    "templates": {
+      "title": "Plantillas de Email",
+      "description": "Edita, previsualiza y personaliza plantillas de email para todos los eventos de notificación",
+      "users": "Usuarios",
+      "auth": "Autenticación",
+      "billing": "Facturación",
+      "teams": "Equipos"
+    }
+  },
+  "settings": {
+    "title": "Configuración Global de Email",
+    "subtitle": "Configura opciones de email para toda la aplicación",
+    "save": "Guardar Configuración",
+    "sender": {
+      "title": "Información del Remitente",
+      "description": "Configura los detalles predeterminados del remitente para todos los emails",
+      "fromName": "Nombre del Remitente",
+      "fromNamePlaceholder": "Nombre de tu App",
+      "fromEmail": "Email del Remitente",
+      "fromEmailPlaceholder": "noreply@tuapp.com",
+      "replyTo": "Email de Respuesta",
+      "replyToPlaceholder": "soporte@tuapp.com"
+    },
+    "provider": {
+      "title": "Proveedor de Email",
+      "description": "Configura tu servicio de entrega de email",
+      "provider": "Proveedor",
+      "selectProvider": "Selecciona un proveedor",
+      "apiKey": "Clave API",
+      "apiKeyPlaceholder": "Ingresa tu clave API",
+      "region": "Región",
+      "selectRegion": "Selecciona región",
+      "test": "Probar configuración",
+      "testing": "Probando conexión...",
+      "verified": "Conexión verificada",
+      "retry": "Reintentar prueba"
+    },
+    "footer": {
+      "title": "Pie de Página Predeterminado",
+      "description": "Contenido HTML para incluir al final de todos los emails",
+      "placeholder": "<p>© 2025 Tu Empresa. Todos los derechos reservados.</p>",
+      "preview": "Vista previa"
+    },
+    "toasts": {
+      "saved": "Configuración guardada",
+      "savedDesc": "Tu configuración de email ha sido actualizada exitosamente.",
+      "error": "Error al guardar configuración",
+      "errorDesc": "No se pudo guardar la configuración. Por favor intenta de nuevo.",
+      "testSuccess": "Conexión exitosa",
+      "testFailed": "Conexión fallida",
+      "testFailedDesc": "No se pudo conectar. Por favor revisa tu configuración."
+    }
+  },
+  "templates": {
+    "title": "Plantillas de Email",
+    "subtitle": "Gestiona y personaliza plantillas de notificación",
+    "searchPlaceholder": "Buscar por nombre o ID de evento...",
+    "tableTitle": "Plantillas ({{count}})",
+    "filters": {
+      "title": "Filtros",
+      "featureArea": "Área de Función",
+      "allAreas": "Todas las Áreas",
+      "users": "Usuarios",
+      "auth": "Autenticación",
+      "billing": "Facturación",
+      "teams": "Equipos",
+      "status": "Estado",
+      "allStatus": "Todos los Estados",
+      "active": "Activa",
+      "draft": "Borrador",
+      "default": "Predeterminada"
+    },
+    "columns": {
+      "name": "Nombre de Plantilla",
+      "eventId": "ID de Evento",
+      "featureArea": "Área de Función",
+      "status": "Estado",
+      "lastModified": "Última Modificación"
+    },
+    "actions": {
+      "edit": "Editar",
+      "restoreDefault": "Restaurar predeterminada",
+      "disable": "Deshabilitar"
+    },
+    "empty": {
+      "noResults": "No hay plantillas que coincidan con tus filtros",
+      "noTemplates": "No hay plantillas disponibles",
+      "adjustFilters": "Intenta ajustar tu búsqueda o filtros",
+      "willAppear": "Las plantillas aparecerán aquí cuando se creen"
+    }
+  },
+  "editor": {
+    "history": "Historial",
+    "sendTest": "Probar",
+    "save": "Guardar",
+    "locale": "Idioma",
+    "status": "Estado",
+    "useCustom": "Usar plantilla personalizada",
+    "useCustomDesc": "Anular la plantilla predeterminada",
+    "lastUpdated": "Actualizado {{time}}",
+    "insertVariable": "Insertar variable",
+    "togglePreview": "Alternar vista previa",
+    "togglePanel": "Alternar panel lateral",
+    "panel": "Panel",
+    "settingsTab": "Configuración",
+    "switchToHtml": "Cambiar a HTML",
+    "editPlainText": "Editar Texto Plano",
+    "locales": {
+      "en": "Inglés (Predeterminado)",
+      "es": "Español",
+      "fr": "Francés",
+      "de": "Alemán"
+    },
+    "statuses": {
+      "active": "Activa",
+      "draft": "Borrador",
+      "default": "Predeterminada"
+    },
+    "warnings": {
+      "undefinedVariables": "Variables no definidas detectadas",
+      "undefinedVariablesDesc": "Las siguientes variables se usan pero no están definidas: {{variables}}"
+    },
+    "subject": {
+      "title": "Línea de Asunto",
+      "placeholder": "Ingresa el asunto del email...",
+      "preview": "Vista previa"
+    },
+    "htmlBody": {
+      "title": "Cuerpo HTML"
+    },
+    "plainText": {
+      "title": "Cuerpo de Texto Plano (Opcional)",
+      "placeholder": "Versión en texto plano del email..."
+    },
+    "preview": {
+      "title": "Vista Previa en Vivo",
+      "plainText": "Texto Plano"
+    },
+    "variables": {
+      "title": "Variables",
+      "clickToInsert": "Clic para insertar en el cursor",
+      "copy": "Copiar al portapapeles"
+    },
+    "testDialog": {
+      "title": "Enviar Email de Prueba",
+      "description": "Envía un email de prueba para verificar cómo se verá en la bandeja de entrada",
+      "recipient": "Email del Destinatario",
+      "placeholder": "tu-email@ejemplo.com",
+      "send": "Enviar Prueba"
+    },
+    "historyDialog": {
+      "title": "Historial de Versiones",
+      "description": "Ver y restaurar versiones anteriores de esta plantilla",
+      "noVersions": "No hay versiones anteriores disponibles",
+      "restore": "Restaurar"
+    }
+  }
+}

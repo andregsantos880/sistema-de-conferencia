@@ -1,0 +1,82 @@
+{
+  "title": "Kanban Boards",
+  "description": "Manage your projects with Kanban boards",
+  "favorites": "Favorites",
+  "allBoards": "All Boards",
+  "columns": "columns",
+  "cards": "cards",
+  "updated": "Updated",
+  "addColumn": "Add Column",
+  "addCard": "Add a card...",
+  "createBoard": "Create Board",
+  "noColumnsYet": "No columns yet",
+  "noColumnsDescription": "Add your first column to start organizing cards on this board.",
+  "cardDetails": "Card Details",
+  "loading": "Loading...",
+  "board": {
+    "notFound": "Board not found",
+    "notFoundDescription": "The board you're looking for doesn't exist or you don't have access to it.",
+    "goBack": "Go back to boards"
+  },
+  "empty": {
+    "title": "No boards yet",
+    "description": "Create your first Kanban board to start organizing your projects and tasks."
+  },
+  "errors": {
+    "loadFailed": "Failed to load boards",
+    "loadFailedDescription": "An error occurred while loading boards.",
+    "saveFailed": "Failed to save changes"
+  },
+  "filters": {
+    "search": "Search cards...",
+    "filters": "Filters",
+    "labels": "Labels",
+    "assignees": "Assignees",
+    "priority": "Priority",
+    "clear": "Clear"
+  },
+  "card": {
+    "description": "Description",
+    "descriptionPlaceholder": "Add a description...",
+    "clickToAddDescription": "Click to add a description...",
+    "labels": "Labels",
+    "assignees": "Assignees",
+    "addAssignee": "Add assignee",
+    "removeAssignee": "Click to remove",
+    "selectAssignees": "Select assignees",
+    "priority": "Priority",
+    "dueDate": "Due Date",
+    "selectDate": "Select date",
+    "activity": "Activity",
+    "noActivity": "No activity yet",
+    "subtasks": "Subtasks",
+    "attachments": "Attachments",
+    "coverImage": "Cover Image",
+    "setCover": "Set Cover Image",
+    "changeCover": "Change",
+    "removeCover": "Remove",
+    "addSubtask": "Add Task",
+    "upload": "Upload",
+    "due": "Due"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "delete": "Delete"
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "overdue": "Overdue",
+    "dueSoon": "Due soon"
+  }
+}

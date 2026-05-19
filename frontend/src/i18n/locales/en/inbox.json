@@ -1,0 +1,97 @@
+{
+  "title": "Inbox",
+  "unread": "unread",
+  "search": "Search notifications...",
+  "back": "Back",
+  "tabs": {
+    "all": "All",
+    "inbox": "Inbox",
+    "following": "Following",
+    "archived": "Archived"
+  },
+  "groups": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earlier": "Earlier"
+  },
+  "filters": {
+    "type": "Type",
+    "priority": "Priority",
+    "clearAll": "Clear filters"
+  },
+  "actions": {
+    "markAsRead": "Mark read",
+    "markAsUnread": "Mark unread",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "markAllAsRead": "Mark all as read",
+    "viewDetails": "View details"
+  },
+  "bulk": {
+    "selected": "{{count}} selected",
+    "markAsRead": "Mark as read",
+    "archive": "Archive",
+    "clearSelection": "Clear"
+  },
+  "detail": {
+    "selectNotification": "Select a notification",
+    "selectNotificationDesc": "Choose a notification from the list to view its details",
+    "triggeredBy": "Triggered this notification",
+    "details": "Details",
+    "attachments": "Attachments",
+    "actions": "Actions"
+  },
+  "empty": {
+    "noNotifications": "No notifications",
+    "noNotificationsDescription": "You're all caught up! Check back later for new updates.",
+    "noUnread": "All caught up!",
+    "noUnreadDescription": "You have no unread notifications.",
+    "noFollowing": "Not following anything",
+    "noFollowingDescription": "Follow items to see updates here.",
+    "noArchived": "No archived notifications",
+    "noArchivedDescription": "Archived notifications will appear here.",
+    "noResults": "No results found",
+    "tryDifferentSearch": "Try a different search term",
+    "checkBackLater": "Check back later for updates"
+  },
+  "errors": {
+    "loadFailed": "Failed to load notifications",
+    "loadFailedDescription": "Something went wrong. Please try again later.",
+    "updateFailed": "Failed to update notification"
+  },
+  "preferences": {
+    "title": "Notification Preferences",
+    "description": "Manage how you receive notifications",
+    "muteAll": "Mute all notifications",
+    "muteAllDescription": "Temporarily disable all notifications",
+    "categories": "Notification Categories",
+    "inApp": "In-app",
+    "email": "Email",
+    "system": "System notifications",
+    "systemDescription": "Updates about system status and maintenance",
+    "task": "Task notifications",
+    "taskDescription": "Updates about tasks assigned to you",
+    "comment": "Comment notifications",
+    "commentDescription": "When someone comments or mentions you",
+    "social": "Social notifications",
+    "socialDescription": "Follows, team updates, and social activity",
+    "security": "Security notifications",
+    "securityDescription": "Login alerts and security updates",
+    "approval": "Approval notifications",
+    "approvalDescription": "Requests that need your approval"
+  },
+  "types": {
+    "system": "System",
+    "task": "Task",
+    "comment": "Comment",
+    "social": "Social",
+    "security": "Security",
+    "approval": "Approval"
+  },
+  "priorities": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "critical": "Critical"
+  }
+}

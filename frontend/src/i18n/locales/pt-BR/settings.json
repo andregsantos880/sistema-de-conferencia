@@ -1,0 +1,242 @@
+{
+  "nav": {
+    "aria": "Navegação de configurações",
+    "items": {
+      "profile": "Perfil",
+      "account": "Conta",
+      "billing": "Faturamento",
+      "security": "Segurança",
+      "apps": "Apps",
+      "notifications": "Notificações",
+      "preferences": "Preferências"
+    }
+  },
+  "title": "Configurações",
+  "description": "Gerencie as configurações da sua conta",
+  "profile": {
+    "title": "Informações do Perfil",
+    "subtitle": "Atualize suas informações pessoais e foto de perfil",
+    "form": {
+      "first_name": "Nome",
+      "first_name_placeholder": "João",
+      "last_name": "Sobrenome",
+      "last_name_placeholder": "Silva",
+      "bio": "Biografia",
+      "bio_placeholder": "Conte-nos sobre você",
+      "bio_default": "Designer de Produto no Figma",
+      "location": "Localização",
+      "location_placeholder": "São Paulo, SP",
+      "website": "Site",
+      "website_placeholder": "https://exemplo.com"
+    },
+    "avatar": {
+      "change_photo": "Alterar Foto",
+      "change_aria": "Alterar avatar",
+      "help": "JPG, PNG ou GIF. Tamanho máx 5MB."
+    }
+  },
+  "actions": {
+    "cancel": "Cancelar",
+    "save_changes": "Salvar Alterações",
+    "update_account": "Atualizar Conta",
+    "reset_to_default": "Redefinir para Padrão",
+    "save_preferences": "Salvar Preferências",
+    "delete": "Excluir",
+    "update": "Atualizar"
+  },
+  "account": {
+    "title": "Configurações da Conta",
+    "subtitle": "Gerencie suas credenciais de conta e informações de contato",
+    "email": {
+      "primary": "Endereço de e-mail principal",
+      "verified": "Verificado"
+    },
+    "phone": {
+      "label": "Número de telefone"
+    },
+    "password": {
+      "title": "Senha",
+      "current": "Senha atual",
+      "current_placeholder": "Senha atual",
+      "new": "Nova senha",
+      "new_placeholder": "Nova senha",
+      "confirm": "Confirmar nova senha",
+      "confirm_placeholder": "Confirmar nova senha"
+    },
+    "danger_zone": {
+      "title": "Zona de Perigo",
+      "description": "Ações irreversíveis para sua conta",
+      "delete_account_title": "Excluir Conta",
+      "delete_account_desc": "Excluir permanentemente sua conta e todos os dados"
+    }
+  },
+  "billing": {
+    "title": "Faturamento e Assinatura",
+    "subtitle": "Gerencie sua assinatura e métodos de pagamento",
+    "payment_methods": {
+      "title": "Métodos de Pagamento",
+      "expires": "Expira em {{date}}",
+      "default": "Padrão",
+      "add": "+ Adicionar Método de Pagamento"
+    },
+    "invoices": {
+      "title": "Faturas Recentes",
+      "number": "Fatura #{{index}}",
+      "status": {
+        "paid": "Paga"
+      }
+    },
+    "plan": {
+      "name": "Plano Pro",
+      "price_label": "R$ 29/mês",
+      "billed_next": "Cobrado mensalmente • Próximo pagamento em {{date}}",
+      "features": {
+        "projects": "Projetos",
+        "storage": "Armazenamento",
+        "team_members": "Membros da Equipe",
+        "projects_value": "Ilimitado",
+        "storage_value": "500 GB",
+        "team_members_value": "10 assentos"
+      },
+      "upgrade": "Fazer Upgrade"
+    }
+  },
+  "security": {
+    "title": "Configurações de Segurança",
+    "subtitle": "Proteja sua conta com medidas de segurança adicionais",
+    "2fa": {
+      "title": "Autenticação de Dois Fatores",
+      "description": "Adicione uma camada extra de segurança à sua conta",
+      "enabled_message": "2FA está ativado via App Autenticador"
+    },
+    "sessions": {
+      "title": "Sessões Ativas",
+      "current_active": "Sessão atual • Ativo agora",
+      "last_active_hours": "Última atividade {{hours}} horas atrás",
+      "active_badge": "Ativo",
+      "revoke": "Revogar"
+    },
+    "api_keys": {
+      "title": "Chaves API",
+      "production": "Chave API de Produção",
+      "create_new": "+ Criar Nova Chave API",
+      "regenerate": "Regenerar",
+      "delete": "Excluir"
+    }
+  },
+  "apps": {
+    "title": "Apps Conectados",
+    "subtitle": "Gerencie aplicativos de terceiros e integrações",
+    "connected_badge": "Conectado",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "list": {
+      "slack": {
+        "name": "Slack",
+        "description": "Comunicação e colaboração da equipe"
+      },
+      "github": {
+        "name": "GitHub",
+        "description": "Repositório de código e controle de versão"
+      },
+      "google_drive": {
+        "name": "Google Drive",
+        "description": "Armazenamento em nuvem e compartilhamento de arquivos"
+      },
+      "figma": {
+        "name": "Figma",
+        "description": "Ferramenta de design e prototipagem"
+      },
+      "notion": {
+        "name": "Notion",
+        "description": "Notas e documentação"
+      },
+      "linear": {
+        "name": "Linear",
+        "description": "Rastreamento de problemas e gerenciamento de projetos"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Preferências de Notificação",
+    "subtitle": "Escolha como você deseja ser notificado",
+    "settings": {
+      "email_notifications": {
+        "title": "Notificações por E-mail",
+        "description": "Receba atualizações por e-mail sobre a atividade da sua conta"
+      },
+      "push_notifications": {
+        "title": "Notificações Push",
+        "description": "Receba notificações push nos seus dispositivos"
+      },
+      "sms_notifications": {
+        "title": "Notificações SMS",
+        "description": "Receba mensagens de texto para atualizações importantes"
+      },
+      "weekly_digest": {
+        "title": "Resumo Semanal",
+        "description": "Receba um resumo semanal da sua atividade"
+      },
+      "product_updates": {
+        "title": "Atualizações do Produto",
+        "description": "Saiba sobre novos recursos e melhorias"
+      },
+      "marketing_emails": {
+        "title": "E-mails de Marketing",
+        "description": "Receba conteúdo promocional e ofertas"
+      }
+    },
+    "quiet_hours": {
+      "title": "Horas Silenciosas",
+      "description": "Defina horários em que você não quer receber notificações",
+      "to": "até"
+    }
+  },
+  "preferences": {
+    "title": "Preferências Gerais",
+    "subtitle": "Personalize sua experiência e interface",
+    "appearance": {
+      "title": "Aparência"
+    },
+    "language_region": {
+      "title": "Idioma e Região"
+    },
+    "accessibility": {
+      "title": "Acessibilidade",
+      "reduced_motion": {
+        "title": "Movimento Reduzido",
+        "description": "Minimizar animações e transições"
+      },
+      "high_contrast": {
+        "title": "Alto Contraste",
+        "description": "Aumentar contraste para melhor visibilidade"
+      },
+      "large_text": {
+        "title": "Texto Grande",
+        "description": "Aumentar tamanho do texto em todo o app"
+      }
+    },
+    "language_selector": {
+      "language_label": "Idioma",
+      "language_value": "Inglês (EUA)",
+      "timezone_label": "Fuso Horário",
+      "timezone_value": "Reajustar automaticamente"
+    }
+  },
+  "sidebarAppearance": {
+    "title": "Aparência da Barra Lateral",
+    "description": "Personalize a aparência da barra lateral",
+    "light": {
+      "title": "Claro",
+      "description": "Barra lateral limpa e minimalista"
+    },
+    "dark": {
+      "title": "Escuro",
+      "description": "Barra lateral otimizada para pouca luz"
+    },
+    "gradient": {
+      "title": "Gradiente",
+      "description": "Barra lateral com gradiente premium"
+    }
+  }
+}
