@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37301.10 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App", "App\App.csproj", "{FEC12E9D-EE2E-4042-B3E8-ED9EF02E9B6B}"
 EndProject
@@ -10,6 +10,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistencia", "Persistencia\Persistencia.csproj", "{66C89FEC-F690-43E1-A47F-DB9EDC3D6FC4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Negocio", "Negocio\Negocio.csproj", "{BDBA37FE-7695-4E5C-A498-59FBDEE28597}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Relatorio", "Relatorio\Relatorio.csproj", "{AAB02516-6FEA-4059-A0CB-7A85828C2657}"
+	ProjectSection(ProjectDependencies) = postProject
+		{006C54E8-BDC1-4DAB-A4AF-A0572DE1CE1B} = {006C54E8-BDC1-4DAB-A4AF-A0572DE1CE1B}
+		{BDBA37FE-7695-4E5C-A498-59FBDEE28597} = {BDBA37FE-7695-4E5C-A498-59FBDEE28597}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +74,17 @@ Global
 		{BDBA37FE-7695-4E5C-A498-59FBDEE28597}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{BDBA37FE-7695-4E5C-A498-59FBDEE28597}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{BDBA37FE-7695-4E5C-A498-59FBDEE28597}.Release|x86.ActiveCfg = Release|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Debug|x86.Build.0 = Debug|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{AAB02516-6FEA-4059-A0CB-7A85828C2657}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

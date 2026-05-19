@@ -1,17 +1,16 @@
-﻿using System.Resources;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Sistema para confêrencia")]
-[assembly: AssemblyDescription("plataforma robusta e intuitiva projetada para facilitar a organização e participação em conferências de maneira eficiente. Com recursos avançados de gerenciamento de eventos, o sistema oferece inscrições simplificadas, controle de participantes, e agendamento de sessões.")]
+[assembly: AssemblyDescription("Sistema para confêrencia de peças de móveis planejado")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Softwerd")]
-[assembly: AssemblyProduct("Sisconf")]
-[assembly: AssemblyCopyright("2024 - Softwerd Soluções em Tecnologia LTDA")]
-[assembly: AssemblyTrademark("All rights reserved")]
+[assembly: AssemblyCompany("Cyrax")]
+[assembly: AssemblyProduct("SisConf")]
+[assembly: AssemblyCopyright("Cyrax - Desenvolvimento de softwares")]
+[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -34,4 +33,3 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.1")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
-[assembly: NeutralResourcesLanguage("pt-BR")]

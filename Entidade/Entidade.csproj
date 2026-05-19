@@ -40,7 +40,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -49,11 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CollectionHelper.cs" />
     <Compile Include="Importar\voArquivoImItens.cs" />
     <Compile Include="Importar\voArquivoIm.cs" />
-    <Compile Include="voPedidoImportBulk.cs" />
+    <Compile Include="voPedidoGrupo.cs" />
+    <Compile Include="voGrupo.cs" />
+    <Compile Include="voLayout.cs" />
     <Compile Include="voSistema.cs" />
+    <Compile Include="voArquivo.cs" />
+    <Compile Include="voHistorico.cs" />
+    <Compile Include="voBox.cs" />
     <Compile Include="voPedido.cs" />
     <Compile Include="voUsuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -4,7 +4,8 @@ namespace Entidade
 {
     public class voPedido
     {
-        public int ID { get; set; }
+
+        public Nullable<int> ID { get; set; }
         public string ORDCOMPRA { get; set; }
         public string CLIENTE { get; set; }
         public string PECLIENTE { get; set; }
@@ -22,9 +23,9 @@ namespace Entidade
         public string NmLayout { get; set; }
         public int IdLayout { get; set; }
         public string PECOMPUTADOR { get; set; }
-        public DateTime DATAINC { get; set; }
+        public DateTime? DATAINC { get; set; }
         public bool FlBloqueio { get; set; }
-        public int IdGrupo { get; set; }
+        public Nullable<int> IdGrupo { get; set; }
  
     }
 }

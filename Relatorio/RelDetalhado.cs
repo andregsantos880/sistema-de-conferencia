@@ -148,6 +148,7 @@ namespace Relatorio
             boPedido mboPedido = new boPedido(conexao);
 
             voHistorico mvoHistorico = new voHistorico();
+            boHistorico mboHistorico = new boHistorico(conexao);
 
             Font cFonte = new System.Drawing.Font("courier new", 8);
             Font cFonteB = new System.Drawing.Font("courier new", 8, FontStyle.Bold);
@@ -236,6 +237,78 @@ namespace Relatorio
                     #region imprime hitórico 
                     id = int.Parse(item["ID"].ToString());
 
+                    mvoHistorico.PEDIDOID = id;
+                    DataTable dtHistorico = mboHistorico.Consultar(mvoHistorico);
+                    if (dtHistorico.Rows.Count > 0)
+                    {
+
+                        //logs
+                        e.Graphics.DrawString("Data", cFonteB, cor, 10, POSY);
+                        e.Graphics.DrawString("Login", cFonteB, cor, 40, POSY);
+                        e.Graphics.DrawString("Estágio", cFonteB, cor, 60, POSY);
+
+                        //nPosicao += 1;
+                        POSY += 4;
+
+                        foreach (DataRow it in dtHistorico.Rows)
+                        {
+                            e.Graphics.DrawString(string.Format("{0:dd/MM/yy HH:mm}", DateTime.Parse(it["DATA"].ToString())), cFonte, cor, 10, POSY);
+                            e.Graphics.DrawString(it["LOGIN"].ToString(), cFonte, cor, 40, POSY);
+                            switch (it["STATUS"].ToString())
+                            {
+                                case "1": e.Graphics.DrawString("ENTRADA", cFonte, cor, 60, POSY);
+                                    break;
+                                case "2": e.Graphics.DrawString("CONFERÊNCIA", cFonte, cor, 60, POSY);
+                                    break;
+                                case "3": e.Graphics.DrawString("SAIDA", cFonte, cor, 60, POSY);
+                                    break;
+                                case "4": e.Graphics.DrawString("PARA ENTREGA", cFonte, cor, 60, POSY);
+                                    break;
+                                case "5":
+                                    e.Graphics.DrawString("ENTREGA NO CLIENTE", cFonte, cor, 60, POSY);
+                                    break;
+                            }
+
+                            //nPosicao += 1;
+                            POSY += 4;
+
+                            /*
+                            #region muda pagina s1
+                            if (POSY >= 160)
+                            {
+
+                                POSY += 4;
+                                e.Graphics.DrawLine(new Pen(cor, 0.1f), 5, POSY, 270, POSY);
+
+                                nPag += 1;
+                                POSY = 40;
+                                e.HasMorePages = true;
+                                return;
+                               // break;
+                            }
+                            #endregion
+                            */
+                        }
+
+                        //nPosicao += 1;
+                        POSY += 4;
+
+                        #region muda pagina s2
+                        if (POSY >= 160)
+                        {
+
+                            POSY += 4;
+                            e.Graphics.DrawLine(new Pen(cor, 0.1f), 5, POSY, 270, POSY);
+
+                            nPag += 1;
+                            POSY = 40;
+                            e.HasMorePages = true;
+                            return;
+                            //break;
+                        }
+                        #endregion
+
+                    }
                     #endregion
                 }
                 #endregion

@@ -1,4 +1,7 @@
-﻿namespace Negocio
+﻿using System;
+using System.Runtime.CompilerServices;
+
+namespace Negocio
 {
     public class item
     {

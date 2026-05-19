@@ -70,7 +70,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Conexao.cs" />
+    <Compile Include="daPedidoGrupo.cs" />
+    <Compile Include="daGrupo.cs" />
+    <Compile Include="daLayout.cs" />
+    <Compile Include="daArquivo.cs" />
+    <Compile Include="daHistorico.cs" />
+    <Compile Include="daBox.cs" />
     <Compile Include="daPedido.cs" />
+    <Compile Include="daSincronizarMobile.cs" />
+    <Compile Include="daUsuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>

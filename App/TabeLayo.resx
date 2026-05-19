@@ -117,28 +117,16 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="btnImportar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        wwAADsMBx2+oZAAAARBJREFUOE+1k6EagkAQhIlEopVo9BWMRqKvYCRajUSjlUg0WnmEi1TixYvrzu6t
-        nBxG5/vmE5B/Zu+A4q8q24LKa0lVp8Zx/CvX9DyQG/Y09jtxvPwRAnY9B902QtxQk58eRDSKcewGDUpt
-        IRFbhGaF72wEObXv2HcKUytG+56Dsyk0gMHAAYkNtKXVXUWn8UD1o5LziH8HGKS+COyngbChV9fQxR0l
-        BOcRXwLSNjNgCljKTaBuPstvPgG3W1vwvZgCW/ZBjYIMhgBauy6FAfMqAN4MsPbPJiZgCvvx9A1DgOdX
-        w+223hw0GO9MxBYtAXgH1k+ipTmC2egmHZ9h3un0ZnO87bcQoN/Cxnj/VVG8AUfLuBCauCxtAAAAAElF
-        TkSuQmCC
-</value>
-  </data>
-  <data name="buttonIncluirLojasSelecionadas.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        wwAADsMBx2+oZAAAAUhJREFUOE+d0d1LwlAYx/H9bftXjLEsRVcuCiqNzGlTp5nVoO4i6KqbLsKbIKgb
-        obI3i0GBUUQRaobMgl9nZ8f1gpPmA18GB54P2xnnNoKgw4rnebCj/421JIV3kFi4gqLcUKCL/Y2t2NM9
-        XNXvkddMbKwDWvaZAtvlDkqXH06bW++9AXWxQZf1tU+sFE2k1UfvwHLBJHWQz70hqdS8AzmtTZbbyKQb
-        iMfvvAPZTIs8m+T1W4jOGt4AJVEnt/9K7qAOa1LsL1jA/G7bqS8wF3siF/gCw+gQoEoBLsrZDdm5AjPT
-        NadY9AHy+JkNFBnAcgXGpAuaHLnGhFxFRDr5Bn7kCgQDp7Rw6BxSqIJwsDwYQBs9RsB/RIGpyX2kkrco
-        LDXpck/A51Pp4Yj/EMNihXVAAeu8V2z193QhQdiDKJbsTxh0LKw/wHFf8wDWFJr+bkcAAAAASUVORK5C
-        YII=
-</value>
-  </data>
+  <metadata name="Status.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="LAYOUT_NAME.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="Arquivo.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="timer1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
 </root>

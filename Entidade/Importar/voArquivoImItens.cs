@@ -1,4 +1,6 @@
-﻿namespace Entidade.Importar
+﻿using System;
+
+namespace Entidade.Importar
 {
     public class voArquivoImItens
     {

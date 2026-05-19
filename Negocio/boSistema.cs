@@ -21,6 +21,11 @@ namespace Negocio
             daSistema da = new daSistema();
             da.AlterarConexao(mvo);
         }
+        public void AtualizarBase(voSistema mvo)
+        {
+            daSistema da = new daSistema();
+            da.AtualizarBase(mvo);
+        }
 
     }
 }
