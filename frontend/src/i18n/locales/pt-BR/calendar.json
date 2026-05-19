@@ -1,0 +1,28 @@
+{
+  "title": "Calendário",
+  "description": "Gerencie seus horários e eventos",
+  "today": "Hoje",
+  "week": "Semana",
+  "month": "Mês",
+  "previous": "Anterior",
+  "next": "Próximo",
+  "create": "Criar",
+  "newEvent": "Novo Evento",
+  "editEvent": "Editar Evento",
+  "deleteEvent": "Excluir Evento",
+  "categories": "Caragorias",
+  "noCategories": "Nenhum evento agendado",
+  "form": {
+    "title": "Título",
+    "titlePlaceholder": "Digite o título do evento",
+    "description": "Descrição",
+    "descriptionPlaceholder": "Adicionar descrição...",
+    "startDate": "Data de Início",
+    "endDate": "Data de Término",
+    "allDay": "Evento de dia inteiro",
+    "category": "Categoria",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "create": "Criar"
+  }
+}

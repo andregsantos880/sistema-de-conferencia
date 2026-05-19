@@ -1,0 +1,146 @@
+{
+  "title": "Invoices",
+  "subtitle": "Manage your invoices and track payments",
+  "routes": {
+    "list": "Invoices",
+    "detail": "Invoice",
+    "new": "New Invoice",
+    "edit": "Edit Invoice"
+  },
+  "columns": {
+    "number": "Invoice #",
+    "customer": "Customer",
+    "status": "Status",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "total": "Total",
+    "actions": "Actions"
+  },
+  "status": {
+    "draft": "Draft",
+    "sent": "Sent",
+    "paid": "Paid",
+    "overdue": "Overdue",
+    "cancelled": "Cancelled"
+  },
+  "filters": {
+    "searchPlaceholder": "Search invoices...",
+    "status": "Status",
+    "allStatuses": "All Statuses",
+    "clear": "Clear"
+  },
+  "actions": {
+    "new": "New Invoice",
+    "view": "View",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "markAsSent": "Mark as Sent",
+    "markAsPaid": "Mark as Paid",
+    "downloadPdf": "Download PDF",
+    "back": "Back",
+    "backToInvoices": "Back to Invoices",
+    "saveDraft": "Save as Draft",
+    "saveAndSend": "Save & Send"
+  },
+  "detail": {
+    "createdOn": "Created on {{date}}",
+    "totalAmount": "Total Amount",
+    "billedTo": "Billed To",
+    "summary": "Summary",
+    "items": "Items",
+    "subtotal": "Subtotal",
+    "tax": "Tax ({{rate}}%)",
+    "total": "Total",
+    "currency": "Currency",
+    "notes": "Notes",
+    "terms": "Terms & Conditions"
+  },
+  "lineItems": {
+    "title": "Line Items",
+    "description": "Description",
+    "quantity": "Qty",
+    "unitPrice": "Unit Price",
+    "discount": "Discount %",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "addItem": "Add Item",
+    "removeItem": "Remove item",
+    "noItems": "No line items yet. Click \"Add Item\" to add one."
+  },
+  "form": {
+    "customerInfo": "Customer Information",
+    "customerName": "Customer Name",
+    "customerNamePlaceholder": "John Doe or Company Name",
+    "email": "Email",
+    "emailPlaceholder": "customer@example.com",
+    "company": "Company",
+    "companyPlaceholder": "Company name (optional)",
+    "taxId": "Tax ID",
+    "taxIdPlaceholder": "Tax identification number",
+    "addressLine1": "Address Line 1",
+    "addressLine1Placeholder": "Street address",
+    "addressLine2": "Address Line 2",
+    "addressLine2Placeholder": "Apartment, suite, etc. (optional)",
+    "city": "City",
+    "cityPlaceholder": "City",
+    "country": "Country",
+    "countryPlaceholder": "Country",
+    "invoiceDetails": "Invoice Details",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "currency": "Currency",
+    "currencyPlaceholder": "Select currency",
+    "taxRate": "Tax Rate (%)",
+    "notesTerms": "Notes & Terms",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes for the customer...",
+    "terms": "Terms & Conditions",
+    "termsPlaceholder": "Payment terms and conditions..."
+  },
+  "validation": {
+    "customerNameRequired": "Customer name is required",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email address",
+    "issueDateRequired": "Issue date is required",
+    "dueDateRequired": "Due date is required",
+    "currencyRequired": "Currency is required",
+    "lineItemRequired": "At least one line item is required",
+    "descriptionRequired": "Line item {{index}}: Description is required",
+    "quantityRequired": "Line item {{index}}: Quantity must be greater than 0",
+    "unitPriceRequired": "Line item {{index}}: Unit price cannot be negative"
+  },
+  "empty": {
+    "title": "No invoices yet",
+    "description": "Create your first invoice to get started.",
+    "noResults": "No invoices found"
+  },
+  "errors": {
+    "loadFailed": "Failed to load invoices",
+    "loadFailedDescription": "There was an error loading your invoices. Please try again.",
+    "notFound": "Invoice not found",
+    "notFoundDescription": "The invoice you are looking for does not exist or has been deleted.",
+    "createFailed": "Failed to create invoice",
+    "updateFailed": "Failed to update invoice",
+    "deleteFailed": "Failed to delete invoice",
+    "markAsPaidFailed": "Failed to mark invoice as paid",
+    "markAsSentFailed": "Failed to mark invoice as sent",
+    "duplicateFailed": "Failed to duplicate invoice"
+  },
+  "success": {
+    "created": "Invoice created successfully",
+    "updated": "Invoice updated successfully",
+    "deleted": "Invoice deleted",
+    "markedAsPaid": "Invoice marked as paid",
+    "markedAsSent": "Invoice marked as sent",
+    "duplicated": "Invoice duplicated"
+  },
+  "pagination": {
+    "showing": "Showing {{start}} to {{end}} of {{total}} invoices"
+  },
+  "table": {
+    "selectAll": "Select all invoices",
+    "selectRow": "Select invoice {{number}}",
+    "openMenu": "Open menu"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "title": "E-mail",
+  "newMessage": "Nova Mensagem",
+  "search": "Pesquisar e-mail…",
+  "trays": {
+    "inbox": "Caixa de Entrada",
+    "starred": "Com estrela",
+    "drafts": "Rascunhos",
+    "sent": "Enviados",
+    "trash": "Lixeira",
+    "archive": "Arquivo"
+  },
+  "filters": {
+    "unread": "Não lidas",
+    "starred": "Com estrela",
+    "attachments": "Com anexos"
+  },
+  "labels": "Marcadores",
+  "loadMore": "Carregar mais",
+  "noResults": "Nenhuma mensagem encontrada",
+  "noMessages": "Nenhuma mensagem nesta pasta",
+  "selectMessage": "Selecione uma mensagem",
+  "selectMessageDesc": "Escolha uma mensagem da lista para ler",
+  "back": "Voltar",
+  "attachments": "Anexos",
+  "compose": {
+    "newMessage": "Nova Mensagem",
+    "to": "Para",
+    "cc": "Cc",
+    "bcc": "Cco",
+    "subject": "Assunto",
+    "body": "Mensagem",
+    "send": "Enviar",
+    "saveDraft": "Salvar Rascunho",
+    "cancel": "Cancelar"
+  }
+}

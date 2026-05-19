@@ -1,0 +1,78 @@
+{
+  "title": "Apps",
+  "description": "Gerencie integrações internas e de terceiros",
+  "filters": {
+    "searchPlaceholder": "Pesquisar apps…",
+    "category": "Categoria",
+    "status": "Status",
+    "favoritesOnly": "Apenas favoritos",
+    "all": "Todos"
+  },
+  "categories": {
+    "communication": "Comunicação",
+    "productivity": "Produtividade",
+    "payments": "Pagamentos",
+    "analytics": "Analytics",
+    "developer_tools": "Ferramentas de desenvolvedor",
+    "storage": "Armazenamento",
+    "security": "Segurança",
+    "other": "Outros"
+  },
+  "status": {
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "error": "Erro",
+    "notConnected": "Não conectado ainda"
+  },
+  "usage": {
+    "count": "Usado {{count}} vezes"
+  },
+  "actions": {
+    "view": "Ver",
+    "configure": "Configurar",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "retry": "Tentar novamente",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "pin": "Fixar",
+    "pinned": "Fixado",
+    "toggleFavorite": "Alternar favorito"
+  },
+  "providers": {
+    "third_party": "Terceiros",
+    "internal": "Interno"
+  },
+  "empty": {
+    "title": "Nenhum app encontrado",
+    "description": "Tente ajustar seus filtros ou pesquisa para encontrar apps.",
+    "noFavoritesTitle": "Nenhum favorito ainda",
+    "noFavoritesDescription": "Fixe seus apps mais usados para acesso rápido de qualquer lugar.",
+    "noConnectedTitle": "Nenhum app conectado",
+    "noConnectedDescription": "Conecte seu primeiro app para começar a construir seu workspace.",
+    "addFirst": "Conecte seu primeiro app"
+  },
+  "errors": {
+    "loadFailed": "Falha ao carregar apps",
+    "loadFailedDescription": "Algo deu errado ao carregar as integrações. Por favor, tente novamente.",
+    "notFound": "Integração não encontrada",
+    "notFoundDescription": "A integração que você está procurando não existe ou foi removida."
+  },
+  "detail": {
+    "title": "Integração do App",
+    "subtitle": "Revise o status, conecte/desconecte e atualize a configuração",
+    "configuration": "Configuração",
+    "health": "Saúde e status",
+    "lastSync": "Última sincronização",
+    "connectedAt": "Conectado",
+    "provider": "Provedor",
+    "website": "Site",
+    "docs": "Docs",
+    "errorMessage": "Erro"
+  },
+  "fields": {
+    "apiKey": "Chave API",
+    "workspaceId": "ID do Workspace",
+    "webhookUrl": "URL do Webhook"
+  }
+}

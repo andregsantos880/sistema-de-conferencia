@@ -1,0 +1,28 @@
+{
+  "title": "Calendar",
+  "description": "Manage your schedule and events",
+  "today": "Today",
+  "week": "Week",
+  "month": "Month",
+  "previous": "Previous",
+  "next": "Next",
+  "create": "Create",
+  "newEvent": "New Event",
+  "editEvent": "Edit Event",
+  "deleteEvent": "Delete Event",
+  "categories": "Categories",
+  "noCategories": "No events scheduled",
+  "form": {
+    "title": "Title",
+    "titlePlaceholder": "Enter event title",
+    "description": "Description",
+    "descriptionPlaceholder": "Add description...",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "allDay": "All day event",
+    "category": "Category",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create"
+  }
+}

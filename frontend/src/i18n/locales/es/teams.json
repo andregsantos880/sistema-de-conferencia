@@ -1,0 +1,266 @@
+{
+  "title": "Equipos",
+  "subtitle": "Organiza usuarios en grupos para colaboración y control de acceso",
+  "createTeam": "Crear equipo",
+  "editTeam": "Editar equipo",
+  "addMembers": "Agregar miembros",
+  "viewTeam": "Ver equipo",
+  "members": "miembros",
+
+  "views": {
+    "tableList": "Lista en Tabla",
+    "cardList": "Lista en Tarjetas"
+  },
+
+  "columns": {
+    "name": "Equipo",
+    "department": "Departamento",
+    "type": "Tipo",
+    "members": "Miembros",
+    "owner": "Propietario",
+    "status": "Estado",
+    "lastUpdated": "Última actualización",
+    "actions": "Acciones"
+  },
+
+  "filters": {
+    "search": "Buscar equipos...",
+    "status": "Estado",
+    "department": "Departamento",
+    "type": "Tipo",
+    "allStatuses": "Todos los estados",
+    "allDepartments": "Todos los departamentos",
+    "allTypes": "Todos los tipos",
+    "clearAll": "Limpiar todo"
+  },
+
+  "status": {
+    "active": "Activo",
+    "archived": "Archivado"
+  },
+
+  "type": {
+    "functional": "Funcional",
+    "project": "Proyecto",
+    "cross-functional": "Multifuncional",
+    "other": "Otro"
+  },
+
+  "role": {
+    "owner": "Propietario",
+    "admin": "Administrador",
+    "member": "Miembro",
+    "viewer": "Observador"
+  },
+
+  "memberStatus": {
+    "active": "Activo",
+    "invited": "Invitado",
+    "pending": "Pendiente"
+  },
+
+  "actions": {
+    "view": "Ver",
+    "edit": "Editar",
+    "archive": "Archivar",
+    "unarchive": "Desarchivar",
+    "delete": "Eliminar",
+    "transferOwnership": "Transferir propiedad",
+    "addMembers": "Agregar miembros",
+    "changeRole": "Cambiar rol",
+    "removeFromTeam": "Remover del equipo",
+    "resendInvitation": "Reenviar invitación"
+  },
+
+  "bulkActions": {
+    "archive": "Archivar seleccionados",
+    "unarchive": "Desarchivar seleccionados",
+    "delete": "Eliminar seleccionados",
+    "selected": "{{count}} seleccionados"
+  },
+
+  "empty": {
+    "title": "Sin equipos aún",
+    "description": "Crea tu primer equipo para comenzar a organizar usuarios en grupos.",
+    "action": "Crear tu primer equipo"
+  },
+
+  "noResults": {
+    "title": "No se encontraron equipos",
+    "description": "Intenta ajustar tu búsqueda o criterios de filtro."
+  },
+
+  "errors": {
+    "loadFailed": "Error al cargar equipos",
+    "loadFailedDescription": "Hubo un error al cargar la lista de equipos. Por favor intenta de nuevo.",
+    "createFailed": "Error al crear equipo",
+    "updateFailed": "Error al actualizar equipo",
+    "deleteFailed": "Error al eliminar equipo",
+    "archiveFailed": "Error al archivar equipo",
+    "unarchiveFailed": "Error al desarchivar equipo"
+  },
+
+  "detail": {
+    "title": "Detalles del Equipo",
+    "backToList": "Volver a equipos",
+
+    "tabs": {
+      "overview": "Resumen",
+      "members": "Miembros",
+      "activity": "Actividad",
+      "settings": "Configuración"
+    },
+
+    "overview": {
+      "title": "Resumen",
+      "teamInfo": "Información del Equipo",
+      "name": "Nombre",
+      "slug": "Slug",
+      "description": "Descripción",
+      "department": "Departamento",
+      "type": "Tipo",
+      "visibility": "Visibilidad",
+      "status": "Estado",
+      "owner": "Propietario",
+      "created": "Creado",
+      "lastUpdated": "Última actualización",
+      "stats": "Estadísticas",
+      "membersCount": "Miembros",
+      "quickActions": "Acciones Rápidas",
+      "goToMembers": "Ir a Miembros",
+      "roleDistribution": "Distribución de Roles"
+    },
+
+    "members": {
+      "title": "Miembros",
+      "count": "{{count}} miembros",
+      "search": "Buscar miembros...",
+      "filterByRole": "Filtrar por rol",
+      "allRoles": "Todos los roles",
+      "name": "Nombre",
+      "role": "Rol",
+      "status": "Estado",
+      "joinedAt": "Se unió",
+      "actions": "Acciones",
+      "noMembers": "Sin miembros aún",
+      "noMembersDescription": "Agrega miembros a este equipo para comenzar.",
+      "noResults": "No se encontraron miembros",
+      "noResultsDescription": "Intenta ajustar tus criterios de búsqueda."
+    },
+
+    "activity": {
+      "title": "Actividad",
+      "filterByType": "Filtrar por tipo",
+      "allTypes": "Todos los tipos",
+      "noActivity": "Sin actividad aún",
+      "noActivityDescription": "La actividad aparecerá aquí cuando ocurran cambios en el equipo.",
+      "loadMore": "Cargar más"
+    },
+
+    "settings": {
+      "title": "Configuración",
+      "teamSettings": "Configuración del Equipo",
+      "dangerZone": "Zona de Peligro",
+      "archiveTeam": "Archivar Equipo",
+      "archiveDescription": "Archivar un equipo lo ocultará de la vista predeterminada. Los miembros conservarán su membresía pero no podrán acceder a los recursos del equipo.",
+      "unarchiveTeam": "Desarchivar Equipo",
+      "unarchiveDescription": "Restaurar este equipo a estado activo.",
+      "deleteTeam": "Eliminar Equipo",
+      "deleteDescription": "Eliminar permanentemente este equipo y todos sus datos. Esta acción no se puede deshacer.",
+      "transferOwnership": "Transferir Propiedad",
+      "transferDescription": "Transferir la propiedad del equipo a otro miembro."
+    }
+  },
+
+  "dialogs": {
+    "createTeam": {
+      "title": "Crear Equipo",
+      "description": "Crea un nuevo equipo para organizar usuarios para colaboración."
+    },
+    "editTeam": {
+      "title": "Editar Equipo",
+      "description": "Actualiza la información y configuración del equipo."
+    },
+    "deleteTeam": {
+      "title": "Eliminar Equipo",
+      "description": "¿Estás seguro de que deseas eliminar \"{{name}}\"? Esta acción no se puede deshacer y eliminará todos los datos del equipo.",
+      "confirmLabel": "Escribe el nombre del equipo para confirmar",
+      "confirmButton": "Eliminar Equipo"
+    },
+    "archiveTeam": {
+      "title": "Archivar Equipo",
+      "description": "¿Estás seguro de que deseas archivar \"{{name}}\"? El equipo se ocultará de la vista predeterminada."
+    },
+    "unarchiveTeam": {
+      "title": "Desarchivar Equipo",
+      "description": "¿Estás seguro de que deseas restaurar \"{{name}}\" a estado activo?"
+    },
+    "transferOwnership": {
+      "title": "Transferir Propiedad",
+      "description": "Selecciona un miembro del equipo para que sea el nuevo propietario de \"{{name}}\".",
+      "selectOwner": "Seleccionar nuevo propietario",
+      "warning": "El propietario actual será degradado a rol de Administrador."
+    },
+    "addMembers": {
+      "title": "Agregar Miembros",
+      "existingUsers": "Usuarios Existentes",
+      "inviteByEmail": "Invitar por Email",
+      "searchUsers": "Buscar usuarios...",
+      "selectRole": "Seleccionar rol",
+      "noUsersFound": "No se encontraron usuarios",
+      "selectedUsers": "{{count}} usuarios seleccionados",
+      "addToTeam": "Agregar al Equipo"
+    },
+    "inviteMembers": {
+      "title": "Invitar por Email",
+      "description": "Ingresa direcciones de email para invitar nuevos usuarios a este equipo.",
+      "emailsPlaceholder": "Ingresa direcciones de email (separadas por coma)",
+      "sendInvitations": "Enviar invitaciones por email",
+      "invite": "Enviar Invitaciones"
+    },
+    "removeMember": {
+      "title": "Remover Miembro",
+      "description": "¿Estás seguro de que deseas remover a \"{{name}}\" de este equipo?"
+    },
+    "changeRole": {
+      "title": "Cambiar Rol",
+      "description": "Cambiar el rol de \"{{name}}\" en este equipo.",
+      "selectRole": "Seleccionar nuevo rol"
+    }
+  },
+
+  "form": {
+    "name": "Nombre del Equipo",
+    "namePlaceholder": "Ingresa el nombre del equipo",
+    "nameRequired": "El nombre del equipo es requerido",
+    "slug": "Slug",
+    "slugPlaceholder": "slug-del-equipo",
+    "slugHelp": "Identificador amigable para URL del equipo",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Describe el propósito del equipo...",
+    "department": "Departamento",
+    "departmentPlaceholder": "Seleccionar departamento",
+    "type": "Tipo de Equipo",
+    "typePlaceholder": "Seleccionar tipo",
+    "owner": "Propietario",
+    "ownerPlaceholder": "Seleccionar propietario",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "create": "Crear Equipo",
+    "update": "Actualizar Equipo"
+  },
+
+  "toast": {
+    "created": "Equipo creado exitosamente",
+    "updated": "Equipo actualizado exitosamente",
+    "deleted": "Equipo eliminado exitosamente",
+    "archived": "Equipo archivado exitosamente",
+    "unarchived": "Equipo desarchivado exitosamente",
+    "ownershipTransferred": "Propiedad transferida exitosamente",
+    "membersAdded": "Miembros agregados exitosamente",
+    "membersInvited": "Invitaciones enviadas exitosamente",
+    "memberRemoved": "Miembro removido exitosamente",
+    "roleChanged": "Rol cambiado exitosamente",
+    "invitationResent": "Invitación reenviada exitosamente"
+  }
+}

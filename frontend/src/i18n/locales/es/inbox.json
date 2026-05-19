@@ -1,0 +1,97 @@
+{
+  "title": "Bandeja de entrada",
+  "unread": "sin leer",
+  "search": "Buscar notificaciones...",
+  "back": "Volver",
+  "tabs": {
+    "all": "Todas",
+    "inbox": "Entrada",
+    "following": "Siguiendo",
+    "archived": "Archivadas"
+  },
+  "groups": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "earlier": "Anteriores"
+  },
+  "filters": {
+    "type": "Tipo",
+    "priority": "Prioridad",
+    "clearAll": "Limpiar filtros"
+  },
+  "actions": {
+    "markAsRead": "Marcar leída",
+    "markAsUnread": "Marcar no leída",
+    "archive": "Archivar",
+    "unarchive": "Desarchivar",
+    "markAllAsRead": "Marcar todas como leídas",
+    "viewDetails": "Ver detalles"
+  },
+  "bulk": {
+    "selected": "{{count}} seleccionadas",
+    "markAsRead": "Marcar como leídas",
+    "archive": "Archivar",
+    "clearSelection": "Limpiar"
+  },
+  "detail": {
+    "selectNotification": "Selecciona una notificación",
+    "selectNotificationDesc": "Elige una notificación de la lista para ver sus detalles",
+    "triggeredBy": "Generó esta notificación",
+    "details": "Detalles",
+    "attachments": "Adjuntos",
+    "actions": "Acciones"
+  },
+  "empty": {
+    "noNotifications": "Sin notificaciones",
+    "noNotificationsDescription": "¡Estás al día! Vuelve más tarde para nuevas actualizaciones.",
+    "noUnread": "¡Todo al día!",
+    "noUnreadDescription": "No tienes notificaciones sin leer.",
+    "noFollowing": "No sigues nada",
+    "noFollowingDescription": "Sigue elementos para ver actualizaciones aquí.",
+    "noArchived": "Sin notificaciones archivadas",
+    "noArchivedDescription": "Las notificaciones archivadas aparecerán aquí.",
+    "noResults": "Sin resultados",
+    "tryDifferentSearch": "Intenta con otro término de búsqueda",
+    "checkBackLater": "Vuelve más tarde para actualizaciones"
+  },
+  "errors": {
+    "loadFailed": "Error al cargar notificaciones",
+    "loadFailedDescription": "Algo salió mal. Por favor intenta de nuevo más tarde.",
+    "updateFailed": "Error al actualizar notificación"
+  },
+  "preferences": {
+    "title": "Preferencias de notificaciones",
+    "description": "Administra cómo recibes las notificaciones",
+    "muteAll": "Silenciar todas las notificaciones",
+    "muteAllDescription": "Desactivar temporalmente todas las notificaciones",
+    "categories": "Categorías de notificaciones",
+    "inApp": "En la app",
+    "email": "Correo",
+    "system": "Notificaciones del sistema",
+    "systemDescription": "Actualizaciones sobre el estado del sistema y mantenimiento",
+    "task": "Notificaciones de tareas",
+    "taskDescription": "Actualizaciones sobre tareas asignadas a ti",
+    "comment": "Notificaciones de comentarios",
+    "commentDescription": "Cuando alguien comenta o te menciona",
+    "social": "Notificaciones sociales",
+    "socialDescription": "Seguidores, actualizaciones de equipo y actividad social",
+    "security": "Notificaciones de seguridad",
+    "securityDescription": "Alertas de inicio de sesión y actualizaciones de seguridad",
+    "approval": "Notificaciones de aprobación",
+    "approvalDescription": "Solicitudes que necesitan tu aprobación"
+  },
+  "types": {
+    "system": "Sistema",
+    "task": "Tarea",
+    "comment": "Comentario",
+    "social": "Social",
+    "security": "Seguridad",
+    "approval": "Aprobación"
+  },
+  "priorities": {
+    "low": "Baja",
+    "normal": "Normal",
+    "high": "Alta",
+    "critical": "Crítica"
+  }
+}

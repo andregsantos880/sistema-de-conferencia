@@ -1,0 +1,310 @@
+{
+  "title": "Usuarios",
+  "subtitle": "Administra cuentas de usuario, invitaciones y permisos",
+  "routes": {
+    "list": "Usuarios",
+    "create": "Nuevo usuario",
+    "view": "Usuario",
+    "edit": "Editar usuario"
+  },
+  "list": {
+    "live": {
+      "filter_changed": "Filtro cambiado"
+    }
+  },
+  "new": "Nuevo Usuario",
+  "view": "Ver",
+  "search": "Buscar...",
+  "name": "Nombre",
+  "email": "Correo",
+  "role": "Rol",
+  "edit": "Editar",
+  "delete": "Eliminar",
+  "editUser": "Editar Usuario",
+  "newUser": "Nuevo Usuario",
+  "viewUser": "Perfil de usuario",
+  "backToList": "Volver a la lista",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "loading": "Cargando...",
+  "notFound": "Usuario no encontrado",
+  "since": "Desde",
+  "form": {
+    "basic": "Básico",
+    "first_name": "Nombre",
+    "last_name": "Apellido",
+    "email": "Correo",
+    "department": "Departamento",
+    "select_department": "Selecciona un departamento",
+    "role": "Rol",
+    "status": "Estado",
+    "status_active": "Activo",
+    "status_pending": "Pendiente",
+    "status_inactive": "Inactivo",
+    "role_permissions": "Rol y permisos",
+    "role_help": "Los roles incluyen capacidades por defecto. Podrás ajustar los permisos más adelante.",
+    "security": "Seguridad",
+    "password": "Contraseña",
+    "confirm_password": "Confirmar contraseña",
+    "security_actions": "Puedes enviar un correo de restablecimiento, exigir cambio de contraseña o revocar sesiones desde las acciones del usuario."
+  },
+  "columns": {
+    "user": "Usuario",
+    "email": "Correo",
+    "role": "Rol",
+    "department": "Departamento",
+    "status": "Estado",
+    "permissions": "Permisos",
+    "last_active": "Última actividad",
+    "lastLogin": "Último acceso",
+    "created": "Creado",
+    "never": "Nunca"
+  },
+  "actionsBar": {
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "add_user": "Agregar usuario"
+  },
+  "actions": {
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "import": "Importar",
+    "add_user": "Agregar usuario",
+    "inviteUser": "Invitar Usuario",
+    "viewDetails": "Ver Detalles",
+    "resendInvitation": "Reenviar Invitación",
+    "resendVerification": "Reenviar Verificación",
+    "sendPasswordReset": "Enviar Restablecimiento",
+    "suspend": "Suspender",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "restore": "Restaurar",
+    "deleteUser": "Eliminar Usuario"
+  },
+  "filters": {
+    "searchPlaceholder": "Buscar por nombre o correo...",
+    "status": "Estado",
+    "role": "Rol",
+    "lastActive": "Última Actividad",
+    "allStatus": "Todos los Estados",
+    "allRoles": "Todos los Roles",
+    "anyTime": "Cualquier Momento",
+    "last7Days": "Últimos 7 días",
+    "last30Days": "Últimos 30 días",
+    "last90Days": "Últimos 90 días",
+    "lastDays": "Últimos {{days}} días",
+    "clearAll": "Limpiar todo"
+  },
+  "status": {
+    "active": "Activo",
+    "invited": "Invitado",
+    "suspended": "Suspendido",
+    "deactivated": "Desactivado"
+  },
+  "roles": {
+    "admin": "Administrador",
+    "manager": "Gerente",
+    "member": "Miembro",
+    "viewer": "Visor"
+  },
+  "bulk": {
+    "selected": "{{count}} seleccionados",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "resendInvite": "Reenviar Invitación",
+    "delete": "Eliminar"
+  },
+  "empty": {
+    "title": "Sin usuarios aún",
+    "description": "Invita a tu primer miembro del equipo para comenzar",
+    "noResults": "Sin resultados",
+    "noResultsDescription": "Intenta ajustar tu búsqueda o filtros"
+  },
+  "errors": {
+    "loadFailed": "Error al cargar usuarios",
+    "loadFailedDescription": "Hubo un error al cargar la lista de usuarios. Por favor intenta de nuevo."
+  },
+  "dialogs": {
+    "deleteUser": {
+      "title": "Eliminar Usuario",
+      "description": "¿Estás seguro de que deseas eliminar a {{name}}? Esta acción no se puede deshacer."
+    },
+    "bulkDelete": {
+      "title": "Eliminar {{count}} Usuarios",
+      "description": "¿Estás seguro de que deseas eliminar {{count}} usuarios? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar Todos"
+    }
+  },
+  "invite": {
+    "title": "Invitar Usuario",
+    "description": "Envía un correo de invitación para agregar un nuevo miembro del equipo",
+    "form": {
+      "email": "Correo",
+      "emailPlaceholder": "usuario@ejemplo.com",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Juan",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Pérez",
+      "role": "Rol",
+      "rolePlaceholder": "Seleccionar rol",
+      "team": "Equipo (opcional)",
+      "teamPlaceholder": "ej., Plataforma, Crecimiento",
+      "sendInvite": "Enviar correo de invitación",
+      "sendInviteDescription": "El usuario recibirá un correo con un enlace para configurar su cuenta",
+      "submit": "Enviar Invitación",
+      "sending": "Enviando..."
+    },
+    "success": {
+      "title": "Invitación Enviada",
+      "description": "Se ha enviado una invitación a {{email}}",
+      "inviteAnother": "Invitar Otro"
+    }
+  },
+  "import": {
+    "title": "Importar Usuarios",
+    "description": "Importa múltiples usuarios desde un archivo CSV",
+    "steps": {
+      "upload": "Subir",
+      "mapcolumns": "Mapear Columnas",
+      "validate": "Validar",
+      "import": "Importar"
+    },
+    "upload": {
+      "dropHere": "Arrastra tu archivo CSV aquí",
+      "orBrowse": "o haz clic para buscar",
+      "downloadTemplate": "Descargar Plantilla",
+      "rowsFound": "{{count}} filas encontradas"
+    },
+    "mapping": {
+      "description": "Mapea las columnas de tu CSV a los campos de usuario",
+      "emailColumn": "Columna de Correo",
+      "firstNameColumn": "Columna de Nombre",
+      "lastNameColumn": "Columna de Apellido",
+      "roleColumn": "Columna de Rol",
+      "selectColumn": "Seleccionar columna",
+      "none": "Ninguna"
+    },
+    "validate": {
+      "valid": "{{count}} válidos",
+      "invalid": "{{count}} inválidos",
+      "status": "Estado",
+      "email": "Correo",
+      "name": "Nombre",
+      "role": "Rol"
+    },
+    "confirm": {
+      "ready": "Listo para importar {{count}} usuarios",
+      "skipped": "{{count}} entradas inválidas serán omitidas. ",
+      "review": "Revisa la configuración de importación abajo.",
+      "sendInvites": "Enviar correos de invitación",
+      "sendInvitesDescription": "Cada usuario importado recibirá un correo de invitación"
+    },
+    "errors": {
+      "emailRequired": "El correo es requerido",
+      "invalidEmail": "Formato de correo inválido",
+      "invalidRole": "Rol inválido: {{role}}"
+    },
+    "success": {
+      "title": "Importación Completa",
+      "description": "Se importaron {{count}} usuarios exitosamente",
+      "invitesSent": "Los correos de invitación han sido enviados"
+    },
+    "back": "Atrás",
+    "next": "Siguiente",
+    "importing": "Importando...",
+    "importButton": "Importar {{count}} Usuarios"
+  },
+  "detail": {
+    "actions": {
+      "edit": "Editar Usuario"
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "profile": "Perfil",
+      "security": "Seguridad",
+      "activity": "Actividad",
+      "roles": "Roles"
+    },
+    "overview": {
+      "loginCount": "Cantidad de Accesos",
+      "lastLogin": "Último Acceso",
+      "userInfo": "Información del Usuario",
+      "email": "Correo",
+      "phone": "Teléfono",
+      "jobTitle": "Cargo",
+      "department": "Departamento",
+      "team": "Equipo",
+      "created": "Creado",
+      "invitedBy": "Invitado Por"
+    },
+    "profile": {
+      "personalInfo": "Información Personal",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "phone": "Teléfono",
+      "jobTitle": "Cargo",
+      "department": "Departamento",
+      "selectDepartment": "Seleccionar departamento",
+      "preferences": "Preferencias",
+      "timezone": "Zona Horaria",
+      "selectTimezone": "Seleccionar zona horaria",
+      "locale": "Idioma",
+      "selectLocale": "Seleccionar idioma"
+    },
+    "security": {
+      "status": "Estado de Seguridad",
+      "emailVerified": "Correo Verificado",
+      "emailVerifiedYes": "El correo ha sido verificado",
+      "emailVerifiedNo": "Correo no verificado",
+      "resend": "Reenviar",
+      "mfa": "Autenticación de Dos Factores",
+      "mfaEnabled": "MFA está habilitado",
+      "mfaDisabled": "MFA no está habilitado",
+      "activeSessions": "Sesiones Activas",
+      "active": "activas",
+      "noSessions": "Sin sesiones activas",
+      "current": "Actual",
+      "lastUsed": "Último uso",
+      "signOut": "Cerrar Sesión"
+    },
+    "activity": {
+      "title": "Registro de Actividad",
+      "by": "por"
+    },
+    "roles": {
+      "currentRole": "Rol Actual",
+      "descriptions": {
+        "admin": "Acceso completo a todas las funciones y configuraciones",
+        "manager": "Puede administrar miembros del equipo y proyectos",
+        "member": "Acceso estándar a proyectos y funciones",
+        "viewer": "Acceso de solo lectura a la mayoría de funciones"
+      },
+      "rbac": "Control de Acceso Basado en Roles",
+      "comingSoon": "Próximamente",
+      "comingSoonDescription": "RBAC avanzado con permisos granulares estará disponible en una actualización futura."
+    }
+  },
+  "stats": {
+    "aria": "Pestañas de estado de usuarios",
+    "labels": {
+      "total": "Usuarios totales",
+      "active": "Usuarios activos",
+      "pending": "Pendientes",
+      "inactive": "Inactivos"
+    },
+    "hints": {
+      "total": "{{count}} nuevos este mes",
+      "active": "Actualmente activos",
+      "pending": "En espera de aprobación",
+      "inactive": "Cuentas deshabilitadas"
+    }
+  },
+  "table": {
+    "actions": "Acciones",
+    "loading": "Cargando...",
+    "no_data": "Sin datos",
+    "rows_per_page": "Filas por página",
+    "select_all": "Seleccionar todo",
+    "select_row": "Seleccionar fila {{n}}"
+  }
+}
