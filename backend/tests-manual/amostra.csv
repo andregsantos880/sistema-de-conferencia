@@ -1,6 +1,0 @@
-etiqueta;ordem_compra;cliente;pe_cliente;produto;descricao;qtde;volume;sequencia
-CSV-001;OC-9001;Loja Premium;PED-7001;PRD-A;Modulo de cozinha 1.20m;1;1/3;100
-CSV-002;OC-9001;Loja Premium;PED-7001;PRD-B;Modulo de cozinha 0.60m;1;2/3;101
-CSV-003;OC-9001;Loja Premium;PED-7001;PRD-C;Modulo aereo;1;3/3;102
-;OC-9002;Cliente sem etiqueta;PED-7002;X;Y;1;1/1;200
-CSV-005;OC-9003;Outra Loja;PED-7003;PRD-D;Tampo de granito 2.40m;1;1/1;300

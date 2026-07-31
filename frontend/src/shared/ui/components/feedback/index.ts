@@ -1,1 +1,0 @@
-export { FloatingFeaturePills } from './FloatingFeaturePills';

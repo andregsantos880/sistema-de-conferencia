@@ -1,9 +1,0 @@
-export { CommandHero } from './CommandHero';
-export { TodaysFocus } from './TodaysFocus';
-export { ActivityStream } from './ActivityStream';
-export { RecentModules } from './RecentModules';
-export { QuickStats } from './QuickStats';
-export { ShortcutsPanel } from './ShortcutsPanel';
-export { PowerTipsTour } from './PowerTipsTour';
-export { WorkspaceInsights } from './WorkspaceInsights';
-export { UtilityRail } from './UtilityRail';
