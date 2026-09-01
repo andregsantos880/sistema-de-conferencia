@@ -343,30 +343,34 @@ namespace Negocio
 
                 var linhaArquivo = arquivoIm.ArquivoItens[i].Linha;
 
-                double num = 0;
-                if (double.TryParse(linhaArquivo.Substring(0, 24), out num))
+                // Etiqueta pode ser numérica (layout antigo) ou alfanumérica, ex: CCGV0050000266031226757209 (peças/ferragens Criare)
+                if (linhaArquivo.Length >= 219)
                 {
                     PedidoImport _voPedido = new PedidoImport();
                     try
                     {
                         _voPedido.ARQUIVO = arquivoIm.FileName;
-                        _voPedido.PRODUTO = linhaArquivo.Substring(104, 7).Trim();
-                        _voPedido.VOLUME = Convert.ToDecimal(linhaArquivo.Substring(216, 3).Trim());
-                        _voPedido.ORDCOMPRA = linhaArquivo.Substring(163, 12).Trim();
                         _voPedido.STATUS = 0;
                         if (!char.IsDigit(linhaArquivo.Substring(25, 1), 0))
                         {
                             _voPedido.ETIQUETA = linhaArquivo.Substring(0, 24);
                             _voPedido.DESCRICAO1 = linhaArquivo.Substring(24, 80).Replace("  ", " ").Trim();
+                            _voPedido.PRODUTO = linhaArquivo.Substring(104, 7).Trim();
                             _voPedido.CLIENTE = linhaArquivo.Substring(111, 40);
                             _voPedido.PECLIENTE = linhaArquivo.Substring(151, 7).Trim();
+                            _voPedido.ORDCOMPRA = linhaArquivo.Substring(163, 12).Trim();
+                            _voPedido.VOLUME = Convert.ToDecimal(linhaArquivo.Substring(216, 3).Trim());
                         }
                         else
                         {
+                            // Etiqueta de 26 posições desloca em +2 todos os campos fixos que vêm depois dela
                             _voPedido.ETIQUETA = linhaArquivo.Substring(0, 26);
                             _voPedido.DESCRICAO1 = linhaArquivo.Substring(26, 80).Replace("  ", " ").Trim();
+                            _voPedido.PRODUTO = linhaArquivo.Substring(106, 7).Trim();
                             _voPedido.CLIENTE = linhaArquivo.Substring(113, 40);
                             _voPedido.PECLIENTE = linhaArquivo.Substring(153, 7).Trim();
+                            _voPedido.ORDCOMPRA = linhaArquivo.Substring(165, 12).Trim();
+                            _voPedido.VOLUME = Convert.ToDecimal(linhaArquivo.Substring(218, 3).Trim());
                         }
                         if (_voPedido.CLIENTE.ToString().Equals(""))
                         {
