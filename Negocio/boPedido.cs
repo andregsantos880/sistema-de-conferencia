@@ -888,50 +888,69 @@ namespace Negocio
             callBack(arquivoIm.ArquivoItens.Count, 0, _listVoPedido);
         }
 
-        private void InserirRomanzza(voArquivoIm arquivoIm, Action<int, int, List<PedidoImport>> callBack)
+private void InserirRomanzza(voArquivoIm arquivoIm, Action<int, int, List<PedidoImport>> callBack)
+{
+    daPedido _daPedido = new daPedido(this.conexao);
+    List<PedidoImport> _listVoPedido = new List<PedidoImport>();
+
+    for (int i = 0; i < arquivoIm.ArquivoItens.Count; i++)
+    {
+        callBack(arquivoIm.ArquivoItens.Count, i, null);
+
+        var linhaArquivo = arquivoIm.ArquivoItens[i].Linha;
+
+        if (string.IsNullOrWhiteSpace(linhaArquivo))
+            continue;
+
+        string[] strArrays = linhaArquivo.Split(';');
+
+        // Valida se a linha tem as colunas mínimas e se possui etiqueta preenchida
+        if (strArrays.Length < 6 || string.IsNullOrWhiteSpace(strArrays[4]))
+            continue;
+
+        try
         {
-            daPedido _daPedido = new daPedido(this.conexao);
-            List<PedidoImport> _listVoPedido = new List<PedidoImport>();
+            PedidoImport _voPedido = new PedidoImport();
 
-            for (int i = 0; i < arquivoIm.ArquivoItens.Count; i++)
+            _voPedido.ARQUIVO = arquivoIm.FileName;
+            _voPedido.PECLIENTE = strArrays[0].Trim();                        // Pedido: 114448
+            _voPedido.ORDCOMPRA = strArrays[1].Trim();                        // Ambiente / OC: 2666/DORMITÓRIO
+            _voPedido.PRODUTO = strArrays[2].Trim();                          // Código Item: 000105881
+            _voPedido.DESCRICAO1 = strArrays[3].Trim();                       // Descrição da Peça
+            _voPedido.ETIQUETA = strArrays[4].Trim();                         // Cód. Barras: 0067279432
+
+            // Quantidade (strArrays[5] = "2")
+            decimal qtde = 0;
+            if (decimal.TryParse(strArrays[5], out qtde))
             {
-                callBack(arquivoIm.ArquivoItens.Count, i, null);
-
-                var linhaArquivo = arquivoIm.ArquivoItens[i].Linha;
-
-                string[] strArrays = linhaArquivo.Split(new char[] { ';' });
-
-                PedidoImport _voPedido = new PedidoImport();
-                try
-                {
-                    _voPedido.ARQUIVO = arquivoIm.FileName;
-                    _voPedido.PRODUTO = strArrays[2];
-                    _voPedido.VOLUME = Convert.ToDecimal(strArrays[5]);
-                    _voPedido.DESCRICAO1 = strArrays[3];
-                    _voPedido.CLIENTE = strArrays[8];
-                    if (_voPedido.CLIENTE.Equals(""))
-                    {
-                        _voPedido.CLIENTE = "NÃO INFORMADO";
-                    }
-                    _voPedido.PECLIENTE = strArrays[0];
-                    _voPedido.ORDCOMPRA = strArrays[1];
-                    _voPedido.STATUS = 0;
-                    _voPedido.ETIQUETA = strArrays[4];
-                    _voPedido.QTDE = 0;
-                    _voPedido.IdBox = 1;
-                    _voPedido.IdLayout = arquivoIm.LayoutId;
-                    _voPedido.DATAINC = DateTime.Now;
-                    _listVoPedido.Add(_voPedido);
-                }
-                catch (Exception exception)
-                {
-                    throw exception;
-                }
+                _voPedido.QTDE = qtde;
+            }
+            else
+            {
+                _voPedido.QTDE = 1;
             }
 
-            callBack(arquivoIm.ArquivoItens.Count, 0, _listVoPedido);
-        }
+            // Cada etiqueta representa 1 volume para conferência
+            _voPedido.VOLUME = 1;
 
+            // O arquivo TXT não possui o nome do cliente (coluna 8 é acabamento/medida)
+            _voPedido.CLIENTE = "NÃO INFORMADO";
+
+            _voPedido.STATUS = 0;
+            _voPedido.IdBox = 1;
+            _voPedido.IdLayout = arquivoIm.LayoutId;
+            _voPedido.DATAINC = DateTime.Now;
+
+            _listVoPedido.Add(_voPedido);
+        }
+        catch (Exception)
+        {
+            throw; // Preserva o stack trace original
+        }
+    }
+
+    callBack(arquivoIm.ArquivoItens.Count, 0, _listVoPedido);
+}
         private void InserirRudnick(voArquivoIm arquivoIm, Action<int, int, List<PedidoImport>> callBack)
         {
             daPedido _daPedido = new daPedido(this.conexao);
