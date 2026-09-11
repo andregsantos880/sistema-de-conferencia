@@ -1222,7 +1222,6 @@ private void InserirRomanzza(voArquivoIm arquivoIm, Action<int, int, List<Pedido
         private void InserirTranspaese(voArquivoIm arquivoIm, Action<int, int, List<PedidoImport>> callBack)
         {
             daPedido _daPedido = new daPedido(this.conexao);
-
             List<PedidoImport> _listVoPedido = new List<PedidoImport>();
 
             for (int i = 0; i < arquivoIm.ArquivoItens.Count; i++)
@@ -1231,34 +1230,84 @@ private void InserirRomanzza(voArquivoIm arquivoIm, Action<int, int, List<Pedido
 
                 var linhaArquivo = arquivoIm.ArquivoItens[i].Linha;
 
-                PedidoImport _voPedido = new PedidoImport();
+                // Linha precisa ter pelo menos 70 caracteres para conter os dados mínimos
+                if (string.IsNullOrWhiteSpace(linhaArquivo) || linhaArquivo.Length < 70)
+                    continue;
+
                 try
                 {
-                    string str = linhaArquivo.Substring(20, 26);
+                    PedidoImport _voPedido = new PedidoImport();
+
                     _voPedido.ARQUIVO = arquivoIm.FileName;
-                    _voPedido.PRODUTO = linhaArquivo.Substring(16, 4);
-                    int num = int.Parse(linhaArquivo.Substring(46, 4).ToString());
-                    _voPedido.VOLUME = Convert.ToDecimal(num.ToString());
-                    _voPedido.DESCRICAO1 = linhaArquivo.Substring(70, 120).Trim();
-                    _voPedido.CLIENTE = "";
-                    if (_voPedido.CLIENTE.Equals(""))
+
+                    // Carga / Romaneio da Transpaese (pos 0 a 20)
+                    string carga = linhaArquivo.Substring(0, 20).Trim().TrimStart('0');
+                    _voPedido.ORDCOMPRA = string.IsNullOrEmpty(carga) ? "--" : carga;
+
+                    // Etiqueta / Código de Barras (26 dígitos a partir da pos 20)
+                    string strEtiqueta = linhaArquivo.Substring(20, 26).Trim();
+                    _voPedido.ETIQUETA = strEtiqueta;
+
+                    // Código do Produto extraído da etiqueta (evita pegar pedaço da carga com Substring(16, 4))
+                    if (strEtiqueta.StartsWith("00000") && strEtiqueta.Length >= 14)
                     {
-                        _voPedido.CLIENTE = "NÃO INFORMADO";
+                        _voPedido.PRODUTO = strEtiqueta.Substring(5, 9).Trim();
                     }
-                    _voPedido.PECLIENTE = linhaArquivo.Substring(36, 7);
-                    _voPedido.ORDCOMPRA = "--";
-                    _voPedido.SEQUENCIA = int.Parse(str.Substring(str.Length - 1, 1));
+                    else if (strEtiqueta.Length >= 14)
+                    {
+                        _voPedido.PRODUTO = strEtiqueta.Substring(0, 14).TrimStart('0');
+                    }
+                    else
+                    {
+                        _voPedido.PRODUTO = "0";
+                    }
+
+                    // Pedido Cliente (pos 36, tamanho 7 - ex: 1057455)
+                    _voPedido.PECLIENTE = linhaArquivo.Substring(36, 7).Trim();
+
+                    // Sequência: os 3 últimos dígitos da etiqueta (ex: 861, 031, 147)
+                    int sequencia = 0;
+                    if (strEtiqueta.Length >= 3)
+                    {
+                        int.TryParse(strEtiqueta.Substring(strEtiqueta.Length - 3, 3), out sequencia);
+                    }
+                    _voPedido.SEQUENCIA = sequencia;
+
+                    // Volume (pos 46, tamanho 4 - ex: 0001 -> 1)
+                    decimal volume = 1;
+                    if (decimal.TryParse(linhaArquivo.Substring(46, 4).Trim(), out volume))
+                    {
+                        _voPedido.VOLUME = volume;
+                    }
+                    else
+                    {
+                        _voPedido.VOLUME = 1;
+                    }
+
+                    // Descrição da Peça (da pos 70 até o final da linha)
+                    if (linhaArquivo.Length > 70)
+                    {
+                        _voPedido.DESCRICAO1 = linhaArquivo.Substring(70).Trim();
+                    }
+                    else
+                    {
+                        _voPedido.DESCRICAO1 = "SEM DESCRIÇÃO";
+                    }
+
+                    // Nome do cliente não consta neste arquivo de volumes
+                    _voPedido.CLIENTE = "NÃO INFORMADO";
+
+                    _voPedido.QTDE = 1;
                     _voPedido.STATUS = 0;
-                    _voPedido.ETIQUETA = str;
-                    _voPedido.QTDE = 0;
                     _voPedido.IdBox = 1;
                     _voPedido.IdLayout = arquivoIm.LayoutId;
                     _voPedido.DATAINC = DateTime.Now;
+
                     _listVoPedido.Add(_voPedido);
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
-                    throw exception;
+                    throw; // Preserva o stack trace original
                 }
             }
 
