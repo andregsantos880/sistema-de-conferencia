@@ -23,6 +23,7 @@ namespace Persistencia
             // Chave pública (anon) ou service_role do seu projeto Supabase
             var apiKey = ConfigurationManager.AppSettings["SupabaseKey"]
                          ?? "SUA_SUPABASE_KEY_AQUI";
+            var jwt = ConfigurationManager.AppSettings["SupabaseJwt"];
 
             Client = new HttpClient
             {
@@ -35,7 +36,8 @@ namespace Persistencia
 
             // Cabeçalhos obrigatórios do Supabase / PostgREST
             Client.DefaultRequestHeaders.Add("apikey", apiKey);
-            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            if (!string.IsNullOrWhiteSpace(jwt))
+                Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
         }
     }
 
