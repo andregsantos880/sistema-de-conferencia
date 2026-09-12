@@ -16,7 +16,13 @@ namespace Persistencia
 
         public ApiConnection()
         {
-            var baseUrl = ConfigurationManager.AppSettings["ApiBaseUrl"] ?? "http://localhost:5000/api/";
+            // URL do seu projeto no Supabase
+            var baseUrl = ConfigurationManager.AppSettings["SupabaseUrl"]
+                          ?? "https://niapcemrcfmvsikvhlfd.supabase.co/rest/v1/";
+
+            // Chave pública (anon) ou service_role do seu projeto Supabase
+            var apiKey = ConfigurationManager.AppSettings["SupabaseKey"]
+                         ?? "SUA_SUPABASE_KEY_AQUI";
 
             Client = new HttpClient
             {
@@ -26,6 +32,10 @@ namespace Persistencia
 
             Client.DefaultRequestHeaders.Accept.Clear();
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Cabeçalhos obrigatórios do Supabase / PostgREST
+            Client.DefaultRequestHeaders.Add("apikey", apiKey);
+            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         }
     }
 
@@ -33,8 +43,7 @@ namespace Persistencia
     {
         private static readonly IApiConnection _instancia = new ApiConnection();
 
-        // Permite chamar Api.RetornaConexao() ou Api.RetornaApi()
-        public static IApiConnection RetornaConexao(int conexao = 0) => _instancia;
+        public static IApiConnection RetornaConexao(string conexao = null) => _instancia;
         public static IApiConnection RetornaApi() => _instancia;
     }
 }
