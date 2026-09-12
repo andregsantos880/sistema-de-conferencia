@@ -8,8 +8,8 @@ namespace Persistencia
 
         public void FecharConexao(int conexao)
         {
-            if (Conexao.RetornaConexao(conexao).State == ConnectionState.Open)
-                Conexao.RetornaConexao(conexao).Close();
+            //if (Conexao.RetornaConexao(conexao).State == ConnectionState.Open)
+            //    Conexao.RetornaConexao(conexao).Close();
         }
 
         public voSistema ConsultarConexao()

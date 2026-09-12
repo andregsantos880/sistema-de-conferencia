@@ -17,29 +17,7 @@ namespace Persistencia
 
         public void InserirBulk<T>(List<T> _listVoPedido)
         {
-            DataTableReader reader = CollectionHelper
-                       .ConvertTo<T>(_listVoPedido).CreateDataReader();
-
-            using (SqlBulkCopy bulkCopy =
-           new SqlBulkCopy(Conexao.RetornaConexao(conexao)))
-            {
-                bulkCopy.DestinationTableName =
-                    "dbo.Pedido";
-                try
-                {
-                    // Write from the source to the destination.
-                    bulkCopy.WriteToServer(reader);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    throw ex;
-                }
-                finally
-                {
-                    reader.Close();
-                }
-            }
+            Conexao.RetornaConexao().InserirBulk(_listVoPedido);
         }
     }
 }

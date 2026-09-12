@@ -558,65 +558,65 @@ namespace App
             labelBuscaQtde.Text = $"{qtde} Iten(s) selecionados.";
         }
 
-        async Task SendMessagesAsync(string connectionString, string queueName, PedidoSB data)
-        {
-            var conexao = Conexao.RetornaConexao();
+        //async Task SendMessagesAsync(string connectionString, string queueName, PedidoSB data)
+        //{
+        //    var conexao = Conexao.RetornaConexao();
 
-            var senderFactory = MessagingFactory.CreateFromConnectionString(connectionString);
+        //    var senderFactory = MessagingFactory.CreateFromConnectionString(connectionString);
 
-            var sender = await senderFactory.CreateMessageSenderAsync(queueName);
+        //    var sender = await senderFactory.CreateMessageSenderAsync(queueName);
 
-            var message = new BrokeredMessage(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))))
-            {
-                ContentType = "application/json",
-                Label = conexao.DataSource,
-                //MessageId = i.ToString(),
-                TimeToLive = TimeSpan.FromMinutes(2)
-            };
+        //    var message = new BrokeredMessage(new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))))
+        //    {
+        //        ContentType = "application/json",
+        //        Label = conexao.DataSource,
+        //        //MessageId = i.ToString(),
+        //        TimeToLive = TimeSpan.FromMinutes(2)
+        //    };
 
-            await sender.SendAsync(message);
-        }
+        //    await sender.SendAsync(message);
+        //}
 
-        async Task ReceiveMessagesAsync(string connectionString, string queueName)
-        {
-            while (true)
-            {
-                var receiverFactory = MessagingFactory.CreateFromConnectionString(connectionString);
-                var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
+        //async Task ReceiveMessagesAsync(string connectionString, string queueName)
+        //{
+        //    while (true)
+        //    {
+        //        var receiverFactory = MessagingFactory.CreateFromConnectionString(connectionString);
+        //        var receiver = await receiverFactory.CreateMessageReceiverAsync(queueName, ReceiveMode.PeekLock);
 
-                try
-                {
-                    var message = await receiver.ReceiveAsync(TimeSpan.FromMinutes(2));
-                    if (message != null)
-                    {
-                        var conexao = Conexao.RetornaConexao();
-                        var getBody = message.GetBody<Stream>();
-                        var pedidoSB = JsonConvert.DeserializeObject<PedidoSB>(new StreamReader(getBody, true).ReadToEnd());
+        //        try
+        //        {
+        //            var message = await receiver.ReceiveAsync(TimeSpan.FromMinutes(2));
+        //            if (message != null)
+        //            {
+        //                var conexao = Conexao.RetornaConexao();
+        //                var getBody = message.GetBody<Stream>();
+        //                var pedidoSB = JsonConvert.DeserializeObject<PedidoSB>(new StreamReader(getBody, true).ReadToEnd());
 
-                        string data = $"UPDATE PEDIDO SET STATUS={pedidoSB.StatusId} where TRIM(ETIQUETA) = '{pedidoSB.Etiqueta}' AND IdLayout = {pedidoSB.FabricaId}";
-                        if (message.Label.Equals(conexao.DataSource, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            int result = conexao.Execute(data);
-                            if (result > 0)
-                                await message.CompleteAsync();
-                        }
-                        else
-                        {
-                            int result = conexao.Execute(data);
-                            if (result > 0)
-                                await message.CompleteAsync();
-                        }
-                    }
-                }
-                catch (MessagingException e)
-                {
-                    if (!e.IsTransient)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                }
-            }
-        }
+        //                string data = $"UPDATE PEDIDO SET STATUS={pedidoSB.StatusId} where TRIM(ETIQUETA) = '{pedidoSB.Etiqueta}' AND IdLayout = {pedidoSB.FabricaId}";
+        //                if (message.Label.Equals(conexao.DataSource, StringComparison.InvariantCultureIgnoreCase))
+        //                {
+        //                    int result = conexao.Execute(data);
+        //                    if (result > 0)
+        //                        await message.CompleteAsync();
+        //                }
+        //                else
+        //                {
+        //                    int result = conexao.Execute(data);
+        //                    if (result > 0)
+        //                        await message.CompleteAsync();
+        //                }
+        //            }
+        //        }
+        //        catch (MessagingException e)
+        //        {
+        //            if (!e.IsTransient)
+        //            {
+        //                Console.WriteLine(e.Message);
+        //            }
+        //        }
+        //    }
+        //}
 
     }
 }
