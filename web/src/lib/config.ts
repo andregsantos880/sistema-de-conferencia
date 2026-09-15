@@ -67,3 +67,38 @@ export const ROTULO_MENU: Record<number, string> = {
   1: 'Conferência',
   2: 'Saída',
 };
+
+/* -------------------------------------------------------------------------- */
+/* Perfis e visibilidade de colunas                                           */
+/* -------------------------------------------------------------------------- */
+
+export const PERFIL = { ADMIN: 'ADMIN', OPERADOR: 'OPERADOR' } as const;
+export type Perfil = (typeof PERFIL)[keyof typeof PERFIL];
+
+/**
+ * Colunas que NÃO aparecem para nenhum usuário (regra definida pelo cliente):
+ * ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC.
+ */
+export const COLUNAS_OCULTAS: readonly string[] = [
+  'id',
+  'nmlayout',
+  'idlayout',
+  'idbox',
+  'flbloqueio',
+  'pecomputador',
+];
+
+/**
+ * Colunas visíveis apenas para determinado perfil.
+ * A ETIQUETA é o código de barras: o administrador vê, o operador não.
+ */
+export const COLUNAS_POR_PERFIL: Record<string, Perfil> = {
+  etiqueta: PERFIL.ADMIN,
+};
+
+/** Colunas do grid já filtradas pelo perfil do usuário logado. */
+export function colunasVisiveis(perfil: string): Array<(typeof COLUNAS_GRID)[number]> {
+  return COLUNAS_GRID.filter((coluna) => !COLUNAS_OCULTAS.includes(coluna.campo)).filter(
+    (coluna) => !COLUNAS_POR_PERFIL[coluna.campo] || COLUNAS_POR_PERFIL[coluna.campo] === perfil,
+  );
+}

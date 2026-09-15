@@ -99,6 +99,59 @@ Implementadas em `src/lib/regrasConferencia.ts` (módulo puro, sem I/O) e usadas
 | campo de etiqueta como senha (`UseSystemPasswordChar`) | texto visível | cosmético |
 | grava só no Fechar | grava a cada bipagem | decisão do cliente |
 
+## Multi-empresa, perfis e gestão de usuários
+
+### A URL identifica a empresa
+
+```
+/sysconf/<empresa>/login          <- link enviado ao cliente
+/sysconf/<empresa>/conferencia
+/sysconf/<empresa>/importacao
+/sysconf/<empresa>/usuarios       (somente ADMIN)
+```
+
+- `src/lib/rota.ts` corta o slug do caminho. Sem slug, a raiz mostra a tela "Acesse pelo link da sua empresa".
+- Empresa inexistente ou inativa → tela de erro.
+- **Cadastro de empresa é feito apenas pelo banco**: `insert into public.empresa (slug, nome) values ('<slug>', '<Nome>');`
+
+### Perfis e visibilidade de colunas
+
+| Perfil | Coluna ETIQUETA (código de barras) | Gestão de usuários |
+|---|---|---|
+| `ADMIN` (administrador) | visível | sim |
+| `OPERADOR` | **oculta** | não |
+
+Colunas que **não aparecem para ninguém**: ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC
+(configuráveis em `src/lib/config.ts` → `COLUNAS_OCULTAS` e `COLUNAS_POR_PERFIL`).
+
+A coluna **STATUS** mostra o **estágio** (`NORMAL`, `CONFERÊNCIA`, `SAÍDA`, `ENTREGA`) em vez do
+número — textos em `DS_STATUS` (`src/lib/regrasConferencia.ts`); usada também no grid e no CSV.
+
+### Gestão de usuários e perfis (pela própria empresa)
+
+Tela `src/telas/Usuarios.tsx` (rota `/usuarios`, exclusiva do ADMIN da própria empresa):
+incluir, editar (login, nome, perfil e senha), ativar/inativar e excluir — sempre restrito à empresa
+logada. O próprio usuário não consegue se inativar/excluir.
+
+### Empresas e dados de exemplo no banco
+
+| Empresa | Slug | Dados |
+|---|---|---|
+| Novo Mundo | `novomundo` | 16 fábricas + 924 pedidos (importação real da Criare) |
+| Homologação | `homologacao` | 1 fábrica (CSV Padrão) + 10 pedidos de teste |
+
+Usuários de teste (senha `trocar@123`): `ADMIN` (administrador) e `OPERADOR` nas duas empresas —
+o mesmo login existe em empresas diferentes porque a unicidade é por empresa.
+
+### Banco de dados
+
+`public.empresa` (cadastro manual) e `empresa_id` em `usuario`, `pedido`, `layout` e `box`;
+`usuario.perfil` (`ADMIN`/`OPERADOR`), `usuario.ativo`; login único por `(empresa_id, login)`.
+O login é o RPC `login_usuario(p_empresa, p_login, p_senha)`.
+
+Migrações: `0006_empresa_multitenant.sql`, `0007_rpc_login_usuario_empresa.sql`,
+`0008_usuario_ativo.sql`.
+
 ## Pendências conhecidas
 
 1. **Parsers de layout**: só o `CSV Padrão` tem mapeamento em `lib/parsers.ts`. Os outros arquivos

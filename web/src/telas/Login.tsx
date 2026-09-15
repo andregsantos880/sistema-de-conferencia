@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
-import { login, type UsuarioLogado } from '../lib/api';
+import { login, type Empresa, type UsuarioLogado } from '../lib/api';
 import { CHAVE_SESSAO } from '../lib/config';
 import { somErro, somOk } from '../lib/audio';
 
 type Props = {
+  empresa: Empresa;
   onEntrar: (usuario: UsuarioLogado, memorizar: boolean) => void;
 };
 
 /**
- * Tela de login — recriação do FormLogin do WinForms:
- * banner no topo, caixa "Entre com suas credenciais", usuário em MAIÚSCULAS
- * (max 30), senha (max 15), "Memorizar senha", Confirmar/Cancelar e o link
- * do rodapé www.softwerd.com.
+ * Tela de login — recriação do FormLogin, agora identificando a empresa
+ * (que vem do slug da URL). Usuário em MAIÚSCULAS (max 30), senha (max 15),
+ * "Memorizar senha", Confirmar/Cancelar e o link do rodapé.
  */
-export default function Login({ onEntrar }: Props) {
+export default function Login({ empresa, onEntrar }: Props) {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [memorizar, setMemorizar] = useState(false);
@@ -25,15 +25,15 @@ export default function Login({ onEntrar }: Props) {
     const salvo = localStorage.getItem(CHAVE_SESSAO);
     if (!salvo) return;
     try {
-      const dados = JSON.parse(salvo) as { login?: string };
-      if (dados.login) {
+      const dados = JSON.parse(salvo) as { login?: string; empresa?: string };
+      if (dados.login && dados.empresa === empresa.slug) {
         setUsuario(dados.login);
         setMemorizar(true);
       }
     } catch {
       localStorage.removeItem(CHAVE_SESSAO);
     }
-  }, []);
+  }, [empresa.slug]);
 
   async function confirmar(evento: React.FormEvent) {
     evento.preventDefault();
@@ -47,7 +47,7 @@ export default function Login({ onEntrar }: Props) {
 
     setCarregando(true);
     try {
-      const usuarioLogado = await login(usuario, senha);
+      const usuarioLogado = await login(empresa.slug, usuario, senha);
       if (!usuarioLogado) {
         setErro('Usuário ou senha estão inválidos');
         somErro();
@@ -72,7 +72,6 @@ export default function Login({ onEntrar }: Props) {
   return (
     <div className="flex min-h-full flex-col items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 p-6">
       <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl">
-        {/* banner (no WinForms é o pictureBox3) */}
         <div className="flex items-center gap-3 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-5">
           <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-500 text-xl font-bold text-white shadow-lg">
             S
@@ -81,10 +80,14 @@ export default function Login({ onEntrar }: Props) {
             <h1 className="text-xl font-semibold tracking-wide text-white">SysConf</h1>
             <p className="text-xs text-slate-300">Conferência de pedidos</p>
           </div>
+          <div className="ml-auto text-right">
+            <div className="text-[10px] tracking-widest text-slate-400">EMPRESA</div>
+            <div className="text-sm font-semibold text-white">{empresa.nome}</div>
+            <div className="text-[10px] text-slate-400">/{empresa.slug}</div>
+          </div>
         </div>
 
         <div className="flex gap-5 p-6">
-          {/* imagem lateral (pictureBox1 - LoginRed) */}
           <div className="hidden h-[144px] w-[163px] shrink-0 items-center justify-center rounded-md border-2 border-slate-800 bg-slate-900 sm:flex">
             <div className="text-center leading-tight">
               <div className="text-4xl font-bold text-red-500">SIS</div>
@@ -95,9 +98,7 @@ export default function Login({ onEntrar }: Props) {
 
           <form onSubmit={confirmar} className="flex-1">
             <fieldset className="rounded-md border border-slate-300 p-4">
-              <legend className="px-1 text-xs font-semibold text-slate-600">
-                Entre com suas credenciais
-              </legend>
+              <legend className="px-1 text-xs font-semibold text-slate-600">Entre com suas credenciais</legend>
 
               <label className="mb-1 block text-xs text-slate-700" htmlFor="usuario">
                 Usuário
@@ -142,9 +143,7 @@ export default function Login({ onEntrar }: Props) {
             </fieldset>
 
             {erro && (
-              <div className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-                {erro}
-              </div>
+              <div className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{erro}</div>
             )}
 
             <div className="mt-4 flex items-center justify-between">

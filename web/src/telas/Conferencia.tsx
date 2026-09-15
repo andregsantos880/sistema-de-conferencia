@@ -13,14 +13,25 @@ import {
   buscarValores,
   listarBoxes,
   listarPedidos,
+  type Empresa,
   type Fabrica,
   type ItemBusca,
   type Pedido,
+  type UsuarioLogado,
 } from '../lib/api';
-import { COLUNAS_GRID, OPCOES_BUSCA, ROTULO_MENU, STATUS, TITULO_BOX } from '../lib/config';
+import {
+  COLUNAS_GRID,
+  colunasVisiveis,
+  OPCOES_BUSCA,
+  PERFIL,
+  ROTULO_MENU,
+  STATUS,
+  TITULO_BOX,
+} from '../lib/config';
 import {
   calcularRestante,
   classificarLeitura,
+  DS_STATUS,
   montarInfoBipagem,
   statusDe,
   type Alvo,
@@ -39,11 +50,13 @@ import {
 } from '../lib/audio';
 
 type Props = {
-  usuario: string;
+  empresa: Empresa;
+  usuario: UsuarioLogado;
   fabricas: Fabrica[];
   fabricaId: number | null;
   onTrocarFabrica: (id: number) => void;
   onAbrirImportacao: () => void;
+  onAbrirUsuarios: () => void;
   onSair: () => void;
 };
 
@@ -52,16 +65,32 @@ type MenuContexto = { x: number; y: number; id: string } | null;
 /* TanStack Table v9: as features precisam ser registradas explicitamente. */
 const features = tableFeatures({ rowSelectionFeature });
 
-const columns: Array<ColumnDef<typeof features, Pedido>> = COLUNAS_GRID.map((coluna) => ({
-  id: coluna.campo,
-  accessorFn: (linha: Pedido) => (linha as unknown as Record<string, unknown>)[coluna.campo],
-  header: coluna.titulo,
-  cell: (info) => {
-    const valor = info.getValue();
-    if (coluna.campo === 'flbloqueio') return valor ? 'SIM' : '';
-    return String(valor ?? '');
-  },
-}));
+/**
+ * Valor como aparece na tela (usado no grid e na exportação).
+ * A coluna STATUS mostra o ESTÁGIO da conferência em vez do número:
+ * 0 = NORMAL, 1 = CONFERÊNCIA (entrada), 2 = SAÍDA, 3 = ENTREGA.
+ */
+function valorExibicao(pedido: Pedido, campo: string): string {
+  const bruto = (pedido as unknown as Record<string, unknown>)[campo];
+
+  if (campo === 'flbloqueio') return bruto ? 'SIM' : '';
+  if (campo === 'status') return DS_STATUS[Number(bruto ?? 0)] ?? String(bruto ?? '');
+
+  return String(bruto ?? '');
+}
+
+/**
+ * Colunas do grid conforme o PERFIL do usuário logado:
+ *  - a ETIQUETA (código de barras) só aparece para ADMIN;
+ *  - ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC não aparecem para ninguém.
+ */
+function montarColunas(perfil: string): Array<ColumnDef<typeof features, Pedido>> {
+  return colunasVisiveis(perfil).map((coluna) => ({
+    id: coluna.campo,
+    accessorFn: (linha: Pedido) => valorExibicao(linha, coluna.campo),
+    header: coluna.titulo,
+  }));
+}
 
 /** Largura mínima por coluna (o `size` do TanStack v9 só existe com columnSizing registrado). */
 const LARGURAS: Record<string, number> = Object.fromEntries(
@@ -101,13 +130,18 @@ function tocarSom(som: Som) {
  *  - ao dar certo, o painel mostra o BOX de destino, a peça, a quantidade e o pedido.
  */
 export default function Conferencia({
+  empresa,
   usuario,
   fabricas,
   fabricaId,
   onTrocarFabrica,
   onAbrirImportacao,
+  onAbrirUsuarios,
   onSair,
 }: Props) {
+  const administrador = usuario.perfil === PERFIL.ADMIN;
+  const columns = useMemo(() => montarColunas(usuario.perfil), [usuario.perfil]);
+
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [boxes, setBoxes] = useState<Array<{ idbox: number; nmbox: string }>>([]);
   const [carregando, setCarregando] = useState(false);
@@ -136,36 +170,39 @@ export default function Conferencia({
 
   const nomeFabrica = fabricas.find((f) => f.controle === fabricaId)?.nome ?? '';
 
-  const carregarPedidos = useCallback(async (idlayout: number) => {
-    // Cada carga recebe um número; respostas atrasadas são descartadas.
-    const requisicao = ++requisicaoAtual.current;
+  const carregarPedidos = useCallback(
+    async (idlayout: number) => {
+      // Cada carga recebe um número; respostas atrasadas são descartadas.
+      const requisicao = ++requisicaoAtual.current;
 
-    setCarregando(true);
-    setErro('');
-    try {
-      const lista = await listarPedidos(idlayout);
-      if (requisicao !== requisicaoAtual.current) return;
+      setCarregando(true);
+      setErro('');
+      try {
+        const lista = await listarPedidos(empresa.id, idlayout);
+        if (requisicao !== requisicaoAtual.current) return;
 
-      setPedidos(lista);
-      setRowSelection({});
-      setFiltroUsado('');
-    } catch (falha) {
-      if (requisicao !== requisicaoAtual.current) return;
-      setErro(falha instanceof Error ? falha.message : 'Falha ao carregar os pedidos.');
-    } finally {
-      if (requisicao === requisicaoAtual.current) setCarregando(false);
-    }
-  }, []);
+        setPedidos(lista);
+        setRowSelection({});
+        setFiltroUsado('');
+      } catch (falha) {
+        if (requisicao !== requisicaoAtual.current) return;
+        setErro(falha instanceof Error ? falha.message : 'Falha ao carregar os pedidos.');
+      } finally {
+        if (requisicao === requisicaoAtual.current) setCarregando(false);
+      }
+    },
+    [empresa.id],
+  );
 
   useEffect(() => {
     if (fabricaId !== null) void carregarPedidos(fabricaId);
   }, [fabricaId, carregarPedidos]);
 
   useEffect(() => {
-    listarBoxes()
+    listarBoxes(empresa.id)
       .then(setBoxes)
       .catch(() => setBoxes([]));
-  }, []);
+  }, [empresa.id]);
 
   useEffect(() => {
     function fecharMenu() {
@@ -284,7 +321,7 @@ export default function Conferencia({
     // Sucesso: baixa na hora (regra definida pelo cliente — não espera o Fechar).
     setGravando(true);
     try {
-      await atualizarStatusPorId(resultado.linha.id, alvo);
+      await atualizarStatusPorId(empresa.id, resultado.linha.id, alvo);
 
       setPedidos((atual) =>
         atual.map((linha) => (linha.id === resultado.linha.id ? resultado.linhaAtualizada : linha)),
@@ -321,7 +358,7 @@ export default function Conferencia({
     setRowSelection({});
 
     try {
-      await atualizarStatusPorEtiquetas(etiquetas, status); // legado: UPDATE ... WHERE ETIQUETA IN(...)
+      await atualizarStatusPorEtiquetas(empresa.id, etiquetas, status); // legado: UPDATE ... WHERE ETIQUETA IN(...)
       tocarSom('success');
       setMensagem(`${etiquetas.length} etiqueta(s) alterada(s) para ${STATUS[status].rotulo}.`);
     } catch (falha) {
@@ -351,7 +388,7 @@ export default function Conferencia({
   async function abrirBusca() {
     if (fabricaId === null) return;
     try {
-      setValoresBusca(await buscarValores(fabricaId, colunaBusca));
+      setValoresBusca(await buscarValores(empresa.id, fabricaId, colunaBusca));
       setValoresMarcados(new Set());
       setCampoBusca('');
       setBuscaAberta(true);
@@ -381,7 +418,7 @@ export default function Conferencia({
     setBuscaAberta(false);
     setCarregando(true);
     try {
-      const encontrados = await buscarPedidosPorFiltro(fabricaId, colunaBusca, valores);
+      const encontrados = await buscarPedidosPorFiltro(empresa.id, fabricaId, colunaBusca, valores);
       if (encontrados.length === 0) {
         setMensagem('Nada encontrado.');
         tocarSom('exclamation');
@@ -407,11 +444,10 @@ export default function Conferencia({
       return;
     }
 
+    const visiveis = colunasVisiveis(usuario.perfil);
     const linhas = [
-      COLUNAS_GRID.map((c) => c.titulo).join(';'),
-      ...pedidos.map((p) =>
-        COLUNAS_GRID.map((c) => String((p as unknown as Record<string, unknown>)[c.campo] ?? '').replace(/;/g, ',')).join(';'),
-      ),
+      visiveis.map((c) => c.titulo).join(';'),
+      ...pedidos.map((p) => visiveis.map((c) => valorExibicao(p, c.campo).replace(/;/g, ',')).join(';')),
     ];
 
     const blob = new Blob([`\uFEFF${linhas.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
@@ -429,12 +465,26 @@ export default function Conferencia({
       <header className="flex shrink-0 items-center justify-between bg-slate-900 px-4 py-2 text-white">
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold tracking-wide">SysConf</span>
+          <span className="rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-semibold" title={`/sysconf/${empresa.slug}`}>
+            {empresa.nome}
+          </span>
           <span className="rounded bg-slate-700 px-2 py-0.5 text-[11px]">{nomeFabrica || 'sem fábrica'}</span>
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-slate-300">
-            Usuário: <strong className="text-white">{usuario}</strong>
+            Usuário: <strong className="text-white">{usuario.login}</strong>
+            <span className="ml-2 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] uppercase">
+              {usuario.perfil === PERFIL.ADMIN ? 'Administrador' : 'Operador'}
+            </span>
           </span>
+          {administrador && (
+            <button
+              onClick={onAbrirUsuarios}
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
+            >
+              Usuários
+            </button>
+          )}
           <button onClick={onSair} className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700">
             Sair
           </button>
@@ -734,7 +784,8 @@ export default function Conferencia({
                 </div>
               </div>
               <div className="text-xs text-slate-300">
-                Cliente: {info?.cliente || '—'} · Etiqueta: {info?.etiqueta || etiquetaLida || '—'}
+                Cliente: {info?.cliente || '—'}
+                {administrador && <> · Etiqueta: {info?.etiqueta || etiquetaLida || '—'}</>}
               </div>
               {mensagem && (
                 <div className="rounded border border-slate-500 bg-slate-900/60 px-3 py-2 text-sm">

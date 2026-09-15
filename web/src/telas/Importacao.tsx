@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
-import { inserirPedidos, type Fabrica, type PedidoNovo } from '../lib/api';
+import { inserirPedidos, type Empresa, type Fabrica, type PedidoNovo } from '../lib/api';
 import { analisarArquivo, PARSERS } from '../lib/parsers';
 import { somErro, somOk } from '../lib/audio';
 
 type Props = {
+  empresa: Empresa;
   fabricas: Fabrica[];
   fabricaId: number | null;
   onTrocarFabrica: (id: number) => void;
@@ -15,8 +16,9 @@ type Props = {
  * Recriação da tela TabeLayo (importação de arquivos):
  * combo de fábrica, botão "Arquivo...", barra de progresso, lista de lojas
  * com checkbox e o botão "Incluir lojas selecionadas.".
+ * Os pedidos importados ficam vinculados à empresa logada.
  */
-export default function Importacao({ fabricas, fabricaId, onTrocarFabrica, onConcluir, onVoltar }: Props) {
+export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabrica, onConcluir, onVoltar }: Props) {
   const [linhas, setLinhas] = useState<PedidoNovo[]>([]);
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [lojasMarcadas, setLojasMarcadas] = useState<Set<string>>(new Set());
@@ -54,6 +56,7 @@ export default function Importacao({ fabricas, fabricaId, onTrocarFabrica, onCon
     try {
       const conteudo = await arquivo.text();
       const resultado = analisarArquivo(conteudo, {
+        empresaId: empresa.id,
         idlayout: fabricaId,
         nomeArquivo: arquivo.name,
         fabrica: fabrica?.nome ?? '',
@@ -126,7 +129,12 @@ export default function Importacao({ fabricas, fabricaId, onTrocarFabrica, onCon
     <div className="flex min-h-full items-start justify-center bg-slate-200 p-6">
       <div className="w-full max-w-[560px] rounded-lg border border-slate-300 bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
-          <h2 className="text-sm font-semibold">Importação de Arquivos</h2>
+          <h2 className="text-sm font-semibold">
+            Importação de Arquivos
+            <span className="ml-2 rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-semibold text-white">
+              {empresa.nome}
+            </span>
+          </h2>
           <button onClick={onVoltar} className="rounded border border-slate-300 px-3 py-1 text-xs hover:bg-slate-100">
             Voltar
           </button>

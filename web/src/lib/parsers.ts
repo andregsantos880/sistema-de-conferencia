@@ -130,7 +130,7 @@ export type ResultadoAnalise = {
  */
 export function analisarArquivo(
   conteudo: string,
-  opcoes: { idlayout: number; nomeArquivo: string; fabrica: string },
+  opcoes: { empresaId: number; idlayout: number; nomeArquivo: string; fabrica: string },
 ): ResultadoAnalise {
   const linhasBrutas = conteudo
     .split(/\r?\n/)
@@ -183,6 +183,7 @@ export function analisarArquivo(
       sequencia: paraNumero(valor('sequencia')),
       status: 0,
       datainc: agora,
+      empresa_id: opcoes.empresaId,
       idlayout: opcoes.idlayout,
       idbox: 1,
       flbloqueio: false,
