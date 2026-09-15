@@ -4,6 +4,9 @@ import Conferencia from './telas/Conferencia';
 import Importacao from './telas/Importacao';
 import Usuarios from './telas/Usuarios';
 import SemEmpresa from './telas/SemEmpresa';
+import Landing from './telas/Landing';
+import Entrar from './telas/Entrar';
+import Registrar from './telas/Registrar';
 import { listarFabricas, obterEmpresa, type Empresa, type Fabrica, type UsuarioLogado } from './lib/api';
 import { irPara, lerRota, type Rota, type Tela } from './lib/rota';
 import { CHAVE_SESSAO } from './lib/config';
@@ -11,9 +14,10 @@ import { CHAVE_SESSAO } from './lib/config';
 /**
  * Raiz do app web.
  *
- * A empresa vem da URL (/sysconf/<empresa>/<tela>) — o cadastro de empresas é
- * feito pelo banco. Depois do login a sessão guarda usuário, perfil e empresa,
- * e todas as consultas ficam restritas àquela empresa.
+ * Páginas públicas (site): / (landing), /entrar e /registrar.
+ * App da empresa: /sysconf/<empresa>/<tela> — a empresa vem da URL.
+ * Depois do login a sessão guarda usuário, perfil e empresa, e todas as
+ * consultas ficam restritas àquela empresa.
  */
 export default function Sysconf() {
   const [rota, setRota] = useState<Rota>(() => lerRota());
@@ -35,7 +39,12 @@ export default function Sysconf() {
 
     setEmpresa(null);
     setEmpresaErro('');
-    setUsuario(null);
+    /* Trocar de empresa encerra a sessão; voltar para a MESMA empresa mantém —
+       é o que permite entrar pela landing (/entrar, /registrar) e cair no
+       /sysconf/<empresa>/conferencia sem perder o login. */
+    setUsuario((atual) =>
+      atual && rota.empresa && atual.empresa_slug === rota.empresa ? atual : null,
+    );
     setFabricas([]);
     setFabricaId(null);
 
@@ -76,7 +85,7 @@ export default function Sysconf() {
   function navegar(tela: Tela) {
     if (!rota.empresa) return;
     irPara(rota.empresa, tela);
-    setRota({ empresa: rota.empresa, tela });
+    setRota({ empresa: rota.empresa, tela, pagina: null });
   }
 
   function entrar(usuarioLogado: UsuarioLogado, memorizar: boolean) {
@@ -96,7 +105,32 @@ export default function Sysconf() {
     if (rota.empresa) navegar('login');
   }
 
+  /**
+   * Entrada pelas telas públicas (/entrar e /registrar): o usuário já sai
+   * logado e segue para o painel da própria empresa.
+   */
+  function entrarPelaLanding(usuarioLogado: UsuarioLogado, memorizar: boolean) {
+    setUsuario(usuarioLogado);
+    if (memorizar) {
+      localStorage.setItem(
+        CHAVE_SESSAO,
+        JSON.stringify({ login: usuarioLogado.login, empresa: usuarioLogado.empresa_slug }),
+      );
+    } else {
+      localStorage.removeItem(CHAVE_SESSAO);
+    }
+    irPara(usuarioLogado.empresa_slug, 'conferencia');
+    setRota({ empresa: usuarioLogado.empresa_slug, tela: 'conferencia', pagina: null });
+  }
+
   /* ------------------------------------------------------------- telas ---- */
+  /* páginas públicas do site (antes de qualquer coisa de empresa) */
+  if (rota.pagina === 'landing') return <Landing />;
+
+  if (rota.pagina === 'entrar') return <Entrar onEntrar={entrarPelaLanding} />;
+
+  if (rota.pagina === 'registrar') return <Registrar onEntrar={entrarPelaLanding} />;
+
   if (!rota.empresa) return <SemEmpresa />;
 
   if (empresaErro) {

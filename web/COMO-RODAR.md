@@ -152,6 +152,75 @@ O login é o RPC `login_usuario(p_empresa, p_login, p_senha)`.
 Migrações: `0006_empresa_multitenant.sql`, `0007_rpc_login_usuario_empresa.sql`,
 `0008_usuario_ativo.sql`.
 
+## Site: landing, login e cadastro
+
+O site é o mesmo app. O caminho da URL decide a tela (`src/lib/rota.ts`):
+
+| URL | Tela | Arquivo |
+|---|---|---|
+| `/` | Landing (apresentação do produto) | `src/telas/Landing.tsx` |
+| `/entrar` | Login de quem já é cliente (informa a empresa) | `src/telas/Entrar.tsx` |
+| `/registrar` | Autocadastro: cria a empresa + o ADMIN | `src/telas/Registrar.tsx` |
+| `/sysconf/<empresa>/login` etc. | App da empresa (links enviados aos clientes) | `src/telas/*` |
+
+A identidade do site (nome, e-mail, telefone, site) fica em `MARCA` (`src/lib/config.ts`) —
+trocar lá muda a landing e os rodapés. **O e-mail de contato é um placeholder: trocar antes de divulgar.**
+
+### Autocadastro (30 dias grátis)
+
+- A tela chama o RPC `registrar_empresa(p_empresa, p_slug, p_login, p_senha, p_nome, p_email)`
+  (migração `20260914000009`), que cria a empresa e o ADMIN na mesma transação e devolve a sessão.
+- A empresa nasce com `ativo = 1` e `trial_ate = now() + 30 dias`; o cabeçalho mostra
+  "Teste grátis: N dias" (ou "Teste encerrado"). O teste **não bloqueia** o acesso — o bloqueio só
+  entra quando o cliente decidir.
+- Regras validadas no banco: endereço de 3 a 30 caracteres (letras sem acento, números e hífen),
+  endereços reservados (`sysconf`, `entrar`, `registrar`, …), endereço único, usuário de 3 a 30,
+  senha de 4 a 15 (limite do legado) e e-mail válido.
+- **`empresa` não aceita mais INSERT/UPDATE/DELETE pela chave publishable** (`revoke` na migração) —
+  a única porta de entrada é o RPC. Leitura (SELECT) continua liberada, porque a URL resolve o slug.
+
+> Empresa nova **já nasce com as 30 fábricas do catálogo** (ver abaixo), então o cliente consegue
+> importar arquivo no primeiro acesso.
+
+### Catálogo de fábricas do autocadastro
+
+`public.catalogo_fabrica` guarda o catálogo padrão (30 nomes: `CSV Padrão` + as 29 fábricas com
+integração do legado). No autocadastro, `registrar_empresa` chama `criar_fabricas_padrao(empresa_id)`,
+que copia o catálogo para `layout` daquela empresa — empresa, ADMIN e fábricas na mesma transação.
+
+- Quem controla o catálogo é o dono, via SQL (a chave publishable só lê):
+  `insert into public.catalogo_fabrica (ordem, nome) values (31, 'Nova Fábrica');`
+- Completar uma empresa já existente (sem duplicar nome):
+  `select public.criar_fabricas_padrao((select id from public.empresa where slug='homologacao'));`
+- A tabela `layout` **não aceita mais escrita pela chave publishable** (o navegador só lê fábricas).
+
+> **Atenção à chave primária:** `layout.controle` é PK **global**, não `(empresa_id, controle)`.
+> Por isso `criar_fabricas_padrao` gera `controle = max(controle) + ordem`, sob
+> `pg_advisory_xact_lock`, para que dois autocadastros simultâneos não colidam.
+
+## Fábricas com integração (fixadas no topo)
+
+A lista de fábricas que o sistema sabe ler vem de `Negocio/boPedido.cs` → `CarregarDados()`,
+no `switch (arquivoIm.LayoutId)`: cada `case` é um parser por fornecedor
+(`2 = InserirCriare`, `21 = InserirBartzen`, `28 = InserirBARTZ`, …). São 29 fábricas (o id 25 não existe).
+
+Essa lista está em `src/lib/integracao.ts` (`LAYOUTS_COM_INTEGRACAO`), junto com
+`temIntegracao(nome)`. As fábricas com integração:
+
+- aparecem **fixadas no topo** do combo "Fábrica" (conferência e importação), sob o grupo
+  **★ Com integração instalada**;
+- são a **seleção padrão** ao abrir a tela;
+- levam **★** também no selo da fábrica no cabeçalho;
+- as demais ficam no grupo "Demais fábricas (sem integração)", e a tela de importação avisa
+  que o arquivo será lido no modo genérico.
+
+> **Atenção:** a comparação é pelo **NOME** da fábrica, normalizado (maiúsculas, sem acento).
+> O `controle` da tabela `layout` **não** é o `LayoutId` do legado — a migração `0002` gravou
+> `controle` na ordem alfabética do cadastro (o `3` é `Italinea` no legado e `CSV Padrão` no banco).
+
+Para incluir uma fábrica na lista, acrescente o nome em `LAYOUTS_COM_INTEGRACAO`
+(e o parser correspondente em `src/lib/parsers.ts`).
+
 ## Pendências conhecidas
 
 1. **Parsers de layout**: só o `CSV Padrão` tem mapeamento em `lib/parsers.ts`. Os outros arquivos

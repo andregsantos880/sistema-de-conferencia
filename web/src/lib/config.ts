@@ -102,3 +102,45 @@ export function colunasVisiveis(perfil: string): Array<(typeof COLUNAS_GRID)[num
     (coluna) => !COLUNAS_POR_PERFIL[coluna.campo] || COLUNAS_POR_PERFIL[coluna.campo] === perfil,
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Landing page (site de vendas)                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Marca e contatos do site. Trocar aqui muda a landing page e os rodapes —
+ * nenhum texto solto pelo codigo.
+ */
+export const MARCA = {
+  produto: 'SysConf',
+  assinatura: 'Conferência de pedidos e cargas',
+  site: 'www.softwerd.com',
+  siteUrl: 'http://www.softwerd.com',
+  /** E-mail comercial que aparece na landing (link mailto no rodapé). */
+  email: 'del.gsantos75@gmail.com',
+  /** Opcional: WhatsApp/telefone com DDD (vazio = nao aparece na landing). */
+  telefone: '',
+} as const;
+
+/** Dias de teste grátis concedidos no autocadastro (prazo gravado pelo RPC). */
+export const TRIAL_DIAS = 30;
+
+/** Dias restantes de teste a partir de EMPRESA.TRIAL_ATE (null = sem prazo). */
+export function diasRestantesTeste(trialAte: string | null | undefined): number | null {
+  if (!trialAte) return null;
+  const fim = new Date(trialAte).getTime();
+  if (Number.isNaN(fim)) return null;
+  return Math.ceil((fim - Date.now()) / 86_400_000);
+}
+
+/** Endereco (slug) sugerido a partir do nome da empresa — usado no cadastro. */
+export function sugerirEndereco(nome: string): string {
+  return nome
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 30)
+    .replace(/-+$/g, '');
+}

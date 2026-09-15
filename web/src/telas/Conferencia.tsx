@@ -22,6 +22,7 @@ import {
 import {
   COLUNAS_GRID,
   colunasVisiveis,
+  diasRestantesTeste,
   OPCOES_BUSCA,
   PERFIL,
   ROTULO_MENU,
@@ -168,7 +169,13 @@ export default function Conferencia({
   const inputEtiqueta = useRef<HTMLInputElement>(null);
   const requisicaoAtual = useRef(0);
 
-  const nomeFabrica = fabricas.find((f) => f.controle === fabricaId)?.nome ?? '';
+  const fabricaAtual = fabricas.find((f) => f.controle === fabricaId) ?? null;
+  const nomeFabrica = fabricaAtual?.nome ?? '';
+  /* Dias restantes do teste grátis do autocadastro (null = empresa sem prazo). */
+  const diasTeste = diasRestantesTeste(empresa.trial_ate);
+  /* Fábricas COM INTEGRAÇÃO ficam fixadas no topo do combo (ver lib/integracao.ts). */
+  const fabricasIntegradas = fabricas.filter((f) => f.integrada);
+  const fabricasSemIntegracao = fabricas.filter((f) => !f.integrada);
 
   const carregarPedidos = useCallback(
     async (idlayout: number) => {
@@ -468,7 +475,34 @@ export default function Conferencia({
           <span className="rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-semibold" title={`/sysconf/${empresa.slug}`}>
             {empresa.nome}
           </span>
-          <span className="rounded bg-slate-700 px-2 py-0.5 text-[11px]">{nomeFabrica || 'sem fábrica'}</span>
+          <span
+            className="rounded bg-slate-700 px-2 py-0.5 text-[11px]"
+            title={
+              fabricaAtual?.integrada
+                ? 'Fábrica com integração instalada de leitura de arquivo'
+                : 'Fábrica sem integração instalada'
+            }
+          >
+            {fabricaAtual?.integrada ? '★ ' : ''}
+            {nomeFabrica || 'sem fábrica'}
+          </span>
+
+          {diasTeste !== null && (
+            <span
+              className={`rounded px-2 py-0.5 text-[11px] font-semibold ${
+                diasTeste > 0 ? 'bg-emerald-700' : 'bg-red-700'
+              }`}
+              title={
+                empresa.trial_ate
+                  ? `Teste grátis até ${new Date(empresa.trial_ate).toLocaleDateString('pt-BR')}`
+                  : 'Teste grátis'
+              }
+            >
+              {diasTeste > 0
+                ? `Teste grátis: ${diasTeste} dia${diasTeste === 1 ? '' : 's'}`
+                : 'Teste encerrado'}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="text-slate-300">
@@ -531,12 +565,26 @@ export default function Conferencia({
             value={fabricaId ?? ''}
             onChange={(e) => onTrocarFabrica(Number(e.target.value))}
             className="rounded border border-slate-400 bg-white px-2 py-1"
+            title="As fábricas com integração instalada aparecem fixadas no topo da lista"
           >
-            {fabricas.map((f) => (
-              <option key={f.controle} value={f.controle}>
-                {f.nome}
-              </option>
-            ))}
+            {fabricasIntegradas.length > 0 && (
+              <optgroup label="★ Com integração instalada">
+                {fabricasIntegradas.map((f) => (
+                  <option key={f.controle} value={f.controle}>
+                    ★ {f.nome}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {fabricasSemIntegracao.length > 0 && (
+              <optgroup label="Demais fábricas (sem integração)">
+                {fabricasSemIntegracao.map((f) => (
+                  <option key={f.controle} value={f.controle}>
+                    {f.nome}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
 

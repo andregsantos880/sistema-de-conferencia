@@ -1,32 +1,53 @@
 /**
- * Roteamento por URL — a empresa é identificada pelo caminho:
+ * Roteamento por URL.
+ *
+ * Publico (sem empresa):
+ *   /            -> landing page (site de vendas)
+ *   /entrar      -> login de quem ja usa
+ *   /registrar   -> autocadastro (30 dias de teste)
+ *
+ * App (a empresa e identificada pelo caminho — sao os links ja enviados aos
+ * clientes, por isso continuam valendo):
  *   /sysconf/<empresa>/login
  *   /sysconf/<empresa>/conferencia
  *   /sysconf/<empresa>/importacao
  *   /sysconf/<empresa>/usuarios
  *
- * Não há router de terceiros: são poucas telas e o estado é simples.
+ * Nao ha router de terceiros: sao poucas telas e o estado e simples.
  */
 
 export type Tela = 'login' | 'conferencia' | 'importacao' | 'usuarios';
 
-export type Rota = { empresa: string | null; tela: Tela };
+/** Paginas publicas do site (fora do escopo de empresa). */
+export type Pagina = 'landing' | 'entrar' | 'registrar';
+
+export type Rota = { empresa: string | null; tela: Tela; pagina: Pagina | null };
 
 const TELAS: Tela[] = ['login', 'conferencia', 'importacao', 'usuarios'];
 
-/** Lê a rota do caminho atual (ou de um caminho informado, útil em testes). */
+const PAGINAS: Record<string, Pagina> = {
+  '': 'landing',
+  entrar: 'entrar',
+  registrar: 'registrar',
+};
+
+/** Le a rota do caminho atual (ou de um caminho informado, util em testes). */
 export function lerRota(caminho: string = window.location.pathname): Rota {
   const partes = caminho.split('/').filter(Boolean);
   const indice = partes.indexOf('sysconf');
 
-  if (indice < 0 || partes.length < indice + 2) {
-    return { empresa: null, tela: 'login' };
+  /* /sysconf/<empresa>[/<tela>] */
+  const empresa =
+    indice >= 0 ? decodeURIComponent(partes[indice + 1] ?? '').trim() : '';
+
+  if (empresa) {
+    const tela = (partes[indice + 2] as Tela) ?? 'login';
+    return { empresa, tela: TELAS.includes(tela) ? tela : 'login', pagina: null };
   }
 
-  const empresa = decodeURIComponent(partes[indice + 1] ?? '') || null;
-  const tela = (partes[indice + 2] as Tela) ?? 'login';
-
-  return { empresa, tela: TELAS.includes(tela) ? tela : 'login' };
+  /* qualquer outro caminho e uma pagina publica (desconhecido -> landing) */
+  const primeira = (partes[indice >= 0 ? indice : 0] ?? '').toLowerCase();
+  return { empresa: null, tela: 'login', pagina: PAGINAS[primeira] ?? 'landing' };
 }
 
 export function urlDaTela(empresa: string, tela: Tela): string {
@@ -44,4 +65,19 @@ export function irPara(empresa: string, tela: Tela): void {
 /** Link completo para enviar ao cliente da empresa. */
 export function linkDaEmpresa(empresa: string): string {
   return `${window.location.origin}${urlDaTela(empresa, 'login')}`;
+}
+
+/* ------------------------------------------------------ paginas publicas --- */
+
+/** URL de uma pagina do site (a raiz e a landing). */
+export function urlDaPagina(pagina: Pagina): string {
+  return pagina === 'landing' ? '/' : `/${pagina}`;
+}
+
+/** Troca a URL sem recarregar (o Sysconf observa o popstate). */
+export function irParaPagina(pagina: Pagina): void {
+  const url = urlDaPagina(pagina);
+  if (window.location.pathname !== url) {
+    window.history.pushState({}, '', url);
+  }
 }

@@ -29,6 +29,9 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
   const arquivoRef = useRef<HTMLInputElement>(null);
 
   const fabrica = fabricas.find((f) => f.controle === fabricaId) ?? null;
+  /* Fábricas COM INTEGRAÇÃO ficam fixadas no topo do combo (ver lib/integracao.ts). */
+  const fabricasIntegradas = fabricas.filter((f) => f.integrada);
+  const fabricasSemIntegracao = fabricas.filter((f) => !f.integrada);
 
   /** Lojas (CLIENTE) distintas encontradas no arquivo. */
   const lojas = useMemo(() => {
@@ -152,11 +155,24 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                 onChange={(e) => onTrocarFabrica(Number(e.target.value))}
                 className="w-full rounded border border-slate-300 px-2 py-1.5"
               >
-                {fabricas.map((f) => (
-                  <option key={f.controle} value={f.controle}>
-                    {f.nome} (controle {f.controle})
-                  </option>
-                ))}
+                {fabricasIntegradas.length > 0 && (
+                  <optgroup label="★ Com integração instalada">
+                    {fabricasIntegradas.map((f) => (
+                      <option key={f.controle} value={f.controle}>
+                        ★ {f.nome}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {fabricasSemIntegracao.length > 0 && (
+                  <optgroup label="Demais fábricas (sem integração)">
+                    {fabricasSemIntegracao.map((f) => (
+                      <option key={f.controle} value={f.controle}>
+                        {f.nome} (controle {f.controle})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
               <button
                 onClick={() => arquivoRef.current?.click()}
@@ -175,6 +191,12 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                 }}
               />
             </div>
+            {fabrica && !fabrica.integrada && (
+              <p className="mt-1 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+                “{fabrica.nome}” não tem integração instalada — o arquivo será lido no modo genérico
+                (detecção de separador e colunas).
+              </p>
+            )}
             {nomeArquivo && <p className="mt-1 text-slate-500">Arquivo: {nomeArquivo}</p>}
           </div>
 

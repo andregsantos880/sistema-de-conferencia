@@ -8,8 +8,9 @@
  * (o Data API não expressa essas consultas).
  */
 import { SUPABASE_KEY, SUPABASE_URL } from './config';
+import { temIntegracao } from './integracao';
 
-export type Empresa = { id: number; slug: string; nome: string; ativo: number };
+export type Empresa = { id: number; slug: string; nome: string; ativo: number; trial_ate?: string | null };
 
 export type Pedido = {
   id: number;
@@ -34,7 +35,8 @@ export type Pedido = {
   nmlayout?: string | null;
 };
 
-export type Fabrica = { controle: number; nome: string };
+/** Fábrica = LAYOUT da empresa. `integrada` vem da lista de integrações do legado. */
+export type Fabrica = { controle: number; nome: string; integrada: boolean };
 
 export type UsuarioLogado = {
   id: number;
@@ -134,7 +136,7 @@ function listaNumero(valores: Array<number | string>): string {
 /** Resolve a empresa pelo slug da URL (cadastro é feito pelo banco). */
 export async function obterEmpresa(slug: string): Promise<Empresa | null> {
   const empresas = await buscar<Empresa[]>(
-    `empresa?select=id,slug,nome,ativo&slug=eq.${encodeURIComponent(slug)}&limit=1`,
+    `empresa?select=id,slug,nome,ativo,trial_ate&slug=eq.${encodeURIComponent(slug)}&limit=1`,
   );
   return empresas[0] ?? null;
 }
@@ -160,14 +162,58 @@ export async function login(slug: string, usuario: string, senha: string): Promi
 }
 
 /* ------------------------------------------------------------------------ */
+/* Autocadastro (landing)                                                    */
+/* ------------------------------------------------------------------------ */
+
+export type DadosRegistro = {
+  /** Nome da empresa (aparece no sistema). */
+  empresa: string;
+  /** Endereco que vai na URL: /sysconf/<slug>/login */
+  slug: string;
+  login: string;
+  senha: string;
+  nome?: string;
+  email?: string;
+};
+
+/**
+ * Cria a empresa + o primeiro usuario ADMIN (30 dias de teste) e devolve a
+ * sessao pronta. As regras ficam no RPC `registrar_empresa` (SECURITY DEFINER):
+ * a tabela `empresa` nao aceita mais escrita pela chave publishable.
+ */
+export async function registrarEmpresa(dados: DadosRegistro): Promise<UsuarioLogado> {
+  const linhas = await rpc<UsuarioLogado[]>('registrar_empresa', {
+    p_empresa: dados.empresa.trim(),
+    p_slug: dados.slug.trim().toLowerCase(),
+    p_login: dados.login.trim(),
+    p_senha: dados.senha,
+    p_nome: dados.nome?.trim() || null,
+    p_email: dados.email?.trim() || null,
+  });
+
+  const criado = Array.isArray(linhas) ? linhas[0] : undefined;
+  if (!criado) throw new Error('O cadastro foi aceito, mas a sessao nao foi devolvida. Entre com o usuario criado.');
+  return criado;
+}
+
+/* ------------------------------------------------------------------------ */
 /* Cadastros da empresa                                                      */
 /* ------------------------------------------------------------------------ */
 
+/**
+ * Fábricas da empresa. As que TÊM INTEGRAÇÃO ficam fixadas no topo da lista
+ * (ver `lib/integracao.ts`); as demais seguem em ordem alfabética abaixo.
+ */
 export async function listarFabricas(empresaId: number): Promise<Fabrica[]> {
-  const fabricas = await buscar<Fabrica[]>(
+  const fabricas = await buscar<Array<{ controle: number; nome: string }>>(
     `layout?select=controle,nome&empresa_id=eq.${empresaId}&flativo=eq.1&order=nome`,
   );
-  return [...fabricas].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  return fabricas
+    .map((fabrica) => ({ ...fabrica, integrada: temIntegracao(fabrica.nome) }))
+    .sort(
+      (a, b) =>
+        Number(b.integrada) - Number(a.integrada) || a.nome.localeCompare(b.nome, 'pt-BR'),
+    );
 }
 
 export async function listarBoxes(empresaId: number): Promise<Array<{ idbox: number; nmbox: string }>> {

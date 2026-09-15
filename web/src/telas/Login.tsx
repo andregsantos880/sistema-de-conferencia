@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { login, type Empresa, type UsuarioLogado } from '../lib/api';
-import { CHAVE_SESSAO } from '../lib/config';
+import { CHAVE_SESSAO, MARCA } from '../lib/config';
 import { somErro, somOk } from '../lib/audio';
 
 type Props = {
@@ -179,14 +179,16 @@ export default function Login({ empresa, onEntrar }: Props) {
 
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-2 text-[11px] text-slate-500">
           <a
-            href="http://www.softwerd.com"
+            href={MARCA.siteUrl}
             target="_blank"
             rel="noreferrer"
             className="text-blue-600 underline hover:text-blue-800"
           >
-            www.softwerd.com
+            {MARCA.site}
           </a>
-          <span>Supabase / PostgreSQL</span>
+          <a href="/" className="hover:text-slate-800">
+            ← Voltar ao site
+          </a>
         </div>
       </div>
     </div>
