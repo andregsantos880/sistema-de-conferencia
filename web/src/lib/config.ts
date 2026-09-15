@@ -47,9 +47,23 @@ export const COLUNAS_GRID = [
   { campo: 'pecomputador', titulo: 'PC', largura: 100 },
 ] as const;
 
-/** Opções do combo "buscar em" (espelha o cboBuscaLista do Form1). */
+/** Opções do combo "buscar em" (espelha o cboBuscaLista do Form1 e seus textos). */
 export const OPCOES_BUSCA = [
-  { valor: 'ORDCOMPRA', titulo: 'Ord. Compra' },
-  { valor: 'PECLIENTE', titulo: 'Pedido' },
-  { valor: 'ARQUIVO', titulo: 'Arquivo' },
+  { valor: 'ORDCOMPRA', titulo: 'ORD.COMPRA' },
+  { valor: 'PECLIENTE', titulo: 'PEDIDO' },
+  { valor: 'ARQUIVO', titulo: 'CARGA' },
 ] as const;
+
+/** Título do painel de conferência por alvo (o combo do legado: "", CONFERENCIA, SAIDA, ENTREGA). */
+export const TITULO_BOX: Record<number, string> = {
+  1: 'CONFERÊNCIA',
+  2: 'SAÍDA',
+  3: 'ENTREGA',
+};
+
+/** Rótulos do menu de contexto do grid — textos exatos do legado (Form1.Designer). */
+export const ROTULO_MENU: Record<number, string> = {
+  0: 'Normal',
+  1: 'Conferência',
+  2: 'Saída',
+};

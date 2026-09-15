@@ -233,4 +233,47 @@ export async function buscarValores(idlayout: number, coluna: string): Promise<I
   }));
 }
 
+/* ------------------------------------------------------------------------ */
+/* Gravação por bipagem e busca do legado                                    */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Grava o status de UMA linha. É chamado a cada bipagem com sucesso
+ * (equivalente a `UPDATE PEDIDO SET STATUS={alvo} where ID = {id}`).
+ */
+export async function atualizarStatusPorId(id: number | string, status: number): Promise<void> {
+  const resposta = await fetch(`${SUPABASE_URL}pedido?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: cabecalhos({ Prefer: 'return=minimal' }),
+    body: JSON.stringify({ status }),
+  });
+  await lerResposta<unknown>(resposta);
+}
+
+/**
+ * Busca do legado (Form1.btnBuscar_Click): remonta o grid com
+ *   SELECT PEDIDO.*, LAYOUT.Nome AS Nmlayout FROM PEDIDO
+ *     JOIN LAYOUT ON PEDIDO.Idlayout=LAYOUT.CONTROLE
+ *    WHERE Idlayout = X AND TRIM(<coluna>) IN('...')
+ * Como usa JOIN/TRIM, vai pelo RPC exec_sql.
+ */
+export async function buscarPedidosPorFiltro(
+  idlayout: number,
+  coluna: string,
+  valores: string[],
+): Promise<Pedido[]> {
+  const colunaSegura = ['ORDCOMPRA', 'PECLIENTE', 'ARQUIVO'].includes(coluna) ? coluna : 'ORDCOMPRA';
+  const limpos = valores.map((v) => v.trim()).filter(Boolean);
+  if (limpos.length === 0) return [];
+
+  const lista = limpos.map((v) => `'${v.replace(/'/g, "''")}'`).join(',');
+  const sql =
+    `SELECT PEDIDO.*, LAYOUT.Nome AS Nmlayout FROM PEDIDO JOIN LAYOUT ON PEDIDO.Idlayout=LAYOUT.CONTROLE ` +
+    `WHERE Idlayout = ${Number(idlayout)} AND TRIM(${colunaSegura}) IN(${lista})`;
+
+  const bruto = await rpc<unknown>('exec_sql', { sql_query: sql });
+  const linhas = typeof bruto === 'string' ? (JSON.parse(bruto) as Pedido[]) : (bruto as Pedido[]);
+  return linhas ?? [];
+}
+
 export { listaTexto, listaNumero };

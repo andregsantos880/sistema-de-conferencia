@@ -57,6 +57,48 @@ exemplo/pedidos-teste.csv   arquivo de exemplo (separador `;`, com cabeçalho)
 - **Paginação**: o PostgREST devolve no máximo 1000 linhas por requisição; `listarPedidos` pagina
   com o header `Range` até acabar.
 
+## Regras de negócio herdadas do legado (`App/Form1.cs`)
+
+Implementadas em `src/lib/regrasConferencia.ts` (módulo puro, sem I/O) e usadas por
+`telas/Conferencia.tsx`:
+
+- **Alvo da conferência**: `1` = CONFERÊNCIA (entrada), `2` = SAÍDA, `3` = ENTREGA. O botão escolhe o
+  alvo e abre o painel de conferência.
+- **A etiqueta só avança um passo**: precisa estar em `alvo - 1`. Não existe baixa sem bipar a peça
+  (objetivo do sistema: evitar esquecimento no transporte).
+- **Desfechos da bipagem** (sons equivalentes ao `Util.GetSom`):
+
+  | Situação da linha | Mensagem | Som |
+  |---|---|---|
+  | já está no alvo | `Etiqueta já lida !` | Exclamation |
+  | está em `alvo - 1` | grava e avança para o alvo | success (Air_Horn quando conclui) |
+  | está em outro status | `Esta etiqueta está para <DsStatus>` | ringout |
+  | não encontrada | `Etiqueta não encontrada !` | Error |
+
+- **Gravação a cada bipagem com sucesso** — `UPDATE pedido SET status = <alvo> WHERE id = <id>`
+  na hora (decisão do cliente; o legado só gravava ao clicar Fechar).
+- **No sucesso o painel mostra o resultado da bipagem**: **box de destino** (tabela `box`, via
+  `pedido.idbox`), **peça** (produto · descrição), **quantidade** e **pedido** (ord. compra), com
+  anúncio do box por voz — o checkbox "anunciar box (voz)" desliga o áudio.
+- **Restante**: `{linhas em alvo+1} de {linhas fora do alvo + linhas em alvo+1}` — fórmula do
+  `ValidaRestante()`.
+- **Menu de contexto**: "Alterar para Normal / Conferência / Saída" altera apenas as linhas
+  selecionadas e grava **por ETIQUETA** (`UPDATE ... WHERE etiqueta IN(...)`), como no legado.
+- **Busca**: opções ORD.COMPRA / PEDIDO / CARGA; a lista de valores vem de `GROUP BY` (RPC `exec_sql`);
+  o campo filtra a lista no cliente; "Buscar" **substitui** o conteúdo do grid (e mostra
+  "Nada encontrado." quando não há resultado).
+- **Layout fixo**: cabeçalho, barra de ações e contadores ficam fixos — **só o grid rola**
+  (raiz `h-screen overflow-hidden`, área do grid `flex-1 min-h-0 overflow-auto`).
+
+### Divergências conscientes
+
+| Legado | Aqui | Motivo |
+|---|---|---|
+| grid vazio até clicar em Buscar | carrega os pedidos da fábrica ao abrir/trocar | praticidade; a busca continua substituindo o conteúdo |
+| modal "Continuar conferindo?" em loop quando a resposta é "No" | aviso único | o loop era um bug do legado |
+| campo de etiqueta como senha (`UseSystemPasswordChar`) | texto visível | cosmético |
+| grava só no Fechar | grava a cada bipagem | decisão do cliente |
+
 ## Pendências conhecidas
 
 1. **Parsers de layout**: só o `CSV Padrão` tem mapeamento em `lib/parsers.ts`. Os outros arquivos

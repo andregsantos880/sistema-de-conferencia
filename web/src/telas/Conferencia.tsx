@@ -1,15 +1,42 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  rowSelectionFeature,
+  tableFeatures,
+  useTable,
+  type ColumnDef,
+  type RowSelectionState,
+} from '@tanstack/react-table';
+import {
   atualizarStatusPorEtiquetas,
-  atualizarStatusPorIds,
+  atualizarStatusPorId,
+  buscarPedidosPorFiltro,
   buscarValores,
+  listarBoxes,
   listarPedidos,
   type Fabrica,
   type ItemBusca,
   type Pedido,
 } from '../lib/api';
-import { COLUNAS_GRID, OPCOES_BUSCA, STATUS } from '../lib/config';
-import { somErro, somFechar, somOk } from '../lib/audio';
+import { COLUNAS_GRID, OPCOES_BUSCA, ROTULO_MENU, STATUS, TITULO_BOX } from '../lib/config';
+import {
+  calcularRestante,
+  classificarLeitura,
+  montarInfoBipagem,
+  statusDe,
+  type Alvo,
+  type InfoBipagem,
+  type Som,
+} from '../lib/regrasConferencia';
+import {
+  falarBox,
+  somAirHorn,
+  somBox,
+  somError,
+  somExclamation,
+  somFechar,
+  somRingout,
+  somSuccess,
+} from '../lib/audio';
 
 type Props = {
   usuario: string;
@@ -20,16 +47,58 @@ type Props = {
   onSair: () => void;
 };
 
-type MenuContexto = { x: number; y: number; id: number } | null;
+type MenuContexto = { x: number; y: number; id: string } | null;
+
+/* TanStack Table v9: as features precisam ser registradas explicitamente. */
+const features = tableFeatures({ rowSelectionFeature });
+
+const columns: Array<ColumnDef<typeof features, Pedido>> = COLUNAS_GRID.map((coluna) => ({
+  id: coluna.campo,
+  accessorFn: (linha: Pedido) => (linha as unknown as Record<string, unknown>)[coluna.campo],
+  header: coluna.titulo,
+  cell: (info) => {
+    const valor = info.getValue();
+    if (coluna.campo === 'flbloqueio') return valor ? 'SIM' : '';
+    return String(valor ?? '');
+  },
+}));
+
+/** Largura mínima por coluna (o `size` do TanStack v9 só existe com columnSizing registrado). */
+const LARGURAS: Record<string, number> = Object.fromEntries(
+  COLUNAS_GRID.map((coluna) => [coluna.campo, coluna.largura]),
+);
+
+function tocarSom(som: Som) {
+  switch (som) {
+    case 'success':
+      somSuccess();
+      break;
+    case 'exclamation':
+      somExclamation();
+      break;
+    case 'air_horn':
+      somAirHorn();
+      break;
+    case 'ringout':
+      somRingout();
+      break;
+    case 'box':
+      somBox();
+      break;
+    default:
+      somError();
+  }
+}
 
 /**
- * Recriação do Form1 (conferência de pedidos).
- * Mantém a estrutura do WinForms: barra de ações, combo de fábrica, busca,
- * contadores por status, grid colorido por status e o painel de conferência
- * (FrameGroupBox) com o número do box em destaque e o campo de etiqueta.
+ * Recriação do Form1 (conferência de peças de móveis planejados).
  *
- * As fábricas e a fábrica ativa vêm do Sysconf para que a seleção sobreviva
- * à ida e volta da tela de importação.
+ * Regras herdadas do legado (detalhadas em src/lib/regrasConferencia.ts):
+ *  - o alvo da conferência é 1=CONFERENCIA, 2=SAIDA, 3=ENTREGA;
+ *  - a etiqueta só avança um passo (precisa estar em alvo-1);
+ *  - não existe baixa sem bipar a peça;
+ *  - CADA BIPAGEM COM SUCESSO É GRAVADA NO BANCO na hora (decisão do cliente);
+ *  - ao dar certo, o painel mostra o BOX de destino, a peça, a quantidade e o pedido.
  */
 export default function Conferencia({
   usuario,
@@ -40,42 +109,63 @@ export default function Conferencia({
   onSair,
 }: Props) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [boxes, setBoxes] = useState<Array<{ idbox: number; nmbox: string }>>([]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
+  const [filtroUsado, setFiltroUsado] = useState('');
 
-  const [selecionados, setSelecionados] = useState<Set<number>>(new Set());
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [menu, setMenu] = useState<MenuContexto>(null);
 
   const [colunaBusca, setColunaBusca] = useState<string>('ORDCOMPRA');
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [valoresBusca, setValoresBusca] = useState<ItemBusca[]>([]);
   const [valoresMarcados, setValoresMarcados] = useState<Set<string>>(new Set());
-  const [filtroAplicado, setFiltroAplicado] = useState<string[]>([]);
+  const [campoBusca, setCampoBusca] = useState('');
 
-  const [conferindo, setConferindo] = useState(false);
-  const [etiquetaAtual, setEtiquetaAtual] = useState('');
+  const [alvo, setAlvo] = useState<Alvo | null>(null);
   const [campoEtiqueta, setCampoEtiqueta] = useState('');
+  const [etiquetaLida, setEtiquetaLida] = useState('');
+  const [info, setInfo] = useState<InfoBipagem | null>(null);
   const [mensagem, setMensagem] = useState('');
+  const [anunciarBox, setAnunciarBox] = useState(true);
+  const [gravando, setGravando] = useState(false);
+
   const inputEtiqueta = useRef<HTMLInputElement>(null);
+  const requisicaoAtual = useRef(0);
+
+  const nomeFabrica = fabricas.find((f) => f.controle === fabricaId)?.nome ?? '';
 
   const carregarPedidos = useCallback(async (idlayout: number) => {
+    // Cada carga recebe um número; respostas atrasadas são descartadas.
+    const requisicao = ++requisicaoAtual.current;
+
     setCarregando(true);
     setErro('');
     try {
       const lista = await listarPedidos(idlayout);
+      if (requisicao !== requisicaoAtual.current) return;
+
       setPedidos(lista);
-      setSelecionados(new Set());
-      setFiltroAplicado([]);
+      setRowSelection({});
+      setFiltroUsado('');
     } catch (falha) {
+      if (requisicao !== requisicaoAtual.current) return;
       setErro(falha instanceof Error ? falha.message : 'Falha ao carregar os pedidos.');
     } finally {
-      setCarregando(false);
+      if (requisicao === requisicaoAtual.current) setCarregando(false);
     }
   }, []);
 
   useEffect(() => {
     if (fabricaId !== null) void carregarPedidos(fabricaId);
   }, [fabricaId, carregarPedidos]);
+
+  useEffect(() => {
+    listarBoxes()
+      .then(setBoxes)
+      .catch(() => setBoxes([]));
+  }, []);
 
   useEffect(() => {
     function fecharMenu() {
@@ -90,131 +180,237 @@ export default function Conferencia({
       if (evento.key === 'Escape') {
         setMenu(null);
         setBuscaAberta(false);
-        setConferindo(false);
+        if (alvo !== null) {
+          somFechar();
+          setAlvo(null);
+        }
       }
     }
     window.addEventListener('keydown', tecla);
     return () => window.removeEventListener('keydown', tecla);
-  }, []);
+  }, [alvo]);
 
-  /* ------------------------------------------------------------ contadores */
-  const contadores = useMemo(() => {
-    const total = pedidos.length;
-    const por = (s: number) => pedidos.filter((p) => Number(p.status ?? 0) === s).length;
-    return { total, normal: por(0), conferido: por(1), saida: por(2), entrega: por(3) };
-  }, [pedidos]);
-
-  const nomeFabrica = useMemo(
-    () => fabricas.find((f) => f.controle === fabricaId)?.nome ?? '',
-    [fabricas, fabricaId],
+  /* ------------------------------------------------------------ derivados -- */
+  const nomeDoBox = useCallback(
+    (pedido: Pedido) => boxes.find((b) => b.idbox === Number(pedido.idbox))?.nmbox,
+    [boxes],
   );
 
-  /* --------------------------------------------------------------- filtros */
-  const visiveis = useMemo(() => {
-    if (filtroAplicado.length === 0) return pedidos;
-    return pedidos.filter((p) => filtroAplicado.includes(valorDaColuna(p, colunaBusca)));
-  }, [pedidos, filtroAplicado, colunaBusca]);
+  const contadores = useMemo(() => {
+    const por = (s: number) => pedidos.filter((p) => statusDe(p) === s).length;
+    return {
+      total: pedidos.length,
+      normal: por(0),
+      conferido: por(1),
+      saida: por(2),
+      entrega: por(3),
+    };
+  }, [pedidos]);
 
-  function valorDaColuna(pedido: Pedido, coluna: string): string {
-    const chave = coluna.toLowerCase();
-    const valor = (pedido as unknown as Record<string, unknown>)[chave];
-    return String(valor ?? '');
+  const restante = useMemo(
+    () => (alvo === null ? null : calcularRestante(pedidos, alvo)),
+    [pedidos, alvo],
+  );
+
+  const idsSelecionados = useMemo(
+    () => Object.keys(rowSelection).filter((id) => rowSelection[id]),
+    [rowSelection],
+  );
+
+  const table = useTable({
+    key: 'conferencia',
+    features,
+    columns,
+    data: pedidos,
+    getRowId: (linha: Pedido) => String(linha.id),
+    state: { rowSelection },
+    onRowSelectionChange: setRowSelection,
+  });
+
+  /* -------------------------------------------------------- conferência ---- */
+  function abrirPainel(novoAlvo: Alvo) {
+    if (pedidos.length === 0) return;
+
+    setAlvo(novoAlvo);
+    setCampoEtiqueta('');
+    setInfo(null);
+    setEtiquetaLida('');
+    setMensagem('');
+    setTimeout(() => inputEtiqueta.current?.focus(), 50);
   }
 
-  /* ----------------------------------------------------------- operações -- */
-  async function alterarStatus(ids: number[], status: number) {
-    if (ids.length === 0) return;
-    const conjunto = new Set(ids);
-    setPedidos((atual) => atual.map((p) => (conjunto.has(p.id) ? { ...p, status } : p)));
-    setSelecionados(new Set());
+  function fecharPainel() {
+    somFechar();
+    setAlvo(null);
+    setInfo(null);
+    setMensagem('');
+  }
+
+  /**
+   * Bipagem: aplica as regras do legado e, no sucesso, GRAVA NO BANCO na hora.
+   */
+  async function conferirEtiqueta(valor: string) {
+    if (alvo === null) return;
+
+    const resultado = classificarLeitura(pedidos, valor, alvo);
+
+    if (resultado.tipo === 'vazio') return;
+
+    setCampoEtiqueta('');
+
+    if (resultado.tipo === 'naoEncontrada') {
+      tocarSom(resultado.som);
+      setInfo(null);
+      setMensagem(resultado.mensagem);
+      return;
+    }
+
+    if (resultado.tipo === 'jaLida') {
+      tocarSom(resultado.som);
+      setEtiquetaLida(String(resultado.linha.etiqueta ?? '').trim());
+      setInfo(montarInfoBipagem(resultado.linha, nomeDoBox(resultado.linha)));
+      setMensagem(resultado.mensagem);
+      return;
+    }
+
+    if (resultado.tipo === 'bloqueada') {
+      tocarSom(resultado.som);
+      setEtiquetaLida(String(resultado.linha.etiqueta ?? '').trim());
+      setInfo(montarInfoBipagem(resultado.linha, nomeDoBox(resultado.linha)));
+      setMensagem(resultado.mensagem);
+      return;
+    }
+
+    // Sucesso: baixa na hora (regra definida pelo cliente — não espera o Fechar).
+    setGravando(true);
+    try {
+      await atualizarStatusPorId(resultado.linha.id, alvo);
+
+      setPedidos((atual) =>
+        atual.map((linha) => (linha.id === resultado.linha.id ? resultado.linhaAtualizada : linha)),
+      );
+
+      const box = nomeDoBox(resultado.linhaAtualizada);
+      setEtiquetaLida(String(resultado.linhaAtualizada.etiqueta ?? '').trim());
+      setInfo(montarInfoBipagem(resultado.linhaAtualizada, box));
+      setMensagem(resultado.mensagem);
+
+      tocarSom(resultado.som);
+
+      // O legado toca o recurso "BOX"; aqui mostramos e (opcionalmente) falamos o box.
+      tocarSom('box');
+      if (anunciarBox && box) falarBox(box);
+    } catch (falha) {
+      tocarSom('error');
+      setMensagem(falha instanceof Error ? falha.message : 'Falha ao gravar a bipagem.');
+    } finally {
+      setGravando(false);
+    }
+  }
+
+  /* ------------------------------------------------------- menu contexto --- */
+  async function alterarStatusSelecionados(status: number) {
+    const linhas = table.getSelectedRowModel().rows.map((r) => r.original);
+    if (linhas.length === 0) return;
+
+    const etiquetas = linhas.map((l) => String(l.etiqueta ?? '').trim()).filter(Boolean);
+
+    setPedidos((atual) =>
+      atual.map((l) => (etiquetas.includes(String(l.etiqueta ?? '').trim()) ? { ...l, status } : l)),
+    );
+    setRowSelection({});
 
     try {
-      await atualizarStatusPorIds(ids, status);
-      somOk();
-      setMensagem(`${ids.length} pedido(s) alterado(s) para ${STATUS[status].rotulo}.`);
+      await atualizarStatusPorEtiquetas(etiquetas, status); // legado: UPDATE ... WHERE ETIQUETA IN(...)
+      tocarSom('success');
+      setMensagem(`${etiquetas.length} etiqueta(s) alterada(s) para ${STATUS[status].rotulo}.`);
     } catch (falha) {
-      somErro();
-      setErro(falha instanceof Error ? falha.message : 'Falha ao atualizar o status.');
+      tocarSom('error');
+      setErro(falha instanceof Error ? falha.message : 'Falha ao alterar o status.');
       if (fabricaId !== null) void carregarPedidos(fabricaId);
     }
   }
 
-  async function alterarStatusPorEtiqueta(etiquetas: string[], status: number) {
-    const limpas = etiquetas.map((e) => e.trim()).filter(Boolean);
-    if (limpas.length === 0) return;
+  function cliqueLinha(id: string, evento: React.MouseEvent, etiqueta: string) {
+    if (evento.ctrlKey || evento.metaKey) {
+      // RowSelectionState no v9 guarda apenas `true` — desmarcar é remover a chave.
+      setRowSelection((atual) => {
+        const novo = { ...atual };
+        if (novo[id]) delete novo[id];
+        else novo[id] = true;
+        return novo;
+      });
+    } else {
+      setRowSelection({ [id]: true });
+    }
+    setEtiquetaLida(etiqueta);
+    setMensagem('');
+  }
 
+  /* ----------------------------------------------------------------- busca -- */
+  async function abrirBusca() {
+    if (fabricaId === null) return;
     try {
-      await atualizarStatusPorEtiquetas(limpas, status);
-      const alvo = new Set(limpas.map((e) => e.toUpperCase()));
-      setPedidos((atual) =>
-        atual.map((p) => (alvo.has(String(p.etiqueta ?? '').trim().toUpperCase()) ? { ...p, status } : p)),
-      );
-      somOk();
-      setMensagem(`${limpas.length} etiqueta(s) alterada(s) para ${STATUS[status].rotulo}.`);
+      setValoresBusca(await buscarValores(fabricaId, colunaBusca));
+      setValoresMarcados(new Set());
+      setCampoBusca('');
+      setBuscaAberta(true);
     } catch (falha) {
-      somErro();
-      setErro(falha instanceof Error ? falha.message : 'Falha ao atualizar por etiqueta.');
+      tocarSom('error');
+      setErro(falha instanceof Error ? falha.message : 'Falha ao carregar os valores da busca.');
     }
   }
 
-  /** Leitura de etiqueta no painel de conferência (lógica do ChecarEtiqueta). */
-  async function conferirEtiquetaLeitura(valor: string) {
-    const etiqueta = valor.trim();
-    if (!etiqueta) return;
+  const valoresVisiveis = useMemo(
+    () =>
+      campoBusca
+        ? valoresBusca.filter((v) => v.descricao.includes(campoBusca))
+        : valoresBusca,
+    [valoresBusca, campoBusca],
+  );
 
-    const encontrado = pedidos.find(
-      (p) => String(p.etiqueta ?? '').trim().toUpperCase() === etiqueta.toUpperCase(),
-    );
+  async function aplicarBusca() {
+    if (fabricaId === null) return;
 
-    if (!encontrado) {
-      somErro();
-      setMensagem(`Etiqueta ${etiqueta} não encontrada nesta fábrica.`);
-      setCampoEtiqueta('');
+    const valores = [...valoresMarcados];
+    if (valores.length === 0) {
+      setBuscaAberta(false);
       return;
     }
 
-    setEtiquetaAtual(String(encontrado.etiqueta ?? ''));
-    setCampoEtiqueta('');
-    // No legado a leitura também destaca a linha, o que preenche CLIENTE/PRODUTO do painel.
-    setSelecionados(new Set([encontrado.id]));
-    await alterarStatusPorEtiqueta([etiqueta], 1);
-  }
-
-  function cliqueLinha(pedido: Pedido, evento: React.MouseEvent) {
-    setSelecionados((atual) => {
-      const novo = new Set(atual);
-      if (evento.ctrlKey || evento.metaKey) {
-        if (novo.has(pedido.id)) novo.delete(pedido.id);
-        else novo.add(pedido.id);
-      } else {
-        novo.clear();
-        novo.add(pedido.id);
+    setBuscaAberta(false);
+    setCarregando(true);
+    try {
+      const encontrados = await buscarPedidosPorFiltro(fabricaId, colunaBusca, valores);
+      if (encontrados.length === 0) {
+        setMensagem('Nada encontrado.');
+        tocarSom('exclamation');
+        return;
       }
-      return novo;
-    });
-    setEtiquetaAtual(String(pedido.etiqueta ?? ''));
+
+      setPedidos(encontrados); // legado: MontarGrid(pedidos) — substitui o conteúdo do grid
+      setRowSelection({});
+      setFiltroUsado(`${colunaBusca}: ${valores.join(', ')}`);
+      setMensagem(`${encontrados.length} registro(s) encontrado(s).`);
+    } catch (falha) {
+      tocarSom('error');
+      setErro(falha instanceof Error ? falha.message : 'Falha na busca.');
+    } finally {
+      setCarregando(false);
+    }
   }
 
-  const pedidoSelecionado = useMemo(
-    () => pedidos.find((p) => selecionados.has(p.id)) ?? null,
-    [pedidos, selecionados],
-  );
-
-  /* ------------------------------------------------------------- exportação */
+  /* -------------------------------------------------------------- exportação */
   function exportarCsv() {
-    const base = filtroAplicado.length > 0 ? visiveis : pedidos;
-    if (base.length === 0) {
+    if (pedidos.length === 0) {
       setMensagem('Nada para exportar.');
       return;
     }
 
-    const colunas = COLUNAS_GRID.map((c) => c.campo);
     const linhas = [
       COLUNAS_GRID.map((c) => c.titulo).join(';'),
-      ...base.map((p) =>
-        colunas
-          .map((campo) => String((p as unknown as Record<string, unknown>)[campo] ?? '').replace(/;/g, ','))
-          .join(';'),
+      ...pedidos.map((p) =>
+        COLUNAS_GRID.map((c) => String((p as unknown as Record<string, unknown>)[c.campo] ?? '').replace(/;/g, ',')).join(';'),
       ),
     ];
 
@@ -227,50 +423,25 @@ export default function Conferencia({
     URL.revokeObjectURL(url);
   }
 
-  /* ------------------------------------------------------------------ busca */
-  async function abrirBusca() {
-    if (fabricaId === null) return;
-    try {
-      const valores = await buscarValores(fabricaId, colunaBusca);
-      setValoresBusca(valores);
-      setValoresMarcados(new Set());
-      setBuscaAberta(true);
-    } catch (falha) {
-      somErro();
-      setErro(falha instanceof Error ? falha.message : 'Falha ao carregar os valores da busca.');
-    }
-  }
-
-  function aplicarBusca() {
-    setFiltroAplicado([...valoresMarcados]);
-    setBuscaAberta(false);
-    setMensagem(
-      valoresMarcados.size === 0
-        ? 'Filtro removido.'
-        : `${valoresMarcados.size} valor(es) filtrado(s) em ${colunaBusca}.`,
-    );
-  }
-
-  const idsSelecionados = [...selecionados];
-
   return (
-    <div className="flex min-h-full flex-col bg-slate-100">
-      {/* ----------------------------------------------------------- topo -- */}
-      <header className="flex items-center justify-between bg-slate-900 px-4 py-2 text-white">
+    /* h-screen + overflow-hidden: só o grid rola; topo e contadores ficam fixos. */
+    <div className="flex h-screen flex-col overflow-hidden bg-slate-100">
+      <header className="flex shrink-0 items-center justify-between bg-slate-900 px-4 py-2 text-white">
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold tracking-wide">SysConf</span>
           <span className="rounded bg-slate-700 px-2 py-0.5 text-[11px]">{nomeFabrica || 'sem fábrica'}</span>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-slate-300">Usuário: <strong className="text-white">{usuario}</strong></span>
+          <span className="text-slate-300">
+            Usuário: <strong className="text-white">{usuario}</strong>
+          </span>
           <button onClick={onSair} className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700">
             Sair
           </button>
         </div>
       </header>
 
-      {/* -------------------------------------------------------- toolbar -- */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-300 bg-slate-200 px-3 py-2 text-xs">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-300 bg-slate-200 px-3 py-2 text-xs">
         <button
           onClick={onAbrirImportacao}
           className="rounded border border-slate-400 bg-white px-3 py-1.5 font-semibold hover:bg-slate-50"
@@ -278,19 +449,22 @@ export default function Conferencia({
           Importar
         </button>
         <button
-          onClick={() => {
-            setConferindo(true);
-            setTimeout(() => inputEtiqueta.current?.focus(), 50);
-          }}
+          onClick={() => abrirPainel(1)}
           className="rounded border border-emerald-600 bg-emerald-600 px-3 py-1.5 font-semibold text-white hover:bg-emerald-700"
         >
           Conferência
         </button>
         <button
-          onClick={() => void alterarStatus(idsSelecionados, 2)}
+          onClick={() => abrirPainel(2)}
           className="rounded border border-orange-500 bg-white px-3 py-1.5 font-semibold text-orange-700 hover:bg-orange-50"
         >
           Saída
+        </button>
+        <button
+          onClick={() => abrirPainel(3)}
+          className="rounded border border-blue-600 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:bg-blue-50"
+        >
+          Entrega
         </button>
         <button
           onClick={exportarCsv}
@@ -338,22 +512,24 @@ export default function Conferencia({
           Buscar
         </button>
 
-        {filtroAplicado.length > 0 && (
+        {filtroUsado && (
           <span className="rounded bg-blue-600 px-2 py-0.5 text-[11px] text-white">
-            filtro: {filtroAplicado.length} valor(es)
-            <button onClick={() => setFiltroAplicado([])} className="ml-2 underline">
+            filtro: {filtroUsado}
+            <button
+              onClick={() => fabricaId !== null && void carregarPedidos(fabricaId)}
+              className="ml-2 underline"
+            >
               limpar
             </button>
           </span>
         )}
 
         <span className="ml-auto text-slate-600">
-          {carregando ? 'Carregando...' : `${visiveis.length} de ${pedidos.length} registro(s)`}
+          {carregando ? 'Carregando...' : `${pedidos.length} registro(s)`}
         </span>
       </div>
 
-      {/* ------------------------------------------------------- contadores -- */}
-      <div className="flex flex-wrap items-center gap-5 border-b border-slate-300 bg-white px-4 py-2 text-xs font-semibold">
+      <div className="flex shrink-0 flex-wrap items-center gap-5 border-b border-slate-300 bg-white px-4 py-2 text-xs font-semibold">
         <span className="contador-normal">Normal: {contadores.normal}</span>
         <span className="contador-conferido">Conferido: {contadores.conferido}</span>
         <span className="contador-saida">Saída: {contadores.saida}</span>
@@ -365,58 +541,59 @@ export default function Conferencia({
       </div>
 
       {erro && (
-        <div className="border-b border-red-300 bg-red-50 px-4 py-2 text-xs text-red-700">{erro}</div>
+        <div className="shrink-0 border-b border-red-300 bg-red-50 px-4 py-2 text-xs text-red-700">{erro}</div>
       )}
-      {mensagem && (
-        <div className="border-b border-blue-300 bg-blue-50 px-4 py-2 text-xs text-blue-800">{mensagem}</div>
+      {mensagem && !alvo && (
+        <div className="shrink-0 border-b border-blue-300 bg-blue-50 px-4 py-2 text-xs text-blue-800">
+          {mensagem}
+        </div>
       )}
 
-      {/* -------------------------------------------------------------- grid */}
-      <div className="tabela-scroll flex-1 overflow-auto">
+      {/* Só esta área rola. */}
+      <div className="tabela-scroll min-h-0 flex-1 overflow-auto">
         <table className="sem-selecao w-full border-collapse text-xs">
           <thead className="sticky top-0 z-10 bg-slate-700 text-white">
-            <tr>
-              {COLUNAS_GRID.map((coluna) => (
-                <th
-                  key={coluna.campo}
-                  style={{ minWidth: coluna.largura }}
-                  className="border border-slate-600 px-2 py-1.5 text-left font-semibold"
-                >
-                  {coluna.titulo}
-                </th>
-              ))}
-            </tr>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    style={{ minWidth: LARGURAS[header.column.id] }}
+                    className="border border-slate-600 px-2 py-1.5 text-left font-semibold"
+                  >
+                    {header.isPlaceholder ? null : <table.FlexRender header={header} />}
+                  </th>
+                ))}
+              </tr>
+            ))}
           </thead>
           <tbody>
-            {visiveis.map((pedido) => {
-              const status = Number(pedido.status ?? 0);
+            {table.getRowModel().rows.map((row) => {
+              const status = statusDe(row.original);
               const classe = STATUS[status]?.classe ?? 'linha-0';
+
               return (
                 <tr
-                  key={pedido.id}
-                  className={`${classe} ${selecionados.has(pedido.id) ? 'selecionada' : ''} cursor-pointer`}
-                  onClick={(e) => cliqueLinha(pedido, e)}
+                  key={row.id}
+                  className={`${classe} ${row.getIsSelected() ? 'selecionada' : ''} cursor-pointer`}
+                  onClick={(e) => cliqueLinha(row.id, e, String(row.original.etiqueta ?? '').trim())}
                   onContextMenu={(e) => {
                     e.preventDefault();
-                    cliqueLinha(pedido, { ctrlKey: false } as React.MouseEvent);
-                    setMenu({ x: e.clientX, y: e.clientY, id: pedido.id });
+                    if (!row.getIsSelected()) setRowSelection({ [row.id]: true });
+                    setMenu({ x: e.clientX, y: e.clientY, id: row.id });
                   }}
                 >
-                  {COLUNAS_GRID.map((coluna) => (
-                    <td key={coluna.campo} className="truncate border border-slate-300 px-2 py-1">
-                      {coluna.campo === 'flbloqueio'
-                        ? pedido.flbloqueio
-                          ? 'SIM'
-                          : ''
-                        : String((pedido as unknown as Record<string, unknown>)[coluna.campo] ?? '')}
+                  {row.getAllCells().map((cell) => (
+                    <td key={cell.id} className="truncate border border-slate-300 px-2 py-1">
+                      <table.FlexRender cell={cell} />
                     </td>
                   ))}
                 </tr>
               );
             })}
-            {!carregando && visiveis.length === 0 && (
+            {!carregando && pedidos.length === 0 && (
               <tr>
-                <td colSpan={COLUNAS_GRID.length} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={columns.length} className="px-3 py-6 text-center text-slate-500">
                   Nenhum pedido para esta fábrica. Use <strong>Importar</strong> para carregar um arquivo.
                 </td>
               </tr>
@@ -425,123 +602,151 @@ export default function Conferencia({
         </table>
       </div>
 
-      {/* --------------------------------------------------- menu de contexto */}
       {menu && (
         <div
-          className="fixed z-30 w-56 rounded border border-slate-300 bg-white py-1 text-xs shadow-xl"
+          className="fixed z-30 w-60 rounded border border-slate-300 bg-white py-1 text-xs shadow-xl"
           style={{ left: menu.x, top: menu.y }}
         >
           {[0, 1, 2].map((status) => (
             <button
               key={status}
               className="block w-full px-3 py-1.5 text-left hover:bg-slate-100"
-              onClick={() => void alterarStatus(idsSelecionados.length > 0 ? idsSelecionados : [menu.id], status)}
+              onClick={() => void alterarStatusSelecionados(status)}
             >
-              Alterar para {STATUS[status].rotulo}
+              Alterar para {ROTULO_MENU[status]}
             </button>
           ))}
-          <button
-            className="block w-full border-t border-slate-200 px-3 py-1.5 text-left hover:bg-slate-100"
-            onClick={() => void alterarStatusPorEtiqueta([String(pedidoSelecionado?.etiqueta ?? '')], 3)}
-          >
-            Registar Entrega
-          </button>
         </div>
       )}
 
-      {/* ------------------------------------------------- painel de busca -- */}
       {buscaAberta && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="overlay-surgir w-full max-w-[520px] rounded-lg border border-slate-300 bg-white shadow-2xl">
-            <div className="border-b border-slate-200 px-4 py-2 text-sm font-semibold">
-              Buscar por {colunaBusca}
+          <div className="overlay-surgir w-full max-w-[560px] rounded-lg border border-slate-300 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
+              <span className="text-sm font-semibold">Buscar por {colunaBusca}</span>
+              <span className="text-xs text-slate-500">{valoresMarcados.size} selecionado(s)</span>
             </div>
+
+            <div className="border-b border-slate-200 px-4 py-2">
+              <input
+                autoFocus
+                value={campoBusca}
+                onChange={(e) => setCampoBusca(e.target.value)}
+                placeholder="filtrar a lista..."
+                className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs"
+              />
+            </div>
+
             <div className="max-h-[45vh] overflow-auto p-4 text-xs">
-              {valoresBusca.length === 0 && <p className="text-slate-500">Nenhum valor encontrado.</p>}
-              {valoresBusca.map((item) => (
+              {valoresVisiveis.length === 0 && <p className="text-slate-500">Nenhum valor encontrado.</p>}
+              {valoresVisiveis.map((item) => (
                 <label key={item.valor} className="flex items-center gap-2 py-0.5">
                   <input
                     type="checkbox"
                     checked={valoresMarcados.has(item.valor)}
-                    onChange={(e) => {
+                    onChange={(e) =>
                       setValoresMarcados((atual) => {
                         const novo = new Set(atual);
                         if (e.target.checked) novo.add(item.valor);
                         else novo.delete(item.valor);
                         return novo;
-                      });
-                    }}
+                      })
+                    }
                   />
                   {item.descricao}
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-2">
-              <span className="text-xs text-slate-500">{valoresMarcados.size} selecionado(s)</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setBuscaAberta(false)}
-                  className="rounded border border-slate-300 px-3 py-1 text-xs hover:bg-slate-100"
-                >
-                  Fechar
-                </button>
-                <button
-                  onClick={aplicarBusca}
-                  className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                >
-                  Incluir lojas selecionadas
-                </button>
-              </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-2">
+              <button
+                onClick={() => setBuscaAberta(false)}
+                className="rounded border border-slate-300 px-3 py-1 text-xs hover:bg-slate-100"
+              >
+                Fechar
+              </button>
+              <button
+                onClick={() => void aplicarBusca()}
+                className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+              >
+                Incluir lojas selecionadas
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* -------------------------------------------- painel de conferência -- */}
-      {conferindo && (
+      {/* ------------------------------------------------ painel de conferência */}
+      {alvo !== null && (
         <div className="fixed inset-0 z-50 flex flex-col bg-slate-800/95 p-4 text-white">
-          <div className="flex items-center justify-between border-b border-slate-600 pb-2">
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-600 pb-2">
             <div className="text-sm font-semibold">
-              Conferência — {nomeFabrica}
+              {TITULO_BOX[alvo]} — {nomeFabrica}
               <span className="ml-3 text-xs text-slate-300">
-                Normal: {contadores.normal} · Conferido: {contadores.conferido} · Saída:{' '}
-                {contadores.saida} · Entrega: {contadores.entrega}
+                Restante: {restante?.texto.replace('Restante: ', '')} · Normal: {contadores.normal} · Conferido:{' '}
+                {contadores.conferido} · Saída: {contadores.saida} · Entrega: {contadores.entrega}
               </span>
             </div>
-            <button
-              onClick={() => {
-                somFechar();
-                setConferindo(false);
-              }}
-              className="rounded border border-slate-500 px-3 py-1 text-xs hover:bg-slate-700"
-            >
-              Fechar (Esc)
-            </button>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1 text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={anunciarBox}
+                  onChange={(e) => setAnunciarBox(e.target.checked)}
+                />
+                anunciar box (voz)
+              </label>
+              <button
+                onClick={fecharPainel}
+                className="rounded border border-slate-500 px-3 py-1 text-xs hover:bg-slate-700"
+              >
+                Fechar (Esc)
+              </button>
+            </div>
           </div>
 
-          <div className="grid flex-1 grid-cols-3 gap-4 pt-4">
-            <div className="flex flex-col items-center justify-center rounded-lg bg-slate-900/60">
+          <div className="grid min-h-0 flex-1 grid-cols-3 gap-4 pt-4">
+            {/* BOX de destino */}
+            <div className="flex flex-col items-center justify-center rounded-lg bg-slate-900/60 px-2">
               <span className="text-xs tracking-widest text-slate-400">BOX</span>
-              <span className="text-[80px] leading-none font-bold">
-                {pedidoSelecionado?.idbox ?? 1}
+              <span className="truncate text-center text-[64px] leading-none font-bold" title={info?.box ?? ''}>
+                {info?.box ?? '—'}
+              </span>
+              <span className="mt-2 text-xs text-slate-400">
+                {restante?.concluido ? 'conferência concluída' : 'aguardando bipagem'}
               </span>
             </div>
 
+            {/* peça / quantidade / pedido da bipagem */}
             <div className="flex flex-col justify-center gap-3">
               <div>
-                <div className="text-xs tracking-widest text-slate-400">CLIENTE</div>
-                <div className="text-2xl font-semibold">{pedidoSelecionado?.cliente ?? '—'}</div>
+                <div className="text-xs tracking-widest text-slate-400">PEÇA</div>
+                <div className="text-2xl font-semibold">{info?.peca ?? '—'}</div>
               </div>
-              <div>
-                <div className="text-xs tracking-widest text-slate-400">PRODUTO</div>
-                <div className="text-2xl font-semibold">{pedidoSelecionado?.produto ?? '—'}</div>
+              <div className="flex gap-8">
+                <div>
+                  <div className="text-xs tracking-widest text-slate-400">QUANTIDADE</div>
+                  <div className="text-2xl font-semibold">{info?.quantidade || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-xs tracking-widest text-slate-400">PEDIDO</div>
+                  <div className="text-2xl font-semibold">{info?.pedido || '—'}</div>
+                </div>
               </div>
-              <div className="text-xs text-slate-300">{pedidoSelecionado?.descricao1 ?? ''}</div>
+              <div className="text-xs text-slate-300">
+                Cliente: {info?.cliente || '—'} · Etiqueta: {info?.etiqueta || etiquetaLida || '—'}
+              </div>
+              {mensagem && (
+                <div className="rounded border border-slate-500 bg-slate-900/60 px-3 py-2 text-sm">
+                  {mensagem}
+                </div>
+              )}
             </div>
 
+            {/* leitura */}
             <div className="flex flex-col justify-center rounded-lg bg-slate-900/60 p-4">
               <label className="mb-2 text-xs tracking-widest text-slate-400" htmlFor="etiqueta">
-                LEITURA DA ETIQUETA
+                LEITURA DA ETIQUETA ({TITULO_BOX[alvo]})
               </label>
               <input
                 id="etiqueta"
@@ -549,25 +754,21 @@ export default function Conferencia({
                 value={campoEtiqueta}
                 onChange={(e) => setCampoEtiqueta(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') void conferirEtiquetaLeitura(campoEtiqueta);
+                  if (e.key === 'Enter') void conferirEtiqueta(campoEtiqueta);
                 }}
                 placeholder="passe o leitor / digite e pressione Enter"
                 className="rounded border border-slate-500 bg-slate-900 px-3 py-3 text-lg text-white outline-none focus:border-emerald-400"
               />
-              <div className="mt-3 space-y-1 text-xs text-slate-300">
-                <div>
-                  Etiqueta atual: <strong className="text-white">{etiquetaAtual || '—'}</strong>
-                </div>
-                <div>
-                  Restante (não conferido): <strong className="text-white">{contadores.normal}</strong>
-                </div>
-              </div>
               <button
-                onClick={() => void conferirEtiquetaLeitura(campoEtiqueta)}
-                className="mt-4 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold hover:bg-emerald-700"
+                onClick={() => void conferirEtiqueta(campoEtiqueta)}
+                disabled={gravando}
+                className="mt-4 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60"
               >
-                Conferir etiqueta
+                {gravando ? 'Gravando...' : 'Conferir etiqueta'}
               </button>
+              <p className="mt-3 text-[11px] leading-snug text-slate-400">
+                A baixa é gravada no banco a cada bipagem com sucesso. Sem bipar a peça não há baixa.
+              </p>
             </div>
           </div>
         </div>
