@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Persistencia
 {
@@ -13,8 +17,190 @@ namespace Persistencia
     /// (Query/Execute/ExecuteScalar/InserirBulk). As instruções SQL simples são traduzidas para
     /// endpoints nativos de tabela; consultas complexas (GROUP BY/JOIN/agregação) caem em RPC.
     /// </summary>
+    /// <remarks>
+    /// CONVERSÃO DE NOMES (obrigatória): o SQL Server do legado é case-insensitive e escreve os
+    /// identificadores em MAIÚSCULO/PascalCase, enquanto o PostgreSQL/PostgREST do Supabase exige
+    /// os identificadores exatos do schema. O banco do Supabase FOI SUBSTITUÍDO pelo schema legado
+    /// com os nomes apenas em minúsculo (<c>pedido</c>, <c>layout</c>, <c>usuario</c> com
+    /// <c>controle</c>, <c>flativo</c>, <c>descricao1</c>, <c>idlayout</c>...), portanto a conversão
+    /// é apenas "minusculizar", feita AQUI em um único ponto:
+    /// <list type="bullet">
+    /// <item>ENTRADA (cliente -&gt; banco): nomes de tabela e coluna na URL/body passam por
+    /// <see cref="TabelaParaBanco"/> e <see cref="ColunaParaBanco"/>.</item>
+    /// <item>SAÍDA (banco -&gt; cliente): o JSON devolvido é lido com o
+    /// <see cref="LegacyNameContractResolver"/>, aplicando a mesma conversão, de modo que
+    /// <c>nmlayout</c>/<c>idlayout</c> cheguem nas propriedades NmLayout/IdLayout.</item>
+    /// </list>
+    /// Exceções pontuais de nome ficam nas tabelas <see cref="_tabelas"/> e <see cref="_colunas"/>.
+    /// </remarks>
     public static class ApiExtensions
     {
+        #region Conversão de nomes (cliente <-> banco)
+
+        /// <summary>
+        /// De-para de TABELAS: nome usado pelo legado -> tabela real do schema.
+        /// A chave é comparada sem separadores e sem diferenciar maiúsculas, de modo que
+        /// "PedidoImport", "PEDIDO_IMPORT" e "pedidoimport" caem no mesmo alvo.
+        /// O schema atual só possui <c>pedido</c>, <c>layout</c> e <c>usuario</c>;
+        /// qualquer outro nome é apenas minusculizado.
+        /// </summary>
+        private static readonly Dictionary<string, string> _tabelas = new Dictionary<string, string>
+        {
+            { "pedido", "pedido" },          // SQL legado: PEDIDO
+            { "pedidoimport", "pedido" },    // DTO Entidade.PedidoImport  (InserirBulk)
+            { "pedidoimportbulk", "pedido" },
+            { "vopedido", "pedido" },        // DTO Entidade.voPedido
+            { "layout", "layout" },          // SQL legado: LAYOUT
+            { "usuario", "usuario" },        // SQL legado: USUARIO
+        };
+
+        /// <summary>
+        /// De-para de COLUNAS para exceções de nome. Vazio de propósito: o schema do Supabase
+        /// usa os MESMOS nomes do legado, apenas em minúsculo, então a conversão padrão
+        /// (minusculizar) já resolve tudo (CONTROLE -> controle, IdLayout -> idlayout).
+        /// Use este dicionário apenas se alguma coluna for renomeada no futuro.
+        /// </summary>
+        private static readonly Dictionary<string, string> _colunas = new Dictionary<string, string>
+        {
+        };
+
+        /// <summary>
+        /// SAÍDA (banco -> cliente): o JSON do PostgREST vem com os nomes em minúsculo e os modelos
+        /// do legado são PascalCase/MAIÚSCULO. O resolver aplica a MESMA conversão, então
+        /// "idlayout" volta para IdLayout, "nmlayout" para NmLayout e "descricao1" para Descricao1.
+        /// </summary>
+        private sealed class LegacyNameContractResolver : DefaultContractResolver
+        {
+            protected override string ResolvePropertyName(string propertyName)
+            {
+                return ColunaParaBanco(propertyName);
+            }
+
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                JsonProperty propriedade = base.CreateProperty(member, memberSerialization);
+
+                // Os modelos do legado declaram as propriedades com setter `internal`
+                // (ex.: App/Models/Pedido.cs -> "public string Etiqueta { get; internal set; }").
+                // O Json.NET considera esses membros NÃO graváveis e simplesmente os ignora, o que
+                // faria toda leitura voltar zerada. Habilitando os setters não públicos, o
+                // PostgREST/Supabase preenche normalmente Id, Etiqueta, Produto, IdLayout etc.
+                if (!propriedade.Writable)
+                {
+                    var infoPropriedade = member as PropertyInfo;
+                    if (infoPropriedade != null && infoPropriedade.GetSetMethod(true) != null)
+                        propriedade.Writable = true;
+                }
+
+                return propriedade;
+            }
+        }
+
+        /// <summary>
+        /// Números do banco -> inteiros dos modelos do legado.
+        /// Colunas como PEDIDO.QTDE são numeric(18,3) e chegam no JSON como 2.000; o Json.NET
+        /// recusa converter isso para int/long e o valor acabaria 0. No legado o Dapper fazia
+        /// a conversão (Convert.ChangeType), então este conversor reproduz o mesmo comportamento,
+        /// inclusive o arredondamento.
+        /// </summary>
+        private sealed class NumeroParaInteiroConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType)
+            {
+                return objectType == typeof(int) || objectType == typeof(long) ||
+                       objectType == typeof(short) || objectType == typeof(int?) ||
+                       objectType == typeof(long?);
+            }
+
+            public override bool CanWrite { get { return false; } }
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                if (reader.TokenType == JsonToken.Null || reader.Value == null)
+                    return null;
+
+                object valor = reader.Value;
+                Type destino = Nullable.GetUnderlyingType(objectType) ?? objectType;
+
+                if (valor is string)
+                {
+                    decimal numero;
+                    if (!decimal.TryParse((string)valor, NumberStyles.Any, CultureInfo.InvariantCulture, out numero))
+                        return null;
+                    valor = numero;
+                }
+
+                return Convert.ChangeType(valor, destino, CultureInfo.InvariantCulture);
+            }
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                writer.WriteValue(value);
+            }
+        }
+
+        private static readonly JsonSerializerSettings _jsonSaida = new JsonSerializerSettings
+        {
+            ContractResolver = new LegacyNameContractResolver(),
+            Converters = { new NumeroParaInteiroConverter() },
+            // Rede de segurança: se algum valor do banco não puder ser convertido para o tipo do
+            // modelo legado (ex.: nulo em propriedade int), mantém o valor padrão do membro em vez
+            // de abortar a consulta inteira.
+            Error = (sender, args) => { args.ErrorContext.Handled = true; }
+        };
+
+        /// <summary>ENTRADA: tabela do legado -> tabela do banco (minúsculo).</summary>
+        private static string TabelaParaBanco(string tabela)
+        {
+            if (string.IsNullOrWhiteSpace(tabela))
+                return tabela;
+
+            string alvo;
+            if (_tabelas.TryGetValue(Compactar(tabela), out alvo))
+                return alvo;
+
+            return ParaMinusculo(tabela);
+        }
+
+        /// <summary>ENTRADA/SAÍDA: coluna do legado -> coluna do banco (minúsculo).</summary>
+        private static string ColunaParaBanco(string coluna)
+        {
+            if (string.IsNullOrWhiteSpace(coluna))
+                return coluna;
+
+            string alvo;
+            if (_colunas.TryGetValue(Compactar(coluna), out alvo))
+                return alvo;
+
+            return ParaMinusculo(coluna);
+        }
+
+        /// <summary>Remove prefixo de tabela (TABELA.COLUNA) e delimitadores ([ ], " ").</summary>
+        private static string LimparIdentificador(string identificador)
+        {
+            string nome = StripTablePrefix(identificador.Trim());
+            return nome.Trim(' ', '[', ']', '"', '`');
+        }
+
+        /// <summary>Chave de busca do de-para: minúscula e sem separadores.</summary>
+        private static string Compactar(string identificador)
+        {
+            return LimparIdentificador(identificador).Replace("_", string.Empty).ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Conversão padrão: MAIÚSCULO/PascalCase -> minúsculo (ex.: CONTROLE -> controle,
+        /// IdLayout -> idlayout). É exatamente o que o PostgreSQL faz ao dobrar identificadores
+        /// não citados, e o que o schema legado do Supabase espera.
+        /// </summary>
+        private static string ParaMinusculo(string identificador)
+        {
+            string nome = LimparIdentificador(identificador);
+            return nome == null ? null : nome.ToLowerInvariant();
+        }
+
+        #endregion
+
         /// <summary>
         /// Inserção em Lote nativa do Supabase (Substitui o SqlBulkCopy).
         /// Envia a lista diretamente para: POST {base}/rest/v1/{tabela}
@@ -24,12 +210,28 @@ namespace Persistencia
             if (lista == null || lista.Count == 0)
                 return;
 
-            // Define a tabela de destino (ex: "PEDIDO")
-            string tabela = typeof(T).Name.ToUpper();
-            if (tabela == "PEDIDOIMPORT")
-                tabela = "PEDIDO";
+            // Tabela de destino convertida para o schema real (ex: "PedidoImport" -> "pedido")
+            string tabela = TabelaParaBanco(typeof(T).Name);
 
-            var json = JsonConvert.SerializeObject(lista);
+            // Conversão ENTRADA: cada propriedade do DTO vira o nome de coluna do banco
+            // (ex: DATAINC -> datainc, PECLIENTE -> pecliente, IdLayout -> idlayout).
+            var registros = new List<Dictionary<string, object>>(lista.Count);
+            var propriedades = typeof(T).GetProperties();
+            foreach (var item in lista)
+            {
+                var registro = new Dictionary<string, object>(propriedades.Length);
+                foreach (var prop in propriedades)
+                {
+                    if (!prop.CanRead)
+                        continue;
+
+                    object valor = prop.GetValue(item, null);
+                    registro[ColunaParaBanco(prop.Name)] = valor;
+                }
+                registros.Add(registro);
+            }
+
+            var json = JsonConvert.SerializeObject(registros);
             using (var request = new HttpRequestMessage(HttpMethod.Post, tabela))
             {
                 request.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -54,12 +256,12 @@ namespace Persistencia
                 var respGet = api.Client.GetAsync(url).GetAwaiter().GetResult();
                 respGet.EnsureSuccessStatusCode();
                 var jsonGet = respGet.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                return JsonConvert.DeserializeObject<List<T>>(jsonGet) ?? new List<T>();
+                return JsonConvert.DeserializeObject<List<T>>(jsonGet, _jsonSaida) ?? new List<T>();
             }
 
             // Fallback: consultas complexas (GROUP BY/JOIN/agregação) via função RPC
             var json = PostRpc(api, "rpc/exec_sql", sql);
-            return JsonConvert.DeserializeObject<List<T>>(json) ?? new List<T>();
+            return JsonConvert.DeserializeObject<List<T>>(json, _jsonSaida) ?? new List<T>();
         }
 
         /// <summary>
@@ -105,10 +307,12 @@ namespace Persistencia
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Get, countUrl))
                 {
-                    // count=exact no header Prefer + Range mínimo => Content-Range traz o total
+                    // count=exact no header Prefer + Range mínimo => Content-Range traz o total.
+                    // ATENÇÃO: "Range" é um header conhecido do .NET e exige "unit=from-to"
+                    // (o valor cru "0-0" lança FormatException antes de qualquer requisição).
                     request.Headers.Add("Prefer", "count=exact");
                     request.Headers.Add("Range-Unit", "items");
-                    request.Headers.Add("Range", "0-0");
+                    request.Headers.Add("Range", "items=0-0");
 
                     var resp = api.Client.SendAsync(request).GetAwaiter().GetResult();
                     resp.EnsureSuccessStatusCode();
@@ -123,13 +327,13 @@ namespace Persistencia
 
             // Fallback: escalares complexos via função RPC
             var json = PostRpc(api, "rpc/exec_scalar", sql);
-            return JsonConvert.DeserializeObject<T>(json);
+            return JsonConvert.DeserializeObject<T>(json, _jsonSaida);
         }
 
         #region Tradutor SQL -> PostgREST
 
         private static readonly Regex _complexo = new Regex(
-            @"\bGROUP\s+BY\b|\bJOIN\b|\bDISTINCT\b|\b(COUNT|SUM|AVG|MIN|MAX)\s*\(|\bCAST\s*\(|\bTRIM\s*\(|\bUPPER\s*\(|\bLOWER\s*\(|\+\s*'|'\s*\+|\s+OR\s+|\(\s*SELECT\b",
+            @"\bGROUP\s+BY\b|\bJOIN\b|\bDISTINCT\b|\b(COUNT|SUM|AVG|MIN|MAX)\s*\(|\bCAST\s*\(|\bTRIM\s*\(|\bUPPER\s*\(|\bLOWER\s*\(|\+\s*'|'\s*\+|\bAS\s+[A-Za-z_\[]|\s+OR\s+|\(\s*SELECT\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static bool TryBuildSelectUrl(string sql, out string url)
@@ -150,14 +354,14 @@ namespace Persistencia
             if (!m.Success)
                 return false;
 
-            string table = StripTablePrefix(m.Groups["table"].Value.Trim());
+            string table = TabelaParaBanco(m.Groups["table"].Value);
             var query = new List<string>();
 
             string cols = m.Groups["cols"].Value.Trim();
             if (cols != "*")
             {
                 var colList = cols.Split(',')
-                    .Select(c => StripTablePrefix(c.Trim()))
+                    .Select(c => ColunaParaBanco(c))
                     .Where(c => c.Length > 0);
                 query.Add("select=" + string.Join(",", colList));
             }
@@ -179,7 +383,7 @@ namespace Persistencia
                     .Select(o =>
                     {
                         var parts = o.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                        string col = StripTablePrefix(parts[0]);
+                        string col = ColunaParaBanco(parts[0]);
                         if (parts.Length > 1 && parts[1].Equals("DESC", StringComparison.OrdinalIgnoreCase))
                             return col + ".desc";
                         return col;
@@ -215,7 +419,7 @@ namespace Persistencia
                     var kv = atrib.Split(new[] { '=' }, 2);
                     if (kv.Length != 2)
                         return false;
-                    body[StripTablePrefix(kv[0].Trim())] = ParseValue(kv[1].Trim());
+                    body[ColunaParaBanco(kv[0])] = ParseValue(kv[1].Trim());
                 }
 
                 var query = new List<string>();
@@ -227,7 +431,7 @@ namespace Persistencia
                     query.AddRange(filtros);
                 }
 
-                string table = StripTablePrefix(mUpd.Groups["table"].Value.Trim());
+                string table = TabelaParaBanco(mUpd.Groups["table"].Value);
                 string url = table + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
 
                 request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
@@ -254,7 +458,7 @@ namespace Persistencia
                     query.AddRange(filtros);
                 }
 
-                string table = StripTablePrefix(mDel.Groups["table"].Value.Trim());
+                string table = TabelaParaBanco(mDel.Groups["table"].Value);
                 string url = table + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
 
                 request = new HttpRequestMessage(HttpMethod.Delete, url);
@@ -289,7 +493,7 @@ namespace Persistencia
                 query.AddRange(filtros);
             }
 
-            string table = StripTablePrefix(m.Groups["table"].Value.Trim());
+            string table = TabelaParaBanco(m.Groups["table"].Value);
             // select mínimo para reduzir payload; a contagem vem no Content-Range
             query.Insert(0, "select=" + FirstFilterColumn(query));
             url = table + "?" + string.Join("&", query);
@@ -333,7 +537,7 @@ namespace Persistencia
                 {
                     var vals = SplitTopLevel(mIn.Groups["vals"].Value, ',')
                         .Select(v => FormatInValue(v.Trim()));
-                    filtros.Add(StripTablePrefix(mIn.Groups["col"].Value) + "=in.(" + string.Join(",", vals) + ")");
+                    filtros.Add(ColunaParaBanco(mIn.Groups["col"].Value) + "=in.(" + string.Join(",", vals) + ")");
                     continue;
                 }
 
@@ -343,7 +547,7 @@ namespace Persistencia
                 {
                     string op = MapOperador(mOp.Groups["op"].Value);
                     string val = UnquoteValue(mOp.Groups["val"].Value.Trim());
-                    filtros.Add(StripTablePrefix(mOp.Groups["col"].Value) + "=" + op + "." + val);
+                    filtros.Add(ColunaParaBanco(mOp.Groups["col"].Value) + "=" + op + "." + val);
                     continue;
                 }
 
