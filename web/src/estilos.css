@@ -1,0 +1,102 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   SysConf Web - estilos base
+   As cores abaixo reproduzem exatamente as do WinForms legado
+   (App/Form1.cs): status 0=Normal(branco) 1=Conferido(verde)
+   2=Saída(salmão/crimson) 3=Entrega(azul).
+   ========================================================================== */
+
+@theme {
+  --color-normal-bg: #ffffff;
+  --color-normal-fg: #111827;
+  --color-conferido: #90ee90; /* LightGreen */
+  --color-saida: #f08080; /* LightCoral */
+  --color-entrega: #0000ff; /* Blue */
+  --font-sans: 'Segoe UI', system-ui, Roboto, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #eef1f5;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- grid ---- */
+/* Cor de fundo da linha por status (igual ao DataGridView do legado) */
+.linha-0 {
+  background: #ffffff;
+  color: #111827;
+}
+.linha-1 {
+  background: #90ee90;
+  color: #111827;
+}
+.linha-2 {
+  background: #f08080;
+  color: #111827;
+}
+.linha-3 {
+  background: #0000ff;
+  color: #ffffff;
+}
+
+tr.selecionada > td {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+/* -------------------------------------------------------------- contadores */
+.contador-normal {
+  color: #111827;
+}
+.contador-conferido {
+  color: #15803d;
+}
+.contador-saida {
+  color: crimson;
+}
+.contador-entrega {
+  color: #1d4ed8;
+}
+
+/* ---------------------------------------------------------------- overlay -- */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.overlay-surgir {
+  animation: surgir 0.12s ease-out;
+}
+
+/* ---------------------------------------------------------------- scroll -- */
+.tabela-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.tabela-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 6px;
+}
+.tabela-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+/* Evita seleção de texto durante o giro de etiquetas */
+.sem-selecao {
+  user-select: none;
+}
