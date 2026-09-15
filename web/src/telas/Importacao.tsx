@@ -59,7 +59,6 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
     try {
       const conteudo = await arquivo.text();
       const resultado = analisarArquivo(conteudo, {
-        empresaId: empresa.id,
         idlayout: fabricaId,
         nomeArquivo: arquivo.name,
         fabrica: fabrica?.nome ?? '',
@@ -109,7 +108,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       // envia em blocos para a barra de progresso andar de verdade
       for (let i = 0; i < total; i += 500) {
         const bloco = paraImportar.slice(i, i + 500);
-        await inserirPedidos(bloco);
+        await inserirPedidos(fabricaId, bloco);
         enviados += bloco.length;
         setProgresso(Math.round((enviados / total) * 100));
       }

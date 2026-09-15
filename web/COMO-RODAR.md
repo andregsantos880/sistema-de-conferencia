@@ -220,7 +220,51 @@ Essa lista está em `src/lib/integracao.ts` (`LAYOUTS_COM_INTEGRACAO`), junto co
 
 Para incluir uma fábrica na lista, acrescente o nome em `LAYOUTS_COM_INTEGRACAO`
 (e o parser correspondente em `src/lib/parsers.ts`).
+## Seguranca: sessao, senhas e o que ainda falta
 
+### Como o app fala com o banco (desde 15/09)
+
+O navegador **nao acessa tabelas**: tudo passa por RPCs que resolvem a empresa e o perfil a
+partir do **token de sessao** (12 horas), guardado em `sessionStorage` (o F5 mantem, fechar a
+aba encerra).
+
+| Passo | RPC |
+|---|---|
+| Entrar | `login_usuario(slug, login, senha)` -> devolve `token` |
+| Retomar no F5 | `sessao_atual(token)` |
+| Sair | `sair_usuario(token)` |
+| Fábricas / boxes | `fabricas_listar(token)` / `boxes_listar(token)` |
+| Pedidos | `pedidos_listar`, `pedido_status_id`, `pedido_status_etiquetas`, `pedidos_inserir` |
+| Busca | `buscar_valores`, `buscar_pedidos_filtro` |
+| Usuários (ADMIN) | `usuarios_listar`, `usuario_criar`, `usuario_atualizar`, `usuario_excluir` |
+
+**Nenhuma consulta recebe `empresa_id` do navegador** — ela vem da sessao, no servidor.
+Perfil tambem e conferido no servidor (a tela de usuarios nao e a protecao).
+
+### Senhas
+
+`usuario.senha_hash` (bcrypt, `pgcrypto`). Quem entrou com a senha antiga em texto claro tem o
+hash gravado no primeiro login. `usuario.senha` (texto claro) continua existindo **apenas para o
+WinForms legado** e pode ser removida depois que ele for desativado.
+
+### SQL arbitrario: fechado
+
+`exec_sql`, `exec_dml` e `exec_scalar` estavam liberados para `anon` — com a chave publishable
+(que vai no bundle) qualquer pessoa rodava SQL, inclusive DDL. Foram revogados; hoje so
+`service_role` executa (migracao `00102`).
+
+> **Como aplicar migracoes agora:** Supabase Dashboard -> SQL Editor -> colar o arquivo -> Run
+> (ou definir uma chave `service_role` apenas em variavel de ambiente local). O caminho por REST
+> nao existe mais.
+
+### Pendente: RLS nas tabelas (`00103`)
+
+`supabase/migrations/20260914000103_fechar_acesso_direto_tabelas.sql` liga RLS em todas as
+tabelas e revoga os GRANTs de `anon`/`authenticated`. Enquanto ele nao roda, uma pessoa com a
+chave publishable ainda consegue **ler `usuario.senha` e os pedidos de qualquer empresa**.
+
+> **Nao aplicar com o WinForms em uso:** o legado fala com o PostgREST como `anon` e le
+> `USUARIO.SENHA` para validar o login dele. Sem os GRANTs ele recebe 401/403.
 ## Pendências conhecidas
 
 1. **Parsers de layout**: só o `CSV Padrão` tem mapeamento em `lib/parsers.ts`. Os outros arquivos

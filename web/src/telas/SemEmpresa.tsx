@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listarEmpresas, type Empresa } from '../lib/api';
+import { listarEmpresas, type EmpresaPublica } from '../lib/api';
 import { linkDaEmpresa } from '../lib/rota';
 
 /**
@@ -7,7 +7,7 @@ import { linkDaEmpresa } from '../lib/rota';
  * O cadastro de empresas é feito diretamente no banco de dados.
  */
 export default function SemEmpresa() {
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [empresas, setEmpresas] = useState<EmpresaPublica[]>([]);
 
   useEffect(() => {
     listarEmpresas()
@@ -36,7 +36,7 @@ export default function SemEmpresa() {
               <p className="mt-3 mb-1 text-xs font-semibold text-slate-600">Empresas cadastradas:</p>
               <ul className="space-y-1">
                 {empresas.map((empresa) => (
-                  <li key={empresa.id}>
+                  <li key={empresa.slug}>
                     <a
                       href={linkDaEmpresa(empresa.slug)}
                       className="text-blue-600 underline hover:text-blue-800"

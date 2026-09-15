@@ -7,7 +7,7 @@ import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
 import Registrar from './telas/Registrar';
-import { listarFabricas, obterEmpresa, type Empresa, type Fabrica, type UsuarioLogado } from './lib/api';
+import { listarFabricas, obterEmpresa, restaurarSessao, sair as sairSessao, type Empresa, type Fabrica, type UsuarioLogado } from './lib/api';
 import { irPara, lerRota, type Rota, type Tela } from './lib/rota';
 import { CHAVE_SESSAO } from './lib/config';
 
@@ -68,9 +68,9 @@ export default function Sysconf() {
     };
   }, [rota.empresa]);
 
-  const carregarFabricas = useCallback(async (empresaId: number) => {
+  const carregarFabricas = useCallback(async () => {
     try {
-      const lista = await listarFabricas(empresaId);
+      const lista = await listarFabricas();
       setFabricas(lista);
       setFabricaId((atual) => atual ?? lista[0]?.controle ?? null);
     } catch {
@@ -79,8 +79,37 @@ export default function Sysconf() {
   }, []);
 
   useEffect(() => {
-    if (usuario) void carregarFabricas(usuario.empresa_id);
+    if (usuario) void carregarFabricas();
   }, [usuario, carregarFabricas]);
+
+  /*
+   * Retoma a sessão guardada (token em sessionStorage): o F5 não desloga mais.
+   * O token só vale para a empresa dele, então a rota é conferida antes.
+   */
+  useEffect(() => {
+    let cancelado = false;
+
+    void restaurarSessao().then((sessao) => {
+      if (cancelado || !sessao) return;
+
+      if (rota.empresa) {
+        if (sessao.empresa_slug === rota.empresa) setUsuario(sessao);
+        return;
+      }
+
+      /* entrou direto em /entrar já estando logado: vai para o painel */
+      if (rota.pagina === 'entrar') {
+        irPara(sessao.empresa_slug, 'conferencia');
+        setUsuario(sessao);
+        setRota({ empresa: sessao.empresa_slug, tela: 'conferencia', pagina: null });
+      }
+    });
+
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function navegar(tela: Tela) {
     if (!rota.empresa) return;
@@ -102,6 +131,7 @@ export default function Sysconf() {
     setUsuario(null);
     setFabricas([]);
     setFabricaId(null);
+    void sairSessao(); /* encerra a sessão no servidor e esquece o token */
     if (rota.empresa) navegar('login');
   }
 

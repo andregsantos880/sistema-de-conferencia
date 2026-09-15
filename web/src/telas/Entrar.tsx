@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listarEmpresas, login, type Empresa, type UsuarioLogado } from '../lib/api';
+import { listarEmpresas, login, type EmpresaPublica, type UsuarioLogado } from '../lib/api';
 import { CHAVE_SESSAO, MARCA } from '../lib/config';
 
 type Props = {
@@ -23,7 +23,7 @@ function normalizar(valor: string): string {
  * /sysconf/<empresa>/conferencia, o mesmo endereço do link enviado ao cliente.
  */
 export default function Entrar({ onEntrar }: Props) {
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [empresas, setEmpresas] = useState<EmpresaPublica[]>([]);
   const [empresaTexto, setEmpresaTexto] = useState('');
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
@@ -55,7 +55,7 @@ export default function Entrar({ onEntrar }: Props) {
     }
   }, [empresas]);
 
-  function acharEmpresa(): Empresa | null {
+  function acharEmpresa(): EmpresaPublica | null {
     const alvo = normalizar(empresaTexto);
     if (!alvo) return null;
     return (
@@ -124,7 +124,7 @@ export default function Entrar({ onEntrar }: Props) {
             />
             <datalist id="lista-empresas">
               {empresas.map((empresa) => (
-                <option key={empresa.id} value={empresa.nome}>
+                <option key={empresa.slug} value={empresa.nome}>
                   {empresa.slug}
                 </option>
               ))}

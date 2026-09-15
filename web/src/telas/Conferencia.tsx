@@ -185,7 +185,7 @@ export default function Conferencia({
       setCarregando(true);
       setErro('');
       try {
-        const lista = await listarPedidos(empresa.id, idlayout);
+        const lista = await listarPedidos(idlayout);
         if (requisicao !== requisicaoAtual.current) return;
 
         setPedidos(lista);
@@ -206,10 +206,10 @@ export default function Conferencia({
   }, [fabricaId, carregarPedidos]);
 
   useEffect(() => {
-    listarBoxes(empresa.id)
+    listarBoxes()
       .then(setBoxes)
       .catch(() => setBoxes([]));
-  }, [empresa.id]);
+  }, []);
 
   useEffect(() => {
     function fecharMenu() {
@@ -328,7 +328,7 @@ export default function Conferencia({
     // Sucesso: baixa na hora (regra definida pelo cliente — não espera o Fechar).
     setGravando(true);
     try {
-      await atualizarStatusPorId(empresa.id, resultado.linha.id, alvo);
+      await atualizarStatusPorId(resultado.linha.id, alvo);
 
       setPedidos((atual) =>
         atual.map((linha) => (linha.id === resultado.linha.id ? resultado.linhaAtualizada : linha)),
@@ -365,7 +365,7 @@ export default function Conferencia({
     setRowSelection({});
 
     try {
-      await atualizarStatusPorEtiquetas(empresa.id, etiquetas, status); // legado: UPDATE ... WHERE ETIQUETA IN(...)
+      await atualizarStatusPorEtiquetas(etiquetas, status); // legado: UPDATE ... WHERE ETIQUETA IN(...)
       tocarSom('success');
       setMensagem(`${etiquetas.length} etiqueta(s) alterada(s) para ${STATUS[status].rotulo}.`);
     } catch (falha) {
@@ -395,7 +395,7 @@ export default function Conferencia({
   async function abrirBusca() {
     if (fabricaId === null) return;
     try {
-      setValoresBusca(await buscarValores(empresa.id, fabricaId, colunaBusca));
+      setValoresBusca(await buscarValores(fabricaId, colunaBusca));
       setValoresMarcados(new Set());
       setCampoBusca('');
       setBuscaAberta(true);
@@ -425,7 +425,7 @@ export default function Conferencia({
     setBuscaAberta(false);
     setCarregando(true);
     try {
-      const encontrados = await buscarPedidosPorFiltro(empresa.id, fabricaId, colunaBusca, valores);
+      const encontrados = await buscarPedidosPorFiltro(fabricaId, colunaBusca, valores);
       if (encontrados.length === 0) {
         setMensagem('Nada encontrado.');
         tocarSom('exclamation');

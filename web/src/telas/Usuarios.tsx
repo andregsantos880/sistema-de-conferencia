@@ -37,11 +37,11 @@ export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
   const carregar = useCallback(async () => {
     if (!administrador) return;
     try {
-      setUsuarios(await listarUsuarios(empresa.id));
+      setUsuarios(await listarUsuarios());
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Falha ao carregar os usuários.');
     }
-  }, [empresa.id, administrador]);
+  }, [administrador]);
 
   useEffect(() => {
     void carregar();
@@ -94,7 +94,6 @@ export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
     await comTratamento(
       () =>
         criarUsuario({
-          empresa_id: empresa.id,
           login,
           nome: form.nome.trim(),
           senha,
@@ -111,6 +110,7 @@ export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
       login: editando.login.trim().toUpperCase(),
       nome: (editando.nome ?? '').trim(),
       perfil: editando.perfil,
+      ativo: editando.ativo,
     };
     if (senhaNova.trim()) dados.senha = senhaNova.trim();
 
@@ -243,7 +243,13 @@ export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
                         <button
                           onClick={() =>
                             void comTratamento(
-                              () => atualizarUsuario(usuario.id, { ativo: !usuario.ativo }),
+                              () =>
+                                atualizarUsuario(usuario.id, {
+                                  login: usuario.login,
+                                  nome: usuario.nome ?? '',
+                                  perfil: usuario.perfil,
+                                  ativo: !usuario.ativo,
+                                }),
                               usuario.ativo ? 'Usuário inativado.' : 'Usuário reativado.',
                             )
                           }
