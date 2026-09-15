@@ -130,7 +130,12 @@ export function diasRestantesTeste(trialAte: string | null | undefined): number 
   if (!trialAte) return null;
   const fim = new Date(trialAte).getTime();
   if (Number.isNaN(fim)) return null;
-  return Math.ceil((fim - Date.now()) / 86_400_000);
+  /*
+   * Tolerancia de 1 minuto: o prazo e gravado pelo relogio do banco (UTC) e
+   * comparado com o do navegador. Sem isso, um trial de exatamente 30 dias
+   * aparece como "31 dias" (ceil de 30 dias + alguns segundos de diferenca).
+   */
+  return Math.max(0, Math.ceil((fim - Date.now()) / 86_400_000 - 1 / 1440));
 }
 
 /** Endereco (slug) sugerido a partir do nome da empresa — usado no cadastro. */

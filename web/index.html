@@ -9,14 +9,58 @@
       name="description"
       content="Importe o arquivo da fábrica, bipe as etiquetas e libere a carga: conferência de entrada e saída no navegador, com controle por box. 30 dias grátis, sem cartão."
     />
+    <meta name="robots" content="index,follow" />
+    <!-- TODO: trocar pelo dominio proprio quando existir -->
+    <link rel="canonical" href="https://sysconf-web.web.app/" />
     <meta name="theme-color" content="#0f172a" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sysconf-web.web.app/" />
     <meta property="og:title" content="SysConf — Conferência de pedidos e cargas" />
     <meta
       property="og:description"
       content="Conferência de entrada e saída de cargas no navegador, com leitura de código de barras, box e controle de estágio. 30 dias grátis."
     />
     <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="SysConf" />
+    <meta property="og:image" content="https://sysconf-web.web.app/imagens/og-v2.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Tela do SysConf: painel de bipagem com o box, a peça, a quantidade e o pedido"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://sysconf-web.web.app/imagens/og-v2.png" />
+
+    <link rel="apple-touch-icon" href="/imagens/icone-180-v2.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Dados estruturados: ajudam o Google a entender que é um software, com
+         teste gratuito, para o mercado brasileiro. Sem notas/inventos. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "SysConf",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Navegador web",
+        "inLanguage": "pt-BR",
+        "description": "Sistema de conferência de entrada e saída de cargas com leitura de código de barras, controle por box e acompanhamento do estágio de cada pedido.",
+        "areaServed": { "@type": "Country", "name": "Brasil" },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Softwerd",
+          "url": "http://www.softwerd.com"
+        },
+        "offers": {
+          "@type": "Offer",
+          "name": "Teste grátis de 30 dias",
+          "price": "0",
+          "priceCurrency": "BRL",
+          "description": "30 dias de uso sem custo e sem cartão de crédito."
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,17 @@
+# SysConf - regras para robos de busca
+# TODO: trocar o dominio quando o site tiver dominio proprio (ex.: sysconf.com.br)
+#       (atualizar tambem o sitemap.xml e o <link rel="canonical"> do index.html)
+
+User-agent: *
+Allow: /
+
+# telas de app: sem valor de busca e conteudo repetido entre empresas
+Disallow: /sysconf/
+
+# login: nao faz sentido no indice
+Disallow: /entrar
+
+# paginas de empresa (login do cliente) ficam fora do indice: sao telas de app,
+# sem conteudo publico e iguais entre si.
+
+Sitemap: https://sysconf-web.web.app/sitemap.xml

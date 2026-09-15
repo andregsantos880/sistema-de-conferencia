@@ -19,7 +19,7 @@
 export type Tela = 'login' | 'conferencia' | 'importacao' | 'usuarios';
 
 /** Paginas publicas do site (fora do escopo de empresa). */
-export type Pagina = 'landing' | 'entrar' | 'registrar';
+export type Pagina = 'landing' | 'entrar' | 'registrar' | 'termos' | 'privacidade';
 
 export type Rota = { empresa: string | null; tela: Tela; pagina: Pagina | null };
 
@@ -29,6 +29,8 @@ const PAGINAS: Record<string, Pagina> = {
   '': 'landing',
   entrar: 'entrar',
   registrar: 'registrar',
+  termos: 'termos',
+  privacidade: 'privacidade',
 };
 
 /** Le a rota do caminho atual (ou de um caminho informado, util em testes). */

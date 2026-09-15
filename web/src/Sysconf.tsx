@@ -7,6 +7,7 @@ import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
 import Registrar from './telas/Registrar';
+import Juridico from './telas/Juridico';
 import { listarFabricas, obterEmpresa, restaurarSessao, sair as sairSessao, type Empresa, type Fabrica, type UsuarioLogado } from './lib/api';
 import { irPara, lerRota, type Rota, type Tela } from './lib/rota';
 import { CHAVE_SESSAO } from './lib/config';
@@ -32,6 +33,16 @@ export default function Sysconf() {
     window.addEventListener('popstate', aoNavegar);
     return () => window.removeEventListener('popstate', aoNavegar);
   }, []);
+
+  /*
+   * SEO: só a landing e as páginas públicas entram no índice. As telas de
+   * empresa (/sysconf/<empresa>/...) são iguais entre si e ficam atrás de login,
+   * então recebem noindex quando a rota é de empresa.
+   */
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="robots"]');
+    if (meta) meta.setAttribute('content', rota.empresa ? 'noindex,follow' : 'index,follow');
+  }, [rota.empresa]);
 
   /* resolve a empresa a partir do slug da URL */
   useEffect(() => {
@@ -160,6 +171,10 @@ export default function Sysconf() {
   if (rota.pagina === 'entrar') return <Entrar onEntrar={entrarPelaLanding} />;
 
   if (rota.pagina === 'registrar') return <Registrar onEntrar={entrarPelaLanding} />;
+
+  if (rota.pagina === 'termos' || rota.pagina === 'privacidade') {
+    return <Juridico documento={rota.pagina} />;
+  }
 
   if (!rota.empresa) return <SemEmpresa />;
 

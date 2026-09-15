@@ -52,7 +52,9 @@ export default function Registrar({ onEntrar }: Props) {
 
   const endereco = useMemo(() => (slugEditado ? slug : sugerirEndereco(empresa)), [empresa, slug, slugEditado]);
 
-  const urlPrevista = `${window.location.origin}/sysconf/${endereco || 'sua-empresa'}/login`;
+  /* `window` nao existe no build estatico (scripts/prerender.mjs) */
+  const origem = typeof window === 'undefined' ? '' : window.location.origin;
+  const urlPrevista = `${origem}/sysconf/${endereco || 'sua-empresa'}/login`;
 
   function trocarEmpresa(valor: string) {
     setEmpresa(valor);
@@ -254,8 +256,16 @@ export default function Registrar({ onEntrar }: Props) {
                 className="mt-0.5 h-3.5 w-3.5"
               />
               <span>
-                Li e aceito os termos de uso. Declaro que os dados informados são da minha empresa e que
-                responderei pelo conteúdo importado no sistema.
+                Li e aceito os{' '}
+                <a href="/termos" target="_blank" rel="noreferrer" className="font-semibold text-emerald-700 underline">
+                  termos de uso
+                </a>{' '}
+                e a{' '}
+                <a href="/privacidade" target="_blank" rel="noreferrer" className="font-semibold text-emerald-700 underline">
+                  política de privacidade
+                </a>
+                . Declaro que os dados informados são da minha empresa e que responderei pelo conteúdo
+                importado no sistema.
               </span>
             </label>
 

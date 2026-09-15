@@ -1,4 +1,12 @@
 import { MARCA, TRIAL_DIAS } from '../lib/config';
+/*
+ * As telas são importadas (e não servidas de /public) de propósito: assim o
+ * Vite publica com nome + hash, e trocar a imagem nunca esbarra no cache
+ * imutável de 1 ano que o Firebase usa para arquivos estáticos.
+ */
+import telaBipagem from '../imagens/tela-bipagem.png';
+import telaConferencia from '../imagens/tela-conferencia.png';
+import telaImportacao from '../imagens/tela-importacao.png';
 
 /**
  * Landing page (raiz do site).
@@ -147,6 +155,9 @@ export default function Landing() {
             </a>
             <a href="#recursos" className="hover:text-white">
               Recursos
+            </a>
+            <a href="#telas" className="hover:text-white">
+              Telas
             </a>
             <a href="#teste" className="hover:text-white">
               Teste grátis
@@ -315,6 +326,55 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* --------------------------------------------------------- as telas -- */}
+      <section id="telas" className="px-4 py-14">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-2xl font-bold text-slate-900">Veja por dentro</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">
+            Telas reais do sistema em uso — nenhuma maquete. É assim que a equipe vê a carga na
+            conferência, na bipagem e na importação do arquivo da fábrica.
+          </p>
+
+          <figure className="mt-8">
+            <img
+              src={telaConferencia}
+              alt="Tela de conferência do SysConf com a lista de pedidos, contadores por estágio e as linhas destacadas por situação"
+              loading="lazy"
+              className="w-full rounded-lg border border-slate-300 shadow-lg"
+            />
+            <figcaption className="mt-2 text-xs text-slate-500">
+              Conferência: contadores por estágio e cada linha colorida conforme a situação do pedido.
+            </figcaption>
+          </figure>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <figure>
+              <img
+                src={telaBipagem}
+                alt="Painel de bipagem do SysConf mostrando o box de destino, a peça, a quantidade e o pedido encontrado pela etiqueta"
+                loading="lazy"
+                className="w-full rounded-lg border border-slate-300 shadow-lg"
+              />
+              <figcaption className="mt-2 text-xs text-slate-500">
+                A cada leitura: box, peça, quantidade e pedido. A baixa é gravada na hora.
+              </figcaption>
+            </figure>
+
+            <figure>
+              <img
+                src={telaImportacao}
+                alt="Tela de importação do SysConf listando as lojas encontradas no arquivo da fábrica antes de importar"
+                loading="lazy"
+                className="w-full rounded-lg border border-slate-300 shadow-lg"
+              />
+              <figcaption className="mt-2 text-xs text-slate-500">
+                Importação: confira as lojas do arquivo antes de gravar a carga.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
       {/* ------------------------------------------------------- teste grátis -- */}
       <section id="teste" className="px-4 py-14">
         <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-slate-200 shadow-lg">
@@ -445,6 +505,14 @@ export default function Landing() {
               ·{' '}
               <a href="/registrar" className="hover:text-slate-200">
                 Criar conta
+              </a>{' '}
+              ·{' '}
+              <a href="/termos" className="hover:text-slate-200">
+                Termos de Uso
+              </a>{' '}
+              ·{' '}
+              <a href="/privacidade" className="hover:text-slate-200">
+                Privacidade
               </a>
             </p>
           </div>

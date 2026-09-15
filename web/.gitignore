@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.seo
 *.local
 
 # Variáveis de ambiente (configure na Vercel em Settings > Environment Variables)

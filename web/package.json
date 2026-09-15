@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "seo": "vite build --ssr src/entradaSeo.tsx --outDir .seo --emptyOutDir && node scripts/prerender.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy": "npm run build && npx --yes firebase-tools@latest deploy --only hosting"
+    "deploy": "npm run build && npm run seo && npx --yes firebase-tools@latest deploy --only hosting"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

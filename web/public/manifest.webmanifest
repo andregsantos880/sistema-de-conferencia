@@ -1,0 +1,19 @@
+{
+  "name": "SysConf — Conferência de pedidos e cargas",
+  "short_name": "SysConf",
+  "description": "Conferência de entrada e saída de cargas com leitura de código de barras, controle por box e estágio de cada pedido.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "/imagens/icone-192-v2.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/imagens/icone-512-v2.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/imagens/icone-512-v2.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
