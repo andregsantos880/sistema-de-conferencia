@@ -77,10 +77,15 @@ export type Perfil = (typeof PERFIL)[keyof typeof PERFIL];
 
 /**
  * Colunas que NÃO aparecem para nenhum usuário (regra definida pelo cliente):
- * ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC.
+ * ID, ARQUIVO, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC.
+ *
+ * O ARQUIVO (nome do arquivo importado, que traz a carga e a data) sai da
+ * grade e do CSV por não ser coluna de trabalho — mas o campo continua gravado
+ * e a busca por "CARGA" (OPCOES_BUSCA) continua usando ele.
  */
 export const COLUNAS_OCULTAS: readonly string[] = [
   'id',
+  'arquivo',
   'nmlayout',
   'idlayout',
   'idbox',
