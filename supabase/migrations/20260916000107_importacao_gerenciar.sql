@@ -120,6 +120,7 @@ declare
     v_sessao public.sessao := public.sessao_aberta(p_token);
     v_nome   text := btrim(coalesce(p_nome_arquivo, ''));
     v_arquivo text := nullif(p_conteudo_base64, '');
+    v_login  varchar(50);
     v_id     bigint;
 begin
     if v_nome = '' or length(v_nome) > 255 then
@@ -131,6 +132,11 @@ begin
     ) then
         raise exception 'Fabrica invalida para esta empresa.' using errcode = 'P0002';
     end if;
+
+    /* a sessao guarda o usuario_id, nao o login: o login vem da tabela usuario */
+    select u.login::varchar(50) into v_login
+      from public.usuario u
+     where u.id = v_sessao.usuario_id;
 
     /* guarda o arquivo, mas nao aceita arquivo gigante no banco */
     if v_arquivo is not null and length(v_arquivo) > 5500000 then
@@ -148,7 +154,7 @@ begin
         greatest(coalesce(p_linhas_lidas, 0), 0),
         greatest(coalesce(p_linhas_importadas, 0), 0),
         greatest(coalesce(p_linhas_descartadas, 0), 0),
-        v_sessao.usuario_id, v_sessao.login, v_arquivo
+        v_sessao.usuario_id, v_login, v_arquivo
     )
     returning importacao.id into v_id;
 
