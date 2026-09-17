@@ -1,0 +1,16 @@
+Campaign,Ad Group,Keyword,Match Type,Status
+SysConf - Pesquisa BR,Conferencia de pedidos,"conferência de pedidos",Phrase,Enabled
+SysConf - Pesquisa BR,Conferencia de pedidos,"sistema de conferência de pedidos",Phrase,Enabled
+SysConf - Pesquisa BR,Conferencia de pedidos,"conferência de mercadorias",Phrase,Enabled
+SysConf - Pesquisa BR,Conferencia de pedidos,"conferir pedido de compra",Phrase,Enabled
+SysConf - Pesquisa BR,Conferencia de pedidos,"sistema de conferência",Phrase,Enabled
+SysConf - Pesquisa BR,Bipagem e codigo de barras,"sistema de bipagem",Phrase,Enabled
+SysConf - Pesquisa BR,Bipagem e codigo de barras,"conferência com leitor de código de barras",Phrase,Enabled
+SysConf - Pesquisa BR,Bipagem e codigo de barras,"bipar etiqueta",Phrase,Enabled
+SysConf - Pesquisa BR,Bipagem e codigo de barras,"conferência cega",Phrase,Enabled
+SysConf - Pesquisa BR,Bipagem e codigo de barras,"coletor de dados conferência",Phrase,Enabled
+SysConf - Pesquisa BR,Expedicao e carga,"controle de expedição",Phrase,Enabled
+SysConf - Pesquisa BR,Expedicao e carga,"conferência de carga",Phrase,Enabled
+SysConf - Pesquisa BR,Expedicao e carga,"conferência de saída de mercadoria",Phrase,Enabled
+SysConf - Pesquisa BR,Expedicao e carga,"romaneio eletrônico",Phrase,Enabled
+SysConf - Pesquisa BR,Expedicao e carga,"controle de carga e descarga",Phrase,Enabled
