@@ -38,6 +38,7 @@ type Regra = {
   modo: 'pedaco' | 'ultimos';
   pos: string;
   len: string;
+  zeros: boolean;
   sePrefixo: string;
   senaoPos: string;
   senaoLen: string;
@@ -52,6 +53,7 @@ const REGRA_VAZIA: Regra = {
   modo: 'pedaco',
   pos: '',
   len: '',
+  zeros: false,
   sePrefixo: '',
   senaoPos: '',
   senaoLen: '',
@@ -93,6 +95,7 @@ function regraParaApi(regra: Regra): RegraDerivada {
   }
   if (regra.pos !== '') saida.pos = numero(regra.pos);
   if (regra.len !== '') saida.len = numero(regra.len);
+  if (regra.zeros) saida.zeros = true;
   if (regra.sePrefixo) {
     saida.se_prefixo = regra.sePrefixo;
     if (regra.senaoPos !== '') saida.senao_pos = numero(regra.senaoPos);
@@ -113,6 +116,7 @@ function regraDaApi(bruta: Record<string, unknown>): Regra {
     modo: bruta.ultimos !== undefined && bruta.ultimos !== null ? 'ultimos' : 'pedaco',
     pos: texto(bruta.pos),
     len: texto(bruta.len),
+    zeros: !!bruta.zeros,
     sePrefixo: texto(bruta.se_prefixo),
     senaoPos: texto(bruta.senao_pos),
     senaoLen: texto(bruta.senao_len),
@@ -931,6 +935,14 @@ export default function ConfigLayoutFabrica({ fabrica, onFechar, onSalvo }: Prop
                                 onChange={(e) => ajustarRegra(campo, { len: e.target.value })}
                                 className={campoPequeno}
                               />
+                            </label>
+                            <label className="flex items-center gap-1">
+                              <input
+                                type="checkbox"
+                                checked={regra?.zeros ?? false}
+                                onChange={(e) => ajustarRegra(campo, { zeros: e.target.checked })}
+                              />
+                              sem zeros à esquerda
                             </label>
                             <label className="flex items-center gap-1">
                               se começa com

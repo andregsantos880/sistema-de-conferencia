@@ -68,6 +68,8 @@ export type RegraDerivada = {
   de: Campo;
   pos?: number;
   len?: number;
+  /** Remove os zeros à esquerda do pedaço (ex.: código do produto na etiqueta). */
+  zeros?: boolean;
   /** Se o campo de origem começar com isto, usa `pos`/`len`. */
   se_prefixo?: string;
   senao_pos?: number;
@@ -481,11 +483,11 @@ export function analisarArquivo(
       }
       if (regra.se_prefixo !== undefined) {
         if (origem.startsWith(regra.se_prefixo)) {
-          return pedaco(regra.pos ?? 0, regra.len ?? 0);
+          return pedaco(regra.pos ?? 0, regra.len ?? 0, regra.zeros);
         }
         return pedaco(regra.senao_pos ?? 0, regra.senao_len ?? 0, regra.senao_zeros);
       }
-      return pedaco(regra.pos ?? 0, regra.len ?? 0);
+      return pedaco(regra.pos ?? 0, regra.len ?? 0, regra.zeros);
     };
 
     /** Valor final do campo: derivado > posição > valor fixo quando vazio. */
