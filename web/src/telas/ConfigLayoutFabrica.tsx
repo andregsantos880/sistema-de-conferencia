@@ -18,6 +18,7 @@ import {
   type RegraDerivada,
   type TipoLayout,
 } from '../lib/parsers';
+import { lerTextoDoArquivo } from '../lib/arquivo';
 
 type Props = {
   fabrica: FabricaAdmin;
@@ -315,11 +316,13 @@ export default function ConfigLayoutFabrica({ fabrica, onFechar, onSalvo }: Prop
       return;
     }
     try {
-      const texto = await arquivo.text();
+      const { texto, codificacao } = await lerTextoDoArquivo(arquivo);
       setConteudo(texto);
       setNomeArquivo(arquivo.name);
 
       const palpite = preverColunas(texto);
+      const notaCodificacao =
+        codificacao === 'UTF-8' ? '' : ` Arquivo lido como ${codificacao} (acentos).`;
 
       if (palpite.posicionalSugerido) {
         /* sem separador e com linhas longas: largura fixa */
@@ -330,7 +333,8 @@ export default function ConfigLayoutFabrica({ fabrica, onFechar, onSalvo }: Prop
         setColunas({});
         setMensagem(
           'O arquivo não tem separador e as linhas são longas — abri como LARGURA FIXA. ' +
-            'Informe a posição e o tamanho de cada campo no passo 4.',
+            'Informe a posição e o tamanho de cada campo no passo 4.' +
+            notaCodificacao,
         );
       } else {
         setTipo('delimitado');
@@ -343,9 +347,9 @@ export default function ConfigLayoutFabrica({ fabrica, onFechar, onSalvo }: Prop
           ),
         );
         setMensagem(
-          palpite.linhaSugerida > 1
+          (palpite.linhaSugerida > 1
             ? `O assistente achou o cabeçalho na linha ${palpite.linhaSugerida} — confira a prévia.`
-            : 'Arquivo lido: confira a prévia e o de-para das colunas.',
+            : 'Arquivo lido: confira a prévia e o de-para das colunas.') + notaCodificacao,
         );
       }
     } catch (falha) {

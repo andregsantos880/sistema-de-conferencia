@@ -8,6 +8,7 @@ import {
   type PedidoNovo,
 } from '../lib/api';
 import { analisarArquivo, comoLayoutFabrica, PARSERS, rotuloSeparador } from '../lib/parsers';
+import { lerTextoDoArquivo } from '../lib/arquivo';
 import { somErro, somOk } from '../lib/audio';
 
 type Props = {
@@ -39,6 +40,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
     origem: string;
     separador: string;
     tipo: string;
+    codificacao?: string;
   } | null>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
 
@@ -93,7 +95,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
     }
 
     try {
-      const conteudo = await arquivo.text();
+      const { texto: conteudo, codificacao } = await lerTextoDoArquivo(arquivo);
       const resultado = analisarArquivo(conteudo, {
         idlayout: fabricaId,
         nomeArquivo: arquivo.name,
@@ -114,6 +116,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
         origem: resultado.origem,
         separador: resultado.separador,
         tipo: resultado.tipo,
+        codificacao,
       });
 
       if (resultado.origem === 'generico' && !PARSERS[fabrica?.nome ?? '']) {
@@ -260,6 +263,9 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                 {layoutEmUso.tipo === 'posicional'
                   ? '(largura fixa)'
                   : `(separador “${rotuloSeparador(layoutEmUso.separador)}”)`}
+                {layoutEmUso.codificacao && layoutEmUso.codificacao !== 'UTF-8'
+                  ? `, arquivo em ${layoutEmUso.codificacao}`
+                  : ''}
                 .
               </p>
             )}
