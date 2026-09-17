@@ -35,7 +35,11 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
   const [aviso, setAviso] = useState('');
   /** Layout que o administrador configurou para a fábrica (tela Fábricas). */
   const [layout, setLayout] = useState<LayoutSalvo | null>(null);
-  const [layoutEmUso, setLayoutEmUso] = useState<{ origem: string; separador: string } | null>(null);
+  const [layoutEmUso, setLayoutEmUso] = useState<{
+    origem: string;
+    separador: string;
+    tipo: string;
+  } | null>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
 
   /* Ao trocar de fábrica, busca o layout dela. Sem migração 00104 (ou sem layout
@@ -106,7 +110,11 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       setLinhas(resultado.linhas);
       setNomeArquivo(arquivo.name);
       setLojasMarcadas(new Set(resultado.linhas.map((l) => String(l.cliente ?? ''))));
-      setLayoutEmUso({ origem: resultado.origem, separador: resultado.separador });
+      setLayoutEmUso({
+        origem: resultado.origem,
+        separador: resultado.separador,
+        tipo: resultado.tipo,
+      });
 
       if (resultado.origem === 'generico' && !PARSERS[fabrica?.nome ?? '']) {
         setAviso(
@@ -232,9 +240,12 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
             )}
             {fabrica && layout && (
               <p className="mt-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-800">
-                Layout configurado desta fábrica: {Object.keys(layout.campos ?? {}).length} coluna(s)
-                mapeada(s), separador “{rotuloSeparador(layout.delimitador)}”, começando na linha{' '}
-                {layout.linha_inicial}
+                Layout configurado desta fábrica:{' '}
+                {layout.tipo === 'posicional'
+                  ? `largura fixa (${Object.keys(layout.campos ?? {}).length} campo(s)` +
+                    `${(layout.derivados && Object.keys(layout.derivados).length > 0) ? ` + ${Object.keys(layout.derivados).length} por regra` : ''})`
+                  : `${Object.keys(layout.campos ?? {}).length} coluna(s) mapeada(s), separador “${rotuloSeparador(layout.delimitador)}”`}
+                , começando na linha {layout.linha_inicial}
                 {layout.tem_cabecalho ? ' (com cabeçalho)' : ''}.
               </p>
             )}
@@ -246,7 +257,10 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                   : layoutEmUso.origem === 'cabecalho'
                     ? 'as colunas identificadas pelo cabeçalho'
                     : 'o modo genérico'}{' '}
-                (separador “{rotuloSeparador(layoutEmUso.separador)}”).
+                {layoutEmUso.tipo === 'posicional'
+                  ? '(largura fixa)'
+                  : `(separador “${rotuloSeparador(layoutEmUso.separador)}”)`}
+                .
               </p>
             )}
             {nomeArquivo && <p className="mt-1 text-slate-500">Arquivo: {nomeArquivo}</p>}

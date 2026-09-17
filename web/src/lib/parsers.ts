@@ -34,10 +34,49 @@ export type MapaLayout = {
  * leitura — a deteção automática e o PARSERS passam a ser só reserva.
  */
 export type LayoutFabrica = {
+  /** `delimitado` (CSV/TXT separado) ou `posicional` (largura fixa). */
+  tipo: TipoLayout;
   delimitador: string;
   linhaInicial: number;
   temCabecalho: boolean;
-  campos: Partial<Record<Campo, number>>;
+  /** Posicional: ignora linhas menores que isto (ex.: Transpaese exige 70). */
+  linhaMinima?: number;
+  campos: Partial<Record<Campo, number | CampoPosicional>>;
+  /** Valor usado quando o campo vier vazio (ex.: qtde 1, ordcompra "--"). */
+  fixos?: Partial<Record<Campo, string | number>>;
+  /** Campos montados a partir de outro (ex.: produto saído da etiqueta). */
+  derivados?: Partial<Record<Campo, RegraDerivada>>;
+};
+
+export type TipoLayout = 'delimitado' | 'posicional';
+
+/** Onde o campo começa e quantos caracteres ocupa no arquivo posicional. */
+export type CampoPosicional = {
+  pos: number;
+  /** 0 = até o fim da linha. */
+  len: number;
+  /** Remove os zeros à esquerda (ex.: carga "0000001057455" -> "1057455"). */
+  zeros?: boolean;
+};
+
+/**
+ * Regra de campo derivado. Ex.: na Transpaese o produto não tem coluna própria,
+ * ele sai de dentro da etiqueta (posições 5..13 quando ela começa com "00000",
+ * senão os 14 primeiros dígitos sem os zeros à esquerda).
+ */
+export type RegraDerivada = {
+  de: Campo;
+  pos?: number;
+  len?: number;
+  /** Se o campo de origem começar com isto, usa `pos`/`len`. */
+  se_prefixo?: string;
+  senao_pos?: number;
+  senao_len?: number;
+  senao_zeros?: boolean;
+  /** Últimos N caracteres do campo de origem. */
+  ultimos?: number;
+  /** Se o resultado ficar vazio. */
+  padrao?: string;
 };
 
 /** Campos que podem ser ligados a uma coluna do arquivo, na ordem da tela. */
@@ -57,10 +96,14 @@ export const CAMPOS_MAPEAIVEIS: ReadonlyArray<{ campo: Campo; titulo: string; ob
 export function comoLayoutFabrica(salvo: LayoutSalvo | null): LayoutFabrica | null {
   if (!salvo) return null;
   return {
+    tipo: salvo.tipo === 'posicional' ? 'posicional' : 'delimitado',
     delimitador: salvo.delimitador,
     linhaInicial: Number(salvo.linha_inicial) || 1,
     temCabecalho: !!salvo.tem_cabecalho,
-    campos: (salvo.campos ?? {}) as Partial<Record<Campo, number>>,
+    linhaMinima: Number(salvo.linha_minima) || 0,
+    campos: (salvo.campos ?? {}) as Partial<Record<Campo, number | CampoPosicional>>,
+    fixos: (salvo.fixos ?? {}) as Partial<Record<Campo, string | number>>,
+    derivados: (salvo.derivados ?? {}) as Partial<Record<Campo, RegraDerivada>>,
   };
 }
 
@@ -129,6 +172,11 @@ export function preverColunas(
   linhaSugerida: number;
   cabecalhoSugerido: boolean;
   camposSugeridos: Partial<Record<Campo, number>>;
+  /**
+   * Texto sem separador nenhum e com linhas longas: quase certamente largura
+   * fixa (ex.: Transpaese). A tela já abre no modo posicional nesse caso.
+   */
+  posicionalSugerido: boolean;
   suspeitaCodificacao: boolean;
 } {
   const todas = linhasUteis(conteudo);
@@ -154,9 +202,20 @@ export function preverColunas(
     linhaSugerida,
     cabecalhoSugerido,
     camposSugeridos: mapaCabecalho,
+    posicionalSugerido: semSeparador(uteis, separador),
     /* U+FFFD aparece quando o arquivo não é UTF-8 (ex.: ANSI de ERP antigo) */
     suspeitaCodificacao: conteudo.includes('\uFFFD'),
   };
+}
+
+/** Nenhuma linha se dividiu em colunas e as linhas são longas: largura fixa. */
+function semSeparador(linhas: string[], separador: string): boolean {
+  if (linhas.length === 0) return false;
+  const amostra = linhas.slice(0, 10);
+  const todasUmaColuna = amostra.every((l) => l.split(separador).length === 1);
+  const comprimentoMedio =
+    amostra.reduce((soma, l) => soma + l.trim().length, 0) / amostra.length;
+  return todasUmaColuna && comprimentoMedio >= 40;
 }
 
 /**
@@ -293,9 +352,10 @@ export type ResultadoAnalise = {
   linhas: PedidoNovo[];
   descartadas: number;
   separador: string;
-  mapa: Partial<Record<Campo, number>>;
+  /** Como o layout foi tratado — a tela de importação mostra isso ao usuário. */
+  tipo: TipoLayout;
+  mapa: Partial<Record<Campo, number | CampoPosicional>>;
   cabecalhoDetectado: boolean;
-  /** De onde veio o mapeamento — a tela de importação mostra isso ao usuário. */
   origem: 'layout' | 'cabecalho' | 'generico';
 };
 
@@ -308,9 +368,15 @@ export function analisarArquivo(
   conteudo: string,
   opcoes: { idlayout: number; nomeArquivo: string; fabrica: string; layout?: LayoutFabrica | null },
 ): ResultadoAnalise {
+  /*
+   * No modo posicional os espaços à direita fazem parte do registro: o legado lê
+   * com ReadLine() (sem trim) e decide por `linha.Length < N`. Por isso lá não
+   * cortamos o fim da linha.
+   */
+  const posicional = opcoes.layout?.tipo === 'posicional';
   const linhasBrutas = conteudo
     .split(/\r?\n/)
-    .map((linha) => linha.trimEnd())
+    .map((linha) => (posicional ? linha.replace(/\r$/, '') : linha.trimEnd()))
     .filter((linha) => linha.trim().length > 0);
 
   if (linhasBrutas.length === 0) {
@@ -318,6 +384,7 @@ export function analisarArquivo(
       linhas: [],
       descartadas: 0,
       separador: ';',
+      tipo: 'delimitado',
       mapa: {},
       cabecalhoDetectado: false,
       origem: 'generico',
@@ -328,8 +395,9 @@ export function analisarArquivo(
   const inicio = Math.max(0, (layout?.linhaInicial ?? 1) - 1);
   const uteis = inicio > 0 ? linhasBrutas.slice(inicio) : linhasBrutas;
 
+  const tipo: TipoLayout = layout?.tipo ?? 'delimitado';
   let separador: string;
-  let mapa: Partial<Record<Campo, number>>;
+  let mapa: Partial<Record<Campo, number | CampoPosicional>>;
   let cabecalhoDetectado: boolean;
   let origem: ResultadoAnalise['origem'];
   let base = uteis;
@@ -368,15 +436,65 @@ export function analisarArquivo(
   }
 
   const dados = cabecalhoDetectado ? base.slice(1) : base;
+  const derivados = layout?.derivados ?? {};
+  const fixos = layout?.fixos ?? {};
+  const linhaMinima = layout?.linhaMinima ?? 0;
   const agora = new Date().toISOString();
   const linhas: PedidoNovo[] = [];
   let descartadas = 0;
 
   for (const bruta of dados) {
-    const colunas = bruta.split(separador);
+    /* posicional: linha curta demais é lixo (cabeçalho de página, rodapé).
+       Mede a linha CRUA, como o legado faz. */
+    if (linhaMinima > 0 && bruta.length < linhaMinima) {
+      descartadas++;
+      continue;
+    }
+
+    const colunas = posicional ? [] : bruta.split(separador);
+
+    /** Valor cru do campo, como está no arquivo. */
+    const bruto = (campo: Campo): string => {
+      const geometria = mapa[campo];
+      if (geometria === undefined) return '';
+
+      if (typeof geometria === 'number') return (colunas[geometria] ?? '').trim();
+
+      const fim = geometria.len > 0 ? geometria.pos + geometria.len : undefined;
+      let texto = (fim === undefined ? bruta.substring(geometria.pos) : bruta.substr(geometria.pos, geometria.len)).trim();
+      if (geometria.zeros) texto = texto.replace(/^0+/, '');
+      return texto;
+    };
+
+    /** Aplica a regra de campo derivado (ex.: produto dentro da etiqueta). */
+    const aplicarDerivado = (regra: RegraDerivada, campo: Campo): string => {
+      const origem = bruto(campo);
+      const pedaco = (pos: number, len: number, zeros?: boolean): string => {
+        const texto = (len > 0 ? origem.substr(pos, len) : origem.substring(pos)).trim();
+        return zeros ? texto.replace(/^0+/, '') : texto;
+      };
+
+      if (regra.ultimos !== undefined) {
+        return origem.length >= regra.ultimos
+          ? origem.substring(origem.length - regra.ultimos)
+          : '';
+      }
+      if (regra.se_prefixo !== undefined) {
+        if (origem.startsWith(regra.se_prefixo)) {
+          return pedaco(regra.pos ?? 0, regra.len ?? 0);
+        }
+        return pedaco(regra.senao_pos ?? 0, regra.senao_len ?? 0, regra.senao_zeros);
+      }
+      return pedaco(regra.pos ?? 0, regra.len ?? 0);
+    };
+
+    /** Valor final do campo: derivado > posição > valor fixo quando vazio. */
     const valor = (campo: Campo): string => {
-      const indice = mapa[campo];
-      return indice === undefined ? '' : (colunas[indice] ?? '').trim();
+      const regra = derivados[campo];
+      let texto = regra ? aplicarDerivado(regra, regra.de) : bruto(campo);
+      if (!texto) texto = String(fixos[campo] ?? '').trim();
+      if (!texto && regra?.padrao) texto = regra.padrao;
+      return texto;
     };
 
     const etiqueta = valor('etiqueta');
@@ -408,5 +526,5 @@ export function analisarArquivo(
     });
   }
 
-  return { linhas, descartadas, separador, mapa, cabecalhoDetectado, origem };
+  return { linhas, descartadas, separador, tipo, mapa, cabecalhoDetectado, origem };
 }

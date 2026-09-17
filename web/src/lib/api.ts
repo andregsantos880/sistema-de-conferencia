@@ -375,16 +375,25 @@ export type FabricaAdmin = {
   ativo: number;
   pedidos: number;
   tem_layout: boolean;
-  layout_campos: Record<string, number> | null;
+  layout_tipo: 'delimitado' | 'posicional' | null;
+  layout_campos: Record<string, unknown> | null;
   layout_delim: string | null;
 };
 
 /** Como está gravado o layout de uma fábrica. */
 export type LayoutSalvo = {
+  /** `delimitado` (CSV/TXT separado) ou `posicional` (largura fixa). */
+  tipo: 'delimitado' | 'posicional';
   delimitador: string;
   linha_inicial: number;
   tem_cabecalho: boolean;
-  campos: Record<string, number>;
+  /** Posicional: ignora linhas menores que isto. */
+  linha_minima: number;
+  campos: Record<string, number | { pos: number; len: number; zeros?: boolean }>;
+  /** Valor usado quando o campo vier vazio. */
+  fixos: Record<string, string | number>;
+  /** Campos montados a partir de outro (ex.: produto dentro da etiqueta). */
+  derivados: Record<string, Record<string, unknown>>;
 };
 
 /**
@@ -428,10 +437,14 @@ export async function lerLayoutFabrica(controle: number): Promise<LayoutSalvo | 
 export async function salvarLayoutFabrica(controle: number, layout: LayoutSalvo): Promise<void> {
   await rpc<number>('layout_salvar', {
     p_controle: controle,
+    p_tipo: layout.tipo,
     p_delimitador: layout.delimitador,
     p_linha_inicial: layout.linha_inicial,
     p_tem_cabecalho: layout.tem_cabecalho,
+    p_linha_minima: layout.linha_minima,
     p_campos: layout.campos,
+    p_fixos: layout.fixos,
+    p_derivados: layout.derivados,
   });
 }
 

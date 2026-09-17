@@ -231,6 +231,9 @@ export default function Fabricas({ usuarioLogado, onVoltar }: Props) {
                     {f.tem_layout ? (
                       <span className="text-emerald-700">
                         Definido ({Object.keys(f.layout_campos ?? {}).length} campos
+                        {f.layout_tipo === 'posicional'
+                          ? ', largura fixa'
+                          : `, separador “${f.layout_delim === '\t' ? 'TAB' : f.layout_delim}”`}
                         {layout ? `, linha ${layout.linha_inicial}` : ''})
                       </span>
                     ) : (
