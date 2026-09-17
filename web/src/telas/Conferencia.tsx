@@ -58,6 +58,7 @@ type Props = {
   onTrocarFabrica: (id: number) => void;
   onAbrirImportacao: () => void;
   onAbrirUsuarios: () => void;
+  onAbrirFabricas: () => void;
   onSair: () => void;
 };
 
@@ -138,6 +139,7 @@ export default function Conferencia({
   onTrocarFabrica,
   onAbrirImportacao,
   onAbrirUsuarios,
+  onAbrirFabricas,
   onSair,
 }: Props) {
   const administrador = usuario.perfil === PERFIL.ADMIN;
@@ -511,6 +513,14 @@ export default function Conferencia({
               {usuario.perfil === PERFIL.ADMIN ? 'Administrador' : 'Operador'}
             </span>
           </span>
+          {administrador && (
+            <button
+              onClick={onAbrirFabricas}
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
+            >
+              Fábricas
+            </button>
+          )}
           {administrador && (
             <button
               onClick={onAbrirUsuarios}

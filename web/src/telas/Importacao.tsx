@@ -1,6 +1,13 @@
-import { useMemo, useRef, useState } from 'react';
-import { inserirPedidos, type Empresa, type Fabrica, type PedidoNovo } from '../lib/api';
-import { analisarArquivo, PARSERS } from '../lib/parsers';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  lerLayoutFabrica,
+  inserirPedidos,
+  type Empresa,
+  type Fabrica,
+  type LayoutSalvo,
+  type PedidoNovo,
+} from '../lib/api';
+import { analisarArquivo, comoLayoutFabrica, PARSERS, rotuloSeparador } from '../lib/parsers';
 import { somErro, somOk } from '../lib/audio';
 
 type Props = {
@@ -26,7 +33,32 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
   const [etapa, setEtapa] = useState('');
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
+  /** Layout que o administrador configurou para a fábrica (tela Fábricas). */
+  const [layout, setLayout] = useState<LayoutSalvo | null>(null);
+  const [layoutEmUso, setLayoutEmUso] = useState<{ origem: string; separador: string } | null>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
+
+  /* Ao trocar de fábrica, busca o layout dela. Sem migração 00104 (ou sem layout
+     configurado) segue o caminho antigo: detecção automática + PARSERS. */
+  useEffect(() => {
+    let cancelado = false;
+    setLayout(null);
+    setLayoutEmUso(null);
+
+    if (fabricaId === null) return;
+
+    lerLayoutFabrica(fabricaId)
+      .then((salvo) => {
+        if (!cancelado) setLayout(salvo);
+      })
+      .catch(() => {
+        if (!cancelado) setLayout(null);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [fabricaId]);
 
   const fabrica = fabricas.find((f) => f.controle === fabricaId) ?? null;
   /* Fábricas COM INTEGRAÇÃO ficam fixadas no topo do combo (ver lib/integracao.ts). */
@@ -62,6 +94,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
         idlayout: fabricaId,
         nomeArquivo: arquivo.name,
         fabrica: fabrica?.nome ?? '',
+        layout: comoLayoutFabrica(layout),
       });
 
       if (resultado.linhas.length === 0) {
@@ -73,13 +106,14 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       setLinhas(resultado.linhas);
       setNomeArquivo(arquivo.name);
       setLojasMarcadas(new Set(resultado.linhas.map((l) => String(l.cliente ?? ''))));
+      setLayoutEmUso({ origem: resultado.origem, separador: resultado.separador });
 
-      if (!PARSERS[fabrica?.nome ?? '']) {
+      if (resultado.origem === 'generico' && !PARSERS[fabrica?.nome ?? '']) {
         setAviso(
-          `Sem parser específico para "${fabrica?.nome}" — o arquivo foi lido com o layout genérico ` +
-            `(separador "${resultado.separador === '\t' ? 'TAB' : resultado.separador}", ` +
+          `Sem layout configurado para "${fabrica?.nome}" — o arquivo foi lido no modo genérico ` +
+            `(separador "${rotuloSeparador(resultado.separador)}", ` +
             `${resultado.cabecalhoDetectado ? 'colunas pelo cabeçalho' : 'colunas por posição'}). ` +
-            'Confira a prévia antes de importar.',
+            'Confira a prévia antes de importar. O administrador pode definir o layout em Fábricas.',
         );
       }
     } catch (falha) {
@@ -190,10 +224,29 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                 }}
               />
             </div>
-            {fabrica && !fabrica.integrada && (
+            {fabrica && !fabrica.integrada && !layout && (
               <p className="mt-1 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
                 “{fabrica.nome}” não tem integração instalada — o arquivo será lido no modo genérico
                 (detecção de separador e colunas).
+              </p>
+            )}
+            {fabrica && layout && (
+              <p className="mt-1 rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-800">
+                Layout configurado desta fábrica: {Object.keys(layout.campos ?? {}).length} coluna(s)
+                mapeada(s), separador “{rotuloSeparador(layout.delimitador)}”, começando na linha{' '}
+                {layout.linha_inicial}
+                {layout.tem_cabecalho ? ' (com cabeçalho)' : ''}.
+              </p>
+            )}
+            {layoutEmUso && (
+              <p className="mt-1 text-[11px] text-slate-500">
+                Arquivo lido com{' '}
+                {layoutEmUso.origem === 'layout'
+                  ? 'o layout configurado da fábrica'
+                  : layoutEmUso.origem === 'cabecalho'
+                    ? 'as colunas identificadas pelo cabeçalho'
+                    : 'o modo genérico'}{' '}
+                (separador “{rotuloSeparador(layoutEmUso.separador)}”).
               </p>
             )}
             {nomeArquivo && <p className="mt-1 text-slate-500">Arquivo: {nomeArquivo}</p>}

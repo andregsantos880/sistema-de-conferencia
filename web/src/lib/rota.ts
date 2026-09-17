@@ -12,18 +12,19 @@
  *   /sysconf/<empresa>/conferencia
  *   /sysconf/<empresa>/importacao
  *   /sysconf/<empresa>/usuarios
+ *   /sysconf/<empresa>/fabricas
  *
  * Nao ha router de terceiros: sao poucas telas e o estado e simples.
  */
 
-export type Tela = 'login' | 'conferencia' | 'importacao' | 'usuarios';
+export type Tela = 'login' | 'conferencia' | 'importacao' | 'usuarios' | 'fabricas';
 
 /** Paginas publicas do site (fora do escopo de empresa). */
 export type Pagina = 'landing' | 'entrar' | 'registrar' | 'termos' | 'privacidade';
 
 export type Rota = { empresa: string | null; tela: Tela; pagina: Pagina | null };
 
-const TELAS: Tela[] = ['login', 'conferencia', 'importacao', 'usuarios'];
+const TELAS: Tela[] = ['login', 'conferencia', 'importacao', 'usuarios', 'fabricas'];
 
 const PAGINAS: Record<string, Pagina> = {
   '': 'landing',

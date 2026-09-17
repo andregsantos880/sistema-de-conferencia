@@ -366,3 +366,75 @@ export async function atualizarUsuario(
 export async function excluirUsuario(id: number): Promise<void> {
   await rpc<number>('usuario_excluir', { p_id: id });
 }
+
+/* --------------------------------------------- fábricas e layout (ADMIN) --- */
+
+export type FabricaAdmin = {
+  controle: number;
+  nome: string;
+  ativo: number;
+  pedidos: number;
+  tem_layout: boolean;
+  layout_campos: Record<string, number> | null;
+  layout_delim: string | null;
+};
+
+/** Como está gravado o layout de uma fábrica. */
+export type LayoutSalvo = {
+  delimitador: string;
+  linha_inicial: number;
+  tem_cabecalho: boolean;
+  campos: Record<string, number>;
+};
+
+/**
+ * A migração 00104 (fábricas + layout no banco) é aplicada pelo SQL Editor do
+ * Supabase, não pelo deploy do site. Quando ela ainda não foi rodada, o RPC
+ * responde "Could not find the function" — a tela avisa isso em português em
+ * vez de mostrar o erro cru.
+ */
+export function migracaoPendente(falha: unknown): boolean {
+  const texto = falha instanceof Error ? falha.message : String(falha);
+  return /Could not find the function|PGRST202|schema cache/i.test(texto);
+}
+
+export const AVISO_MIGRACAO =
+  'Este recurso precisa da migração 00104 aplicada no banco. Rode o arquivo ' +
+  'supabase/migrations/20260916000104_fabricas_e_layout_mapa.sql no SQL Editor do Supabase.';
+
+export async function listarFabricasAdmin(): Promise<FabricaAdmin[]> {
+  return rpc<FabricaAdmin[]>('fabricas_admin');
+}
+
+/** Cria a fábrica e devolve o `controle` gerado. */
+export async function criarFabrica(nome: string): Promise<number> {
+  return rpc<number>('fabrica_criar', { p_nome: nome });
+}
+
+export async function atualizarFabrica(controle: number, nome: string, ativo: number): Promise<void> {
+  await rpc<number>('fabrica_atualizar', { p_controle: controle, p_nome: nome, p_ativo: ativo });
+}
+
+export async function excluirFabrica(controle: number): Promise<void> {
+  await rpc<number>('fabrica_excluir', { p_controle: controle });
+}
+
+/** Layout salvo da fábrica (usado pela importação; o operador também lê). */
+export async function lerLayoutFabrica(controle: number): Promise<LayoutSalvo | null> {
+  const linhas = await rpc<LayoutSalvo[]>('layout_da_fabrica', { p_controle: controle });
+  return Array.isArray(linhas) ? (linhas[0] ?? null) : null;
+}
+
+export async function salvarLayoutFabrica(controle: number, layout: LayoutSalvo): Promise<void> {
+  await rpc<number>('layout_salvar', {
+    p_controle: controle,
+    p_delimitador: layout.delimitador,
+    p_linha_inicial: layout.linha_inicial,
+    p_tem_cabecalho: layout.tem_cabecalho,
+    p_campos: layout.campos,
+  });
+}
+
+export async function excluirLayoutFabrica(controle: number): Promise<void> {
+  await rpc<number>('layout_excluir', { p_controle: controle });
+}

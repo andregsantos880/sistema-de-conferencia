@@ -10,7 +10,7 @@
  *
  * TODO (pendente): portar os 30 parsers do legado para PARSERS.
  */
-import type { PedidoNovo } from './api';
+import type { LayoutSalvo, PedidoNovo } from './api';
 
 export type Campo =
   | 'ordcompra'
@@ -27,6 +27,42 @@ export type MapaLayout = {
   separador?: string;
   campos?: Partial<Record<Campo, number>>;
 };
+
+/**
+ * Layout salvo no banco para uma fábrica (tela Fábricas), como o usuário
+ * configurou importando um arquivo de exemplo. Quando existe, ele manda na
+ * leitura — a deteção automática e o PARSERS passam a ser só reserva.
+ */
+export type LayoutFabrica = {
+  delimitador: string;
+  linhaInicial: number;
+  temCabecalho: boolean;
+  campos: Partial<Record<Campo, number>>;
+};
+
+/** Campos que podem ser ligados a uma coluna do arquivo, na ordem da tela. */
+export const CAMPOS_MAPEAIVEIS: ReadonlyArray<{ campo: Campo; titulo: string; obrigatorio: boolean }> = [
+  { campo: 'etiqueta', titulo: 'Etiqueta (código de barras)', obrigatorio: true },
+  { campo: 'produto', titulo: 'Produto (código)', obrigatorio: false },
+  { campo: 'descricao1', titulo: 'Descrição do produto', obrigatorio: false },
+  { campo: 'qtde', titulo: 'Quantidade', obrigatorio: false },
+  { campo: 'ordcompra', titulo: 'Ordem de compra', obrigatorio: false },
+  { campo: 'pecliente', titulo: 'Pedido do cliente', obrigatorio: false },
+  { campo: 'cliente', titulo: 'Cliente / loja', obrigatorio: false },
+  { campo: 'volume', titulo: 'Volume', obrigatorio: false },
+  { campo: 'sequencia', titulo: 'Sequência', obrigatorio: false },
+];
+
+/** Converte o layout gravado no banco (snake_case) para o formato da leitura. */
+export function comoLayoutFabrica(salvo: LayoutSalvo | null): LayoutFabrica | null {
+  if (!salvo) return null;
+  return {
+    delimitador: salvo.delimitador,
+    linhaInicial: Number(salvo.linha_inicial) || 1,
+    temCabecalho: !!salvo.tem_cabecalho,
+    campos: (salvo.campos ?? {}) as Partial<Record<Campo, number>>,
+  };
+}
 
 /** Mapeamentos já configurados (chave = nome da fábrica como veio do LAYOUT). */
 export const PARSERS: Record<string, MapaLayout> = {
@@ -64,6 +100,63 @@ function normalizar(valor: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^A-Z0-9_]/g, '');
+}
+
+/** Separa o conteúdo em linhas úteis (ignora linhas em branco). */
+function linhasUteis(conteudo: string): string[] {
+  return conteudo
+    .split(/\r?\n/)
+    .map((linha) => linha.trimEnd())
+    .filter((linha) => linha.trim().length > 0);
+}
+
+/**
+ * Prévia para a tela de configuração (mesma ideia do "Importar dados TXT" do
+ * Excel): devolve as primeiras linhas já separadas em colunas, além do que foi
+ * detectado — separador, se a primeira linha parece cabeçalho e se o texto
+ * aparenta NÃO estar em UTF-8 (acento corrompido).
+ */
+export function preverColunas(
+  conteudo: string,
+  config: { delimitador?: string; linhaInicial?: number; temCabecalho?: boolean } = {},
+  maxLinhas = 8,
+): {
+  linhas: string[][];
+  totalLinhas: number;
+  separador: string;
+  cabecalhoSugerido: boolean;
+  camposSugeridos: Partial<Record<Campo, number>>;
+  suspeitaCodificacao: boolean;
+} {
+  const todas = linhasUteis(conteudo);
+  const inicio = Math.max(0, (config.linhaInicial ?? 1) - 1);
+  const uteis = todas.slice(inicio);
+  /* o separador sai da primeira linha DEPOIS do deslocamento: arquivos de ERP
+     costumam ter linha(s) de titulo antes dos dados. */
+  const separador = config.delimitador ?? detectarSeparador(uteis[0] ?? '');
+
+  const mapaCabecalho = mapearPorCabecalho(uteis[0] ?? '', separador);
+  const cabecalhoSugerido =
+    config.temCabecalho ?? Object.keys(mapaCabecalho).length >= 3;
+
+  return {
+    linhas: uteis.slice(0, maxLinhas).map((linha) => linha.split(separador)),
+    totalLinhas: uteis.length,
+    separador,
+    cabecalhoSugerido,
+    camposSugeridos: mapaCabecalho,
+    /* U+FFFD aparece quando o arquivo não é UTF-8 (ex.: ANSI de ERP antigo) */
+    suspeitaCodificacao: conteudo.includes('\uFFFD'),
+  };
+}
+
+/** Rótulo curto do separador, para mostrar na tela. */
+export function rotuloSeparador(separador: string): string {
+  if (separador === '\t') return 'TAB';
+  if (separador === ';') return 'ponto e vírgula (;)';
+  if (separador === ',') return 'vírgula (,)';
+  if (separador === '|') return 'barra vertical (|)';
+  return separador;
 }
 
 /** Detecta o separador predominante na primeira linha. */
@@ -121,6 +214,8 @@ export type ResultadoAnalise = {
   separador: string;
   mapa: Partial<Record<Campo, number>>;
   cabecalhoDetectado: boolean;
+  /** De onde veio o mapeamento — a tela de importação mostra isso ao usuário. */
+  origem: 'layout' | 'cabecalho' | 'generico';
 };
 
 /**
@@ -130,7 +225,7 @@ export type ResultadoAnalise = {
  */
 export function analisarArquivo(
   conteudo: string,
-  opcoes: { idlayout: number; nomeArquivo: string; fabrica: string },
+  opcoes: { idlayout: number; nomeArquivo: string; fabrica: string; layout?: LayoutFabrica | null },
 ): ResultadoAnalise {
   const linhasBrutas = conteudo
     .split(/\r?\n/)
@@ -138,18 +233,45 @@ export function analisarArquivo(
     .filter((linha) => linha.trim().length > 0);
 
   if (linhasBrutas.length === 0) {
-    return { linhas: [], descartadas: 0, separador: ';', mapa: {}, cabecalhoDetectado: false };
+    return {
+      linhas: [],
+      descartadas: 0,
+      separador: ';',
+      mapa: {},
+      cabecalhoDetectado: false,
+      origem: 'generico',
+    };
   }
 
-  const separador = PARSERS[opcoes.fabrica]?.separador ?? detectarSeparador(linhasBrutas[0]);
-  const mapaCabecalho = mapearPorCabecalho(linhasBrutas[0], separador);
-  const cabecalhoDetectado = Object.keys(mapaCabecalho).length >= 3;
+  const layout = opcoes.layout ?? null;
+  const inicio = Math.max(0, (layout?.linhaInicial ?? 1) - 1);
+  const uteis = inicio > 0 ? linhasBrutas.slice(inicio) : linhasBrutas;
 
-  const mapa = cabecalhoDetectado
-    ? mapaCabecalho
-    : (PARSERS[opcoes.fabrica]?.campos ?? PARSERS['CSV Padrão'].campos ?? {});
+  let separador: string;
+  let mapa: Partial<Record<Campo, number>>;
+  let cabecalhoDetectado: boolean;
+  let origem: ResultadoAnalise['origem'];
 
-  const dados = cabecalhoDetectado ? linhasBrutas.slice(1) : linhasBrutas;
+  if (layout && Object.keys(layout.campos ?? {}).length > 0) {
+    /* layout configurado na tela Fábricas manda em tudo */
+    separador = layout.delimitador;
+    mapa = layout.campos;
+    cabecalhoDetectado = layout.temCabecalho;
+    origem = 'layout';
+  } else {
+    /* sem layout salvo: detecta pelo cabeçalho e, na falta dele, usa o mapa fixo */
+    separador = layout?.delimitador ?? PARSERS[opcoes.fabrica]?.separador ?? detectarSeparador(uteis[0]);
+    const mapaCabecalho = mapearPorCabecalho(uteis[0], separador);
+    const achouCabecalho = Object.keys(mapaCabecalho).length >= 3;
+
+    cabecalhoDetectado = layout?.temCabecalho ?? achouCabecalho;
+    mapa = cabecalhoDetectado && achouCabecalho
+      ? mapaCabecalho
+      : (PARSERS[opcoes.fabrica]?.campos ?? PARSERS['CSV Padrão'].campos ?? {});
+    origem = cabecalhoDetectado && achouCabecalho ? 'cabecalho' : 'generico';
+  }
+
+  const dados = cabecalhoDetectado ? uteis.slice(1) : uteis;
   const agora = new Date().toISOString();
   const linhas: PedidoNovo[] = [];
   let descartadas = 0;
@@ -190,5 +312,5 @@ export function analisarArquivo(
     });
   }
 
-  return { linhas, descartadas, separador, mapa, cabecalhoDetectado };
+  return { linhas, descartadas, separador, mapa, cabecalhoDetectado, origem };
 }
