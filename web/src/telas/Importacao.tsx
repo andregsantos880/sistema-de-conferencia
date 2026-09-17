@@ -21,6 +21,24 @@ type Props = {
 };
 
 /**
+ * Erros do banco traduzidos para o operador. O caso real: a descrição de uma
+ * peça maior que a coluna reservada (a Romanzza manda 86 caracteres e a coluna
+ * tem 80) derruba a importação inteira com um texto técnico em inglês.
+ */
+function mensagemDeImportacao(falha: unknown): string {
+  const texto = falha instanceof Error ? falha.message : String(falha);
+  const campoLongo = /too long for type character varying\((\d+)\)/.exec(texto);
+  if (campoLongo) {
+    return (
+      `Um texto do arquivo é maior do que o espaço reservado no banco ` +
+      `(${campoLongo[1]} caracteres) — a peça mais longa deste arquivo não cabe. ` +
+      'Nada foi importado. Avise o suporte para ampliar a coluna de descrição.'
+    );
+  }
+  return texto || 'Falha ao importar.';
+}
+
+/**
  * Recriação da tela TabeLayo (importação de arquivos):
  * combo de fábrica, botão "Arquivo...", barra de progresso, lista de lojas
  * com checkbox e o botão "Incluir lojas selecionadas.".
@@ -168,7 +186,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
     } catch (falha) {
       somErro();
       setEtapa('');
-      setErro(falha instanceof Error ? falha.message : 'Falha ao importar.');
+      setErro(mensagemDeImportacao(falha));
     }
   }
 
