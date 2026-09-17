@@ -136,11 +136,18 @@ export default function ConfigLayoutFabrica({ fabrica, onFechar, onSalvo }: Prop
       setConteudo(texto);
       setNomeArquivo(arquivo.name);
 
-      /* primeira leitura: adivinha separador, cabeçalho e sugere as colunas */
-      const palpite = preverColunas(texto, { linhaInicial: 1 });
+      /* primeira leitura: adivinha separador, onde os dados começam, se há
+         cabeçalho e o de-para das colunas — depois o usuário confere/ajusta */
+      const palpite = preverColunas(texto);
       setDelimitador(palpite.separador);
+      setLinhaInicial(palpite.linhaSugerida);
       setTemCabecalho(palpite.cabecalhoSugerido);
       setCampos(palpite.camposSugeridos as MapaTela);
+      setMensagem(
+        palpite.linhaSugerida > 1
+          ? `O assistente achou o cabeçalho na linha ${palpite.linhaSugerida} — confira a prévia.`
+          : 'Arquivo lido: confira a prévia e o de-para das colunas.',
+      );
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Falha ao ler o arquivo.');
     }
@@ -149,6 +156,7 @@ export default function ConfigLayoutFabrica({ fabrica, onFechar, onSalvo }: Prop
   function sugerir() {
     if (!previa) return;
     setDelimitador(previa.separador);
+    setLinhaInicial(previa.linhaSugerida);
     setTemCabecalho(previa.cabecalhoSugerido);
     setCampos(previa.camposSugeridos as MapaTela);
     setMensagem('Sugestão do assistente aplicada — confira a prévia e ajuste o que precisar.');

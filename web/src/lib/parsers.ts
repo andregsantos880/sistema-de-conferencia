@@ -113,8 +113,9 @@ function linhasUteis(conteudo: string): string[] {
 /**
  * Prévia para a tela de configuração (mesma ideia do "Importar dados TXT" do
  * Excel): devolve as primeiras linhas já separadas em colunas, além do que foi
- * detectado — separador, se a primeira linha parece cabeçalho e se o texto
- * aparenta NÃO estar em UTF-8 (acento corrompido).
+ * detectado — separador, a linha onde os dados começam (arquivo de ERP costuma
+ * ter título/emitente antes do cabeçalho) e se o texto aparenta NÃO estar em
+ * UTF-8 (acento corrompido).
  */
 export function preverColunas(
   conteudo: string,
@@ -124,30 +125,90 @@ export function preverColunas(
   linhas: string[][];
   totalLinhas: number;
   separador: string;
+  /** Linha onde os dados começam, segundo o próprio arquivo (1 = primeira). */
+  linhaSugerida: number;
   cabecalhoSugerido: boolean;
   camposSugeridos: Partial<Record<Campo, number>>;
   suspeitaCodificacao: boolean;
 } {
   const todas = linhasUteis(conteudo);
-  const inicio = Math.max(0, (config.linhaInicial ?? 1) - 1);
-  const uteis = todas.slice(inicio);
-  /* o separador sai da primeira linha DEPOIS do deslocamento: arquivos de ERP
-     costumam ter linha(s) de titulo antes dos dados. */
-  const separador = config.delimitador ?? detectarSeparador(uteis[0] ?? '');
+  const separador = config.delimitador ?? detectarSeparador(todas);
 
-  const mapaCabecalho = mapearPorCabecalho(uteis[0] ?? '', separador);
+  /* sem linha escolhida pelo usuário, procura o cabeçalho nas primeiras linhas */
+  const cabecalhoAchado =
+    config.linhaInicial === undefined ? acharLinhaCabecalho(todas, separador) : null;
+  const linhaSugerida =
+    config.linhaInicial ?? cabecalhoAchado?.linha ?? acharInicioDados(todas, separador);
+  const uteis = todas.slice(Math.max(0, linhaSugerida - 1));
+
+  const mapaCabecalho = cabecalhoAchado
+    ? cabecalhoAchado.campos
+    : mapearPorCabecalho(uteis[0] ?? '', separador);
   const cabecalhoSugerido =
-    config.temCabecalho ?? Object.keys(mapaCabecalho).length >= 3;
+    config.temCabecalho ?? (cabecalhoAchado !== null || Object.keys(mapaCabecalho).length >= 3);
 
   return {
     linhas: uteis.slice(0, maxLinhas).map((linha) => linha.split(separador)),
     totalLinhas: uteis.length,
     separador,
+    linhaSugerida,
     cabecalhoSugerido,
     camposSugeridos: mapaCabecalho,
     /* U+FFFD aparece quando o arquivo não é UTF-8 (ex.: ANSI de ERP antigo) */
     suspeitaCodificacao: conteudo.includes('\uFFFD'),
   };
+}
+
+/**
+ * Procura, nas primeiras linhas, a que mais se parece com um cabeçalho (nomes
+ * de coluna conhecidos). É o que permite ler arquivo que vem com título e data
+ * de emissão antes da tabela.
+ */
+function acharLinhaCabecalho(
+  linhas: string[],
+  separador: string,
+  maxLinhas = 20,
+): { linha: number; campos: Partial<Record<Campo, number>> } | null {
+  const limite = Math.min(maxLinhas, linhas.length);
+  let melhor: { linha: number; campos: Partial<Record<Campo, number>> } | null = null;
+
+  for (let i = 0; i < limite; i++) {
+    const campos = mapearPorCabecalho(linhas[i], separador);
+    const achados = Object.keys(campos).length;
+    if (achados < 3) continue;
+    if (!melhor || achados > Object.keys(melhor.campos).length) {
+      melhor = { linha: i + 1, campos };
+    }
+  }
+  return melhor;
+}
+
+/**
+ * Primeira linha que tem a quantidade de colunas predominante no arquivo. Sem
+ * cabeçalho para reconhecer, é isso que denuncia a linha de título: ela tem
+ * menos colunas que o resto do arquivo.
+ */
+function acharInicioDados(linhas: string[], separador: string, maxLinhas = 20): number {
+  const contagens = linhas
+    .slice(0, Math.min(maxLinhas, linhas.length))
+    .map((linha) => linha.split(separador).length);
+  if (contagens.length === 0) return 1;
+
+  const frequencia = new Map<number, number>();
+  for (const n of contagens) frequencia.set(n, (frequencia.get(n) ?? 0) + 1);
+
+  let tipica = contagens[0];
+  let vezesTipica = 0;
+  frequencia.forEach((vezes, colunas) => {
+    if (vezes > vezesTipica || (vezes === vezesTipica && colunas > tipica)) {
+      vezesTipica = vezes;
+      tipica = colunas;
+    }
+  });
+
+  if (tipica < 2) return 1;
+  const indice = contagens.indexOf(tipica);
+  return indice >= 0 ? indice + 1 : 1;
 }
 
 /** Rótulo curto do separador, para mostrar na tela. */
@@ -159,16 +220,36 @@ export function rotuloSeparador(separador: string): string {
   return separador;
 }
 
-/** Detecta o separador predominante na primeira linha. */
-export function detectarSeparador(linha: string): string {
+/**
+ * Detecta o separador predominante. Aceita uma linha ou várias: o arquivo de
+ * ERP pode ter título antes dos dados, e aí a 1ª linha não tem separador
+ * nenhum. A escolha prioriza o candidato que separa mais linhas de forma
+ * CONSISTENTE (mesma quantidade de colunas), para não cair em vírgula de
+ * decimal ("12,50") nem em TAB isolado.
+ */
+export function detectarSeparador(linha: string | string[]): string {
   const candidatos = [';', '|', '\t', ','];
+  const linhas = (Array.isArray(linha) ? linha : [linha])
+    .map((l) => l.trimEnd())
+    .filter((l) => l.trim().length > 0)
+    .slice(0, 20);
+
   let melhor = ';';
-  let maior = 0;
+  let melhorPontos = -1;
 
   for (const c of candidatos) {
-    const total = linha.split(c).length - 1;
-    if (total > maior) {
-      maior = total;
+    const contagens = linhas
+      .map((l) => l.split(c).length)
+      .filter((n) => n >= 2)
+      .sort((a, b) => a - b);
+    if (contagens.length === 0) continue;
+
+    const tipica = contagens[Math.floor(contagens.length / 2)] ?? 2;
+    const consistentes = contagens.filter((n) => n === tipica).length;
+    /* consistência vale mais que quantidade de colunas */
+    const pontos = consistentes * 100 + tipica;
+    if (pontos > melhorPontos) {
+      melhorPontos = pontos;
       melhor = c;
     }
   }
@@ -251,6 +332,7 @@ export function analisarArquivo(
   let mapa: Partial<Record<Campo, number>>;
   let cabecalhoDetectado: boolean;
   let origem: ResultadoAnalise['origem'];
+  let base = uteis;
 
   if (layout && Object.keys(layout.campos ?? {}).length > 0) {
     /* layout configurado na tela Fábricas manda em tudo */
@@ -259,10 +341,24 @@ export function analisarArquivo(
     cabecalhoDetectado = layout.temCabecalho;
     origem = 'layout';
   } else {
-    /* sem layout salvo: detecta pelo cabeçalho e, na falta dele, usa o mapa fixo */
-    separador = layout?.delimitador ?? PARSERS[opcoes.fabrica]?.separador ?? detectarSeparador(uteis[0]);
-    const mapaCabecalho = mapearPorCabecalho(uteis[0], separador);
-    const achouCabecalho = Object.keys(mapaCabecalho).length >= 3;
+    /* sem layout salvo: procura o cabeçalho no arquivo e, na falta dele, usa o mapa fixo */
+    separador = layout?.delimitador ?? PARSERS[opcoes.fabrica]?.separador ?? detectarSeparador(uteis);
+    let mapaCabecalho = mapearPorCabecalho(uteis[0] ?? '', separador);
+    let achouCabecalho = Object.keys(mapaCabecalho).length >= 3;
+
+    /* arquivo de ERP com título/emitente antes do cabeçalho */
+    if (!layout && !achouCabecalho) {
+      const achado = acharLinhaCabecalho(uteis, separador);
+      if (achado) {
+        base = uteis.slice(achado.linha - 1);
+        mapaCabecalho = achado.campos;
+        achouCabecalho = true;
+      } else {
+        /* sem cabeçalho reconhecível: ao menos pula as linhas de título */
+        const inicioDados = acharInicioDados(uteis, separador);
+        if (inicioDados > 1) base = uteis.slice(inicioDados - 1);
+      }
+    }
 
     cabecalhoDetectado = layout?.temCabecalho ?? achouCabecalho;
     mapa = cabecalhoDetectado && achouCabecalho
@@ -271,7 +367,7 @@ export function analisarArquivo(
     origem = cabecalhoDetectado && achouCabecalho ? 'cabecalho' : 'generico';
   }
 
-  const dados = cabecalhoDetectado ? uteis.slice(1) : uteis;
+  const dados = cabecalhoDetectado ? base.slice(1) : base;
   const agora = new Date().toISOString();
   const linhas: PedidoNovo[] = [];
   let descartadas = 0;
