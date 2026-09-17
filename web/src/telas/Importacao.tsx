@@ -2,13 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   lerLayoutFabrica,
   inserirPedidos,
+  registrarImportacao,
+  migracaoPendente,
+  AVISO_IMPORTACOES,
   type Empresa,
   type Fabrica,
   type LayoutSalvo,
   type PedidoNovo,
 } from '../lib/api';
 import { analisarArquivo, comoLayoutFabrica, PARSERS, rotuloSeparador } from '../lib/parsers';
-import { lerTextoDoArquivo } from '../lib/arquivo';
+import { arquivoParaBase64, lerTextoDoArquivo } from '../lib/arquivo';
 import { somErro, somOk } from '../lib/audio';
 
 type Props = {
@@ -47,6 +50,9 @@ function mensagemDeImportacao(falha: unknown): string {
 export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabrica, onConcluir, onVoltar }: Props) {
   const [linhas, setLinhas] = useState<PedidoNovo[]>([]);
   const [nomeArquivo, setNomeArquivo] = useState('');
+  /** O File escolhido: guardado para registrar a importação (com o original) e baixar depois. */
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [descartadas, setDescartadas] = useState(0);
   const [lojasMarcadas, setLojasMarcadas] = useState<Set<string>>(new Set());
   const [progresso, setProgresso] = useState(0);
   const [etapa, setEtapa] = useState('');
@@ -129,6 +135,8 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
 
       setLinhas(resultado.linhas);
       setNomeArquivo(arquivo.name);
+      setArquivo(arquivo);
+      setDescartadas(resultado.descartadas);
       setLojasMarcadas(new Set(resultado.linhas.map((l) => String(l.cliente ?? ''))));
       setLayoutEmUso({
         origem: resultado.origem,
@@ -168,10 +176,38 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       const total = paraImportar.length;
       let enviados = 0;
 
+      /* Registra a importação ANTES de gravar os pedidos: o id volta e cada
+         bloco de pedidos nasce vinculado a ele (é o que permite excluir a
+         importação depois, apagando os pedidos dela). Se a migração do banco
+         ainda não foi aplicada, importa do jeito antigo, sem o vínculo. */
+      let importacaoId: number | null = null;
+      try {
+        const original = arquivo ? await arquivoParaBase64(arquivo) : null;
+        importacaoId = await registrarImportacao({
+          controle: fabricaId,
+          nomeArquivo: nomeArquivo || 'arquivo',
+          tamanho: arquivo?.size ?? 0,
+          codificacao: layoutEmUso?.codificacao ?? 'UTF-8',
+          linhasLidas: linhas.length,
+          linhasImportadas: total,
+          linhasDescartadas: descartadas,
+          conteudoBase64: original,
+        });
+      } catch (falha) {
+        importacaoId = null;
+        setAviso(
+          migracaoPendente(falha)
+            ? AVISO_IMPORTACOES
+            : 'Não foi possível registrar a importação — os pedidos serão gravados sem o vínculo ' +
+              'com o arquivo: ' +
+              (falha instanceof Error ? falha.message : String(falha)),
+        );
+      }
+
       // envia em blocos para a barra de progresso andar de verdade
       for (let i = 0; i < total; i += 500) {
         const bloco = paraImportar.slice(i, i + 500);
-        await inserirPedidos(fabricaId, bloco);
+        await inserirPedidos(fabricaId, bloco, importacaoId);
         enviados += bloco.length;
         setProgresso(Math.round((enviados / total) * 100));
       }
@@ -180,6 +216,8 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       setEtapa(`${enviados} linha(s) importada(s) com sucesso.`);
       setLinhas([]);
       setNomeArquivo('');
+      setArquivo(null);
+      setDescartadas(0);
       setLojasMarcadas(new Set());
       if (arquivoRef.current) arquivoRef.current.value = '';
       onConcluir();

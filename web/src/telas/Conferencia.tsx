@@ -59,6 +59,7 @@ type Props = {
   onAbrirImportacao: () => void;
   onAbrirUsuarios: () => void;
   onAbrirFabricas: () => void;
+  onAbrirImportacoes: () => void;
   onSair: () => void;
 };
 
@@ -140,6 +141,7 @@ export default function Conferencia({
   onAbrirImportacao,
   onAbrirUsuarios,
   onAbrirFabricas,
+  onAbrirImportacoes,
   onSair,
 }: Props) {
   const administrador = usuario.perfil === PERFIL.ADMIN;
@@ -519,6 +521,14 @@ export default function Conferencia({
               className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
             >
               Fábricas
+            </button>
+          )}
+          {administrador && (
+            <button
+              onClick={onAbrirImportacoes}
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
+            >
+              Importações
             </button>
           )}
           {administrador && (

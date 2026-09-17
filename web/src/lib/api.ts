@@ -283,13 +283,21 @@ export async function atualizarStatusPorEtiquetas(etiquetas: string[], status: n
 }
 
 /** Importação em lote (a empresa e a fábrica são resolvidas pela sessão). */
-export async function inserirPedidos(idlayout: number, linhas: PedidoNovo[]): Promise<number> {
+export async function inserirPedidos(
+  idlayout: number,
+  linhas: PedidoNovo[],
+  importacaoId: number | null = null,
+): Promise<number> {
   if (linhas.length === 0) return 0;
 
   let total = 0;
   for (let i = 0; i < linhas.length; i += TAMANHO_LOTE) {
     const lote = linhas.slice(i, i + TAMANHO_LOTE);
-    total += await rpc<number>('pedidos_inserir', { p_idlayout: idlayout, p_pedidos: lote });
+    total += await rpc<number>('pedidos_inserir', {
+      p_idlayout: idlayout,
+      p_pedidos: lote,
+      p_importacao_id: importacaoId,
+    });
   }
   return total;
 }
@@ -450,4 +458,78 @@ export async function salvarLayoutFabrica(controle: number, layout: LayoutSalvo)
 
 export async function excluirLayoutFabrica(controle: number): Promise<void> {
   await rpc<number>('layout_excluir', { p_controle: controle });
+}
+
+/* ---------------------------------------------------- importações feitas --- */
+
+export type Importacao = {
+  id: number;
+  criado_em: string;
+  fabrica: string;
+  layout_controle: number;
+  nome_arquivo: string;
+  tamanho_bytes: number;
+  codificacao: string;
+  linhas_lidas: number;
+  linhas_importadas: number;
+  linhas_descartadas: number;
+  usuario_login: string | null;
+  pedidos: number;
+  tem_arquivo: boolean;
+};
+
+export type DadosImportacao = {
+  controle: number;
+  nomeArquivo: string;
+  tamanho: number;
+  codificacao: string;
+  linhasLidas: number;
+  linhasImportadas: number;
+  linhasDescartadas: number;
+  /** Arquivo original em base64, para poder ser baixado depois. */
+  conteudoBase64: string | null;
+};
+
+/**
+ * As RPCs de importação são aplicadas pelo SQL Editor. Quando elas ainda não
+ * existem, o RPC responde "Could not find the function" — a tela avisa isso em
+ * português em vez de mostrar o erro cru.
+ */
+export const AVISO_IMPORTACOES =
+  'Este recurso precisa da migração 00107 aplicada no banco. Rode o arquivo ' +
+  'supabase/migrations/20260916000107_importacao_gerenciar.sql no SQL Editor do Supabase.';
+
+export async function registrarImportacao(dados: DadosImportacao): Promise<number> {
+  return rpc<number>('importacao_registrar', {
+    p_controle: dados.controle,
+    p_nome_arquivo: dados.nomeArquivo,
+    p_tamanho_bytes: dados.tamanho,
+    p_codificacao: dados.codificacao,
+    p_linhas_lidas: dados.linhasLidas,
+    p_linhas_importadas: dados.linhasImportadas,
+    p_linhas_descartadas: dados.linhasDescartadas,
+    p_conteudo_base64: dados.conteudoBase64,
+  });
+}
+
+export async function listarImportacoes(): Promise<Importacao[]> {
+  return rpc<Importacao[]>('importacoes_listar');
+}
+
+/** Devolve o arquivo original (base64) para o navegador baixar. */
+export async function lerArquivoImportacao(
+  id: number,
+): Promise<{ nome_arquivo: string; conteudo: string | null } | null> {
+  const linhas = await rpc<Array<{ nome_arquivo: string; conteudo: string | null }>>(
+    'importacao_arquivo',
+    { p_id: id },
+  );
+  return Array.isArray(linhas) ? (linhas[0] ?? null) : null;
+}
+
+/** Exclui a importação e, junto, os pedidos que vieram dela. */
+export async function excluirImportacao(id: number): Promise<number> {
+  const linhas = await rpc<Array<{ pedidos_apagados: number }>>('importacao_excluir', { p_id: id });
+  const linha = Array.isArray(linhas) ? linhas[0] : null;
+  return Number(linha?.pedidos_apagados ?? 0);
 }

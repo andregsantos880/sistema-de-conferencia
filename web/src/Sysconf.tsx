@@ -4,6 +4,7 @@ import Conferencia from './telas/Conferencia';
 import Importacao from './telas/Importacao';
 import Usuarios from './telas/Usuarios';
 import Fabricas from './telas/Fabricas';
+import Importacoes from './telas/Importacoes';
 import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
@@ -238,6 +239,16 @@ export default function Sysconf() {
     );
   }
 
+  if (rota.tela === 'importacoes') {
+    return (
+      <Importacoes
+        empresa={empresa}
+        usuarioLogado={{ id: usuario.id, login: usuario.login, perfil: usuario.perfil }}
+        onVoltar={() => navegar('conferencia')}
+      />
+    );
+  }
+
   return (
     <Conferencia
       empresa={empresa}
@@ -248,6 +259,7 @@ export default function Sysconf() {
       onAbrirImportacao={() => navegar('importacao')}
       onAbrirUsuarios={() => navegar('usuarios')}
       onAbrirFabricas={() => navegar('fabricas')}
+      onAbrirImportacoes={() => navegar('importacoes')}
       onSair={sair}
     />
   );

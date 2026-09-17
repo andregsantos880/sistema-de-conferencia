@@ -28,3 +28,38 @@ export async function lerTextoDoArquivo(arquivo: File): Promise<TextoArquivo> {
   /* acento corrompido: o arquivo é ANSI (Windows-1252) */
   return { texto: new TextDecoder('windows-1252').decode(bytes), codificacao: 'Windows-1252' };
 }
+
+/** Arquivo em base64 — é assim que o original fica guardado para ser baixado depois. */
+export async function arquivoParaBase64(arquivo: File): Promise<string> {
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  let texto = '';
+  const passo = 0x8000;
+  for (let i = 0; i < bytes.length; i += passo) {
+    texto += String.fromCharCode(...bytes.subarray(i, i + passo));
+  }
+  return btoa(texto);
+}
+
+/** Entrega o conteúdo guardado (base64) ao navegador como download. */
+export function baixarBase64(conteudo: string, nomeArquivo: string): void {
+  const binario = atob(conteudo);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Tamanho em texto curto (KB/MB). */
+export function tamanhoLegivel(bytes: number): string {
+  if (!bytes) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
