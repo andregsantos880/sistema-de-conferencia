@@ -94,16 +94,13 @@ function valorExibicao(pedido: Pedido, campo: string, local?: string): string {
  *  - ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC não aparecem para ninguém;
  *  - LOCAL não vem do pedido: é o local do estágio, calculado pela tela.
  */
-function montarColunas(
-  perfil: string,
-  localDe: (pedido: Pedido) => string,
-): Array<ColumnDef<typeof features, Pedido>> {
+type LinhaGrid = Pedido & { local?: string };
+
+function montarColunas(perfil: string): Array<ColumnDef<typeof features, LinhaGrid>> {
   return colunasVisiveis(perfil).map((coluna) => ({
     id: coluna.campo,
-    accessorFn: (linha: Pedido) =>
-      coluna.campo === 'local'
-        ? localDe(linha)
-        : valorExibicao(linha, coluna.campo),
+    accessorFn: (linha: LinhaGrid) =>
+      coluna.campo === 'local' ? (linha.local ?? '') : valorExibicao(linha, coluna.campo),
     header: coluna.titulo,
   }));
 }
@@ -297,9 +294,16 @@ export default function Conferencia({
     [alvo, localDoEstagio],
   );
 
-  const columns = useMemo(
-    () => montarColunas(usuario.perfil, localDaColuna),
-    [usuario.perfil, localDaColuna],
+  const columns = useMemo(() => montarColunas(usuario.perfil), [usuario.perfil]);
+
+  /**
+   * O grid recebe os pedidos JÁ com o local calculado. O valor precisa vir pelo
+   * `data`: o TanStack v9 não recalcula as células quando só as colunas mudam
+   * (era o sintoma de a coluna LOCAL ficar "sem local" até a próxima interação).
+   */
+  const linhasDoGrid = useMemo<LinhaGrid[]>(
+    () => pedidos.map((pedido) => ({ ...pedido, local: localDaColuna(pedido) })),
+    [pedidos, localDaColuna],
   );
 
   const contadores = useMemo(() => {
@@ -327,8 +331,8 @@ export default function Conferencia({
     key: 'conferencia',
     features,
     columns,
-    data: pedidos,
-    getRowId: (linha: Pedido) => String(linha.id),
+    data: linhasDoGrid,
+    getRowId: (linha: LinhaGrid) => String(linha.id),
     state: { rowSelection },
     onRowSelectionChange: setRowSelection,
   });
