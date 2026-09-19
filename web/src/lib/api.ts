@@ -271,8 +271,16 @@ export async function listarPedidos(idlayout: number): Promise<Pedido[]> {
 }
 
 /** Baixa de UMA etiqueta — gravada na hora a cada bipagem com sucesso. */
-export async function atualizarStatusPorId(id: number | string, status: number): Promise<number> {
-  return rpc<number>('pedido_status_id', { p_id: Number(id), p_status: status });
+export async function atualizarStatusPorId(
+  id: number | string,
+  status: number,
+  valorLido?: string,
+): Promise<number> {
+  return rpc<number>('pedido_status_id', {
+    p_id: Number(id),
+    p_status: status,
+    p_valor_lido: valorLido ?? null,
+  });
 }
 
 /** Alteração do menu de contexto — o legado grava por ETIQUETA. */
@@ -532,4 +540,139 @@ export async function excluirImportacao(id: number): Promise<number> {
   const linhas = await rpc<Array<{ pedidos_apagados: number }>>('importacao_excluir', { p_id: id });
   const linha = Array.isArray(linhas) ? linhas[0] : null;
   return Number(linha?.pedidos_apagados ?? 0);
+}
+
+/* ------------------------------------------------------- log de conferência -- */
+
+/**
+ * Desfechos possíveis de uma leitura no painel de conferência:
+ * `sucesso` avançou de estágio · `ja_lida` bipou de novo · `bloqueada` fora de
+ * ordem · `nao_encontrada` código inexistente · `massa` alteração pelo menu.
+ */
+export type DesfechoLog = 'sucesso' | 'ja_lida' | 'bloqueada' | 'nao_encontrada' | 'massa';
+
+export type LogConferencia = {
+  id: number;
+  criado_em: string;
+  fabrica: string | null;
+  layout_controle: number | null;
+  estagio: number;
+  desfecho: DesfechoLog;
+  origem: string;
+  valor_lido: string | null;
+  usuario_login: string | null;
+  pedido_id: number | null;
+  etiqueta: string | null;
+  ordcompra: string | null;
+  produto: string | null;
+  descricao1: string | null;
+  qtde: number | string | null;
+  cliente: string | null;
+  pecliente: string | null;
+  idbox: number | null;
+  nmbox: string | null;
+  status_antes: number | null;
+  status_novo: number | null;
+  mensagem: string | null;
+};
+
+export type ResumoLogs = {
+  total: number;
+  sucesso: number;
+  ja_lida: number;
+  bloqueada: number;
+  nao_encontrada: number;
+  massa: number;
+  estagio_1: number;
+  estagio_2: number;
+  estagio_3: number;
+  operadores: number;
+};
+
+export type FiltrosLog = {
+  de?: string;
+  ate?: string;
+  controle?: number | null;
+  usuario?: string;
+  desfecho?: string;
+  texto?: string;
+  ordcompra?: string;
+  limite?: number;
+};
+
+/**
+ * A tela de logs é servida pelas RPCs da migração 00109 (aplicada pelo SQL
+ * Editor). Sem ela, o RPC responde "Could not find the function".
+ */
+export const AVISO_LOGS =
+  'Os logs de conferência precisam da migração 00109 aplicada no banco. Rode o arquivo ' +
+  'supabase/migrations/20260919000109_log_conferencia.sql no SQL Editor do Supabase.';
+
+function corpoDosFiltros(filtros: FiltrosLog): Record<string, unknown> {
+  return {
+    p_de: filtros.de || null,
+    p_ate: filtros.ate || null,
+    p_controle: filtros.controle ?? null,
+    p_usuario: filtros.usuario?.trim() || null,
+    p_desfecho: filtros.desfecho || null,
+    p_texto: filtros.texto?.trim() || null,
+    p_ordcompra: filtros.ordcompra?.trim() || null,
+  };
+}
+
+/**
+ * Registra uma leitura que NÃO gerou baixa (não encontrada / já lida / bloqueada).
+ * É chamada "fire and forget": se o banco não tiver a migração, a conferência
+ * continua funcionando — só não fica o registro.
+ */
+export async function registrarLogBipagem(dados: {
+  controle: number | null;
+  estagio: number;
+  desfecho: DesfechoLog;
+  valorLido: string;
+  pedidoId?: number | null;
+  mensagem?: string | null;
+}): Promise<number> {
+  return rpc<number>('log_registrar', {
+    p_controle: dados.controle,
+    p_estagio: dados.estagio,
+    p_desfecho: dados.desfecho,
+    p_valor_lido: dados.valorLido,
+    p_pedido_id: dados.pedidoId ?? null,
+    p_mensagem: dados.mensagem ?? null,
+  });
+}
+
+/** Logs da empresa (somente administrador). */
+export async function listarLogs(filtros: FiltrosLog = {}): Promise<LogConferencia[]> {
+  const linhas = await rpc<LogConferencia[]>('logs_listar', {
+    ...corpoDosFiltros(filtros),
+    p_limite: filtros.limite ?? 1000,
+  });
+  return linhas ?? [];
+}
+
+/** Totais do filtro (faixa de contadores da tela). Somente administrador. */
+export async function resumoLogs(filtros: FiltrosLog = {}): Promise<ResumoLogs | null> {
+  const linhas = await rpc<ResumoLogs[]>('logs_resumo', corpoDosFiltros(filtros));
+  return Array.isArray(linhas) ? (linhas[0] ?? null) : null;
+}
+
+/** Dias de retenção configurados (0 = guardar para sempre). */
+export async function lerRetencaoLogs(): Promise<number> {
+  return rpc<number>('logs_retencao');
+}
+
+export async function definirRetencaoLogs(
+  dias: number,
+): Promise<{ dias: number; apagados: number }> {
+  const linhas = await rpc<Array<{ dias: number; apagados: number }>>('logs_retencao_definir', {
+    p_dias: dias,
+  });
+  return Array.isArray(linhas) ? (linhas[0] ?? { dias, apagados: 0 }) : { dias, apagados: 0 };
+}
+
+/** Apaga agora os logs que passaram da retenção configurada. */
+export async function limparLogs(): Promise<number> {
+  return rpc<number>('logs_limpar');
 }

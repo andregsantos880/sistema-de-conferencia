@@ -63,3 +63,26 @@ export function tamanhoLegivel(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
+
+/**
+ * Baixa um CSV com separador `;` e BOM — é o que faz o Excel abrir os acentos
+ * certos (mesmo formato usado na exportação do grid de conferência).
+ */
+export function baixarCsv(nomeArquivo: string, cabecalho: string[], linhas: string[][]): void {
+  const escapar = (valor: string) => `"${String(valor ?? '').replace(/"/g, '""')}"`;
+  const texto = [
+    cabecalho.map(escapar).join(';'),
+    ...linhas.map((linha) => linha.map(escapar).join(';')),
+  ].join('\r\n');
+
+  const url = URL.createObjectURL(
+    new Blob([`\uFEFF${texto}`], { type: 'text/csv;charset=utf-8' }),
+  );
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

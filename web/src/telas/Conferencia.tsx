@@ -13,6 +13,8 @@ import {
   buscarValores,
   listarBoxes,
   listarPedidos,
+  registrarLogBipagem,
+  type DesfechoLog,
   type Empresa,
   type Fabrica,
   type ItemBusca,
@@ -60,6 +62,7 @@ type Props = {
   onAbrirUsuarios: () => void;
   onAbrirFabricas: () => void;
   onAbrirImportacoes: () => void;
+  onAbrirLogs: () => void;
   onSair: () => void;
 };
 
@@ -142,6 +145,7 @@ export default function Conferencia({
   onAbrirUsuarios,
   onAbrirFabricas,
   onAbrirImportacoes,
+  onAbrirLogs,
   onSair,
 }: Props) {
   const administrador = usuario.perfil === PERFIL.ADMIN;
@@ -295,6 +299,29 @@ export default function Conferencia({
   }
 
   /**
+   * Registra no log de conferência a leitura que acabou de acontecer.
+   * É "fire and forget": se o banco não tiver a migração 00109 o log é
+   * ignorado e a bipagem segue normal — a conferência nunca pára por causa do log.
+   */
+  function registrarLeitura(
+    valor: string,
+    desfecho: DesfechoLog,
+    pedidoId: number | null,
+    mensagem: string,
+  ) {
+    void registrarLogBipagem({
+      controle: fabricaId,
+      estagio: alvo ?? 0,
+      desfecho,
+      valorLido: valor,
+      pedidoId,
+      mensagem,
+    }).catch(() => {
+      /* sem a migração 00109 (ou sem rede) o log é simplesmente ignorado */
+    });
+  }
+
+  /**
    * Bipagem: aplica as regras do legado e, no sucesso, GRAVA NO BANCO na hora.
    */
   async function conferirEtiqueta(valor: string) {
@@ -310,6 +337,7 @@ export default function Conferencia({
       tocarSom(resultado.som);
       setInfo(null);
       setMensagem(resultado.mensagem);
+      registrarLeitura(valor, 'nao_encontrada', null, resultado.mensagem);
       return;
     }
 
@@ -318,6 +346,7 @@ export default function Conferencia({
       setEtiquetaLida(String(resultado.linha.etiqueta ?? '').trim());
       setInfo(montarInfoBipagem(resultado.linha, nomeDoBox(resultado.linha)));
       setMensagem(resultado.mensagem);
+      registrarLeitura(valor, 'ja_lida', Number(resultado.linha.id), resultado.mensagem);
       return;
     }
 
@@ -326,13 +355,15 @@ export default function Conferencia({
       setEtiquetaLida(String(resultado.linha.etiqueta ?? '').trim());
       setInfo(montarInfoBipagem(resultado.linha, nomeDoBox(resultado.linha)));
       setMensagem(resultado.mensagem);
+      registrarLeitura(valor, 'bloqueada', Number(resultado.linha.id), resultado.mensagem);
       return;
     }
 
     // Sucesso: baixa na hora (regra definida pelo cliente — não espera o Fechar).
     setGravando(true);
     try {
-      await atualizarStatusPorId(resultado.linha.id, alvo);
+      // o valor lido vai junto: é o que o log guarda como "valor lido" do sucesso
+      await atualizarStatusPorId(resultado.linha.id, alvo, valor);
 
       setPedidos((atual) =>
         atual.map((linha) => (linha.id === resultado.linha.id ? resultado.linhaAtualizada : linha)),
@@ -529,6 +560,14 @@ export default function Conferencia({
               className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
             >
               Importações
+            </button>
+          )}
+          {administrador && (
+            <button
+              onClick={onAbrirLogs}
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
+            >
+              Logs
             </button>
           )}
           {administrador && (
