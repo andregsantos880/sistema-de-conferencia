@@ -335,7 +335,7 @@ begin
         perform public.log_gravar(
             v_sessao.empresa_id, v_sessao.usuario_id, v_login,
             r.idlayout, p_status, 'massa', r.etiqueta, v_origem,
-            r.id, r.status, p_status, 'Alteracao em massa pelo menu de contexto'
+            r.id, r.status, p_status, 'Alteração em massa pelo menu de contexto'
         );
     end loop;
 
