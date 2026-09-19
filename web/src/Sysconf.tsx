@@ -8,6 +8,7 @@ import Importacoes from './telas/Importacoes';
 import Logs from './telas/Logs';
 import Locais from './telas/Locais';
 import LocaisPecas from './telas/LocaisPecas';
+import Ajuda from './telas/Ajuda';
 import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
@@ -286,6 +287,30 @@ export default function Sysconf() {
     );
   }
 
+  /* Manual de uso: é do administrador (o link no topo só aparece para ele). */
+  if (rota.tela === 'ajuda') {
+    if (usuario.perfil !== 'ADMIN') {
+      return (
+        <div className="flex h-screen items-center justify-center bg-slate-200 p-6">
+          <div className="w-full max-w-[420px] rounded-lg border border-slate-300 bg-white p-6 text-center shadow-xl">
+            <h2 className="text-sm font-semibold">Acesso restrito</h2>
+            <p className="mt-2 text-xs text-slate-600">
+              O manual é exclusivo do perfil <strong>ADMIN</strong>.
+            </p>
+            <button
+              onClick={() => navegar('conferencia')}
+              className="mt-4 rounded border border-slate-300 px-3 py-1.5 text-xs hover:bg-slate-100"
+            >
+              Voltar
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return <Ajuda empresa={empresa} onVoltar={() => navegar('conferencia')} />;
+  }
+
   return (
     <Conferencia
       empresa={empresa}
@@ -300,6 +325,7 @@ export default function Sysconf() {
       onAbrirLogs={() => navegar('logs')}
       onAbrirLocais={() => navegar('locais')}
       onAbrirLocaisPecas={() => navegar('locais-pecas')}
+      onAbrirAjuda={() => navegar('ajuda')}
       onSair={sair}
     />
   );

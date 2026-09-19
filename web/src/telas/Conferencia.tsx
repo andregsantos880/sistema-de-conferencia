@@ -65,6 +65,7 @@ type Props = {
   onAbrirLogs: () => void;
   onAbrirLocais: () => void;
   onAbrirLocaisPecas: () => void;
+  onAbrirAjuda: () => void;
   onSair: () => void;
 };
 
@@ -155,6 +156,7 @@ export default function Conferencia({
   onAbrirLogs,
   onAbrirLocais,
   onAbrirLocaisPecas,
+  onAbrirAjuda,
   onSair,
 }: Props) {
   const administrador = usuario.perfil === PERFIL.ADMIN;
@@ -632,6 +634,15 @@ export default function Conferencia({
               className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
             >
               Locais das peças
+            </button>
+          )}
+          {administrador && (
+            <button
+              onClick={onAbrirAjuda}
+              title="Manual do sistema"
+              className="rounded border border-emerald-500 bg-emerald-700 px-2 py-1 font-semibold hover:bg-emerald-600"
+            >
+              Ajuda
             </button>
           )}
           {administrador && (
