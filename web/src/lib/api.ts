@@ -676,3 +676,149 @@ export async function definirRetencaoLogs(
 export async function limparLogs(): Promise<number> {
   return rpc<number>('logs_limpar');
 }
+
+/* ------------------------------------------------------------- locais ----- */
+
+/** Local = lugar físico onde a peça deve ficar (Box 01, Prateleira, Piso...). */
+export type Local = { idbox: number; nmbox: string; ativo: number; pecas: number };
+
+/** Local de UMA peça em UM estágio (1=CONFERENCIA, 2=SAIDA, 3=ENTREGA). */
+export type LocalPedido = { pedido_id: number; estagio: number; idbox: number; nmbox: string };
+
+/** Local mais usado de um grupo (ORD.COMPRA) em um estágio. */
+export type LocalGrupo = {
+  ordcompra: string;
+  estagio: number;
+  idbox: number;
+  nmbox: string;
+  pecas: number;
+};
+
+/** Uma definição de local escolhida na importação (grupo + estágio + local). */
+export type LocalEscolhido = { ordcompra: string; estagio: number; idbox: number };
+
+/**
+ * A tela de locais e o vínculo peça × estágio vêm da migração 00110
+ * (aplicada pelo SQL Editor).
+ */
+export const AVISO_LOCAIS =
+  'Os locais das peças precisam da migração 00110 aplicada no banco. Rode o arquivo ' +
+  'supabase/migrations/20260919000110_locais_pecas.sql no SQL Editor do Supabase.';
+
+export async function listarLocais(): Promise<Local[]> {
+  const linhas = await rpc<Local[]>('locais_listar');
+  return linhas ?? [];
+}
+
+/** Cria o local e devolve o `idbox` gerado. Somente ADMIN. */
+export async function criarLocal(nome: string): Promise<number> {
+  return rpc<number>('local_criar', { p_nome: nome });
+}
+
+/** Renomeia / ativa / desativa um local. Somente ADMIN. */
+export async function atualizarLocal(
+  idbox: number,
+  nome: string,
+  ativo: number,
+): Promise<number> {
+  return rpc<number>('local_atualizar', { p_idbox: idbox, p_nome: nome, p_ativo: ativo });
+}
+
+/** Exclui o local — o banco recusa se houver peça usando. Somente ADMIN. */
+export async function excluirLocal(idbox: number): Promise<number> {
+  return rpc<number>('local_excluir', { p_idbox: idbox });
+}
+
+/** Local de cada peça por estágio, na fábrica (mapa usado pelo grid). */
+export async function locaisDosPedidos(idlayout: number): Promise<LocalPedido[]> {
+  const linhas = await rpc<LocalPedido[]>('locais_dos_pedidos', { p_idlayout: idlayout });
+  return linhas ?? [];
+}
+
+/** Local mais usado de cada grupo (ORD.COMPRA) — pré-preenche a importação. */
+export async function locaisPorGrupo(idlayout: number): Promise<LocalGrupo[]> {
+  const linhas = await rpc<LocalGrupo[]>('locais_por_grupo', { p_idlayout: idlayout });
+  return linhas ?? [];
+}
+
+/**
+ * Define o local de um estágio para TODAS as peças do filtro (somente ADMIN).
+ * Os filtros vazios são ignorados pelo banco.
+ */
+export async function definirLocais(dados: {
+  controle: number;
+  estagio: number;
+  idbox: number;
+  ordcompra?: string;
+  cliente?: string;
+  etiqueta?: string;
+  importacaoId?: number | null;
+  status?: number | null;
+  semLocal?: boolean;
+}): Promise<number> {
+  return rpc<number>('locais_definir', {
+    p_idlayout: dados.controle,
+    p_estagio: dados.estagio,
+    p_idbox: dados.idbox,
+    p_ordcompra: dados.ordcompra?.trim() || null,
+    p_cliente: dados.cliente?.trim() || null,
+    p_etiqueta: dados.etiqueta?.trim() || null,
+    p_importacao_id: dados.importacaoId ?? null,
+    p_status: dados.status ?? null,
+    p_sem_local: dados.semLocal ?? false,
+  });
+}
+
+/** Aplica, de uma vez, os locais escolhidos na importação (por grupo/ORD.COMPRA). */
+export async function definirLocaisLote(
+  idlayout: number,
+  importacaoId: number | null,
+  locais: LocalEscolhido[],
+): Promise<number> {
+  if (locais.length === 0) return 0;
+  return rpc<number>('locais_definir_lote', {
+    p_idlayout: idlayout,
+    p_importacao_id: importacaoId,
+    p_locais: locais,
+  });
+}
+
+/** Uma peça com o local dos três estágios (tela "Locais das peças"). */
+export type PecaComLocal = {
+  pedido_id: number;
+  etiqueta: string | null;
+  ordcompra: string | null;
+  cliente: string | null;
+  pecliente: string | null;
+  produto: string | null;
+  descricao1: string | null;
+  qtde: number | string | null;
+  status: number;
+  local_conf: string | null;
+  local_saida: string | null;
+  local_entrega: string | null;
+};
+
+/** Peças da fábrica com os locais (somente ADMIN). */
+export async function listarPecasComLocal(filtros: {
+  controle: number;
+  ordcompra?: string;
+  cliente?: string;
+  etiqueta?: string;
+  status?: number | null;
+  importacaoId?: number | null;
+  semLocalEstagio?: number | null;
+  limite?: number;
+}): Promise<PecaComLocal[]> {
+  const linhas = await rpc<PecaComLocal[]>('locais_pecas_listar', {
+    p_idlayout: filtros.controle,
+    p_ordcompra: filtros.ordcompra?.trim() || null,
+    p_cliente: filtros.cliente?.trim() || null,
+    p_etiqueta: filtros.etiqueta?.trim() || null,
+    p_status: filtros.status ?? null,
+    p_importacao_id: filtros.importacaoId ?? null,
+    p_sem_local_estagio: filtros.semLocalEstagio ?? null,
+    p_limite: filtros.limite ?? 500,
+  });
+  return linhas ?? [];
+}

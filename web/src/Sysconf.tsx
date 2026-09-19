@@ -6,6 +6,8 @@ import Usuarios from './telas/Usuarios';
 import Fabricas from './telas/Fabricas';
 import Importacoes from './telas/Importacoes';
 import Logs from './telas/Logs';
+import Locais from './telas/Locais';
+import LocaisPecas from './telas/LocaisPecas';
 import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
@@ -261,6 +263,29 @@ export default function Sysconf() {
     );
   }
 
+  if (rota.tela === 'locais') {
+    return (
+      <Locais
+        empresa={empresa}
+        usuarioLogado={usuario}
+        onVoltar={() => navegar('conferencia')}
+      />
+    );
+  }
+
+  if (rota.tela === 'locais-pecas') {
+    return (
+      <LocaisPecas
+        empresa={empresa}
+        usuarioLogado={usuario}
+        fabricas={fabricas}
+        fabricaId={fabricaId}
+        onTrocarFabrica={setFabricaId}
+        onVoltar={() => navegar('conferencia')}
+      />
+    );
+  }
+
   return (
     <Conferencia
       empresa={empresa}
@@ -273,6 +298,8 @@ export default function Sysconf() {
       onAbrirFabricas={() => navegar('fabricas')}
       onAbrirImportacoes={() => navegar('importacoes')}
       onAbrirLogs={() => navegar('logs')}
+      onAbrirLocais={() => navegar('locais')}
+      onAbrirLocaisPecas={() => navegar('locais-pecas')}
       onSair={sair}
     />
   );

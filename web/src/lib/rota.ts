@@ -15,6 +15,8 @@
  *   /sysconf/<empresa>/fabricas
  *   /sysconf/<empresa>/importacoes
  *   /sysconf/<empresa>/logs
+ *   /sysconf/<empresa>/locais
+ *   /sysconf/<empresa>/locais-pecas
  *
  * Nao ha router de terceiros: sao poucas telas e o estado e simples.
  */
@@ -26,7 +28,9 @@ export type Tela =
   | 'usuarios'
   | 'fabricas'
   | 'importacoes'
-  | 'logs';
+  | 'logs'
+  | 'locais'
+  | 'locais-pecas';
 
 /** Paginas publicas do site (fora do escopo de empresa). */
 export type Pagina = 'landing' | 'entrar' | 'registrar' | 'termos' | 'privacidade';
@@ -41,6 +45,8 @@ const TELAS: Tela[] = [
   'fabricas',
   'importacoes',
   'logs',
+  'locais',
+  'locais-pecas',
 ];
 
 const PAGINAS: Record<string, Pagina> = {

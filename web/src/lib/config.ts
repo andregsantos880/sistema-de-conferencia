@@ -42,6 +42,7 @@ export const COLUNAS_GRID = [
   { campo: 'sequencia', titulo: 'SEQUÊNCIA', largura: 90 },
   { campo: 'volume', titulo: 'VOLUME', largura: 70 },
   { campo: 'status', titulo: 'STATUS', largura: 70 },
+  { campo: 'local', titulo: 'LOCAL', largura: 130 },
   { campo: 'idbox', titulo: 'ID BOX', largura: 70 },
   { campo: 'flbloqueio', titulo: 'BLOQUEIO', largura: 80 },
   { campo: 'pecomputador', titulo: 'PC', largura: 100 },
@@ -54,12 +55,15 @@ export const OPCOES_BUSCA = [
   { valor: 'ARQUIVO', titulo: 'CARGA' },
 ] as const;
 
-/** Título do painel de conferência por alvo (o combo do legado: "", CONFERENCIA, SAIDA, ENTREGA). */
-export const TITULO_BOX: Record<number, string> = {
+/** Rótulo dos estágios da conferência (1/2/3) — usado nos locais das peças. */
+export const ROTULO_ESTAGIO: Record<number, string> = {
   1: 'CONFERÊNCIA',
   2: 'SAÍDA',
   3: 'ENTREGA',
 };
+
+/** Título do painel de conferência por alvo (o combo do legado: "", CONFERENCIA, SAIDA, ENTREGA). */
+export const TITULO_BOX: Record<number, string> = ROTULO_ESTAGIO;
 
 /** Rótulos do menu de contexto do grid — textos exatos do legado (Form1.Designer). */
 export const ROTULO_MENU: Record<number, string> = {

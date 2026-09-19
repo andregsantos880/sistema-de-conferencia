@@ -11,8 +11,8 @@ import {
   atualizarStatusPorId,
   buscarPedidosPorFiltro,
   buscarValores,
-  listarBoxes,
   listarPedidos,
+  locaisDosPedidos,
   registrarLogBipagem,
   type DesfechoLog,
   type Empresa,
@@ -63,6 +63,8 @@ type Props = {
   onAbrirFabricas: () => void;
   onAbrirImportacoes: () => void;
   onAbrirLogs: () => void;
+  onAbrirLocais: () => void;
+  onAbrirLocaisPecas: () => void;
   onSair: () => void;
 };
 
@@ -76,9 +78,10 @@ const features = tableFeatures({ rowSelectionFeature });
  * A coluna STATUS mostra o ESTÁGIO da conferência em vez do número:
  * 0 = NORMAL, 1 = CONFERÊNCIA (entrada), 2 = SAÍDA, 3 = ENTREGA.
  */
-function valorExibicao(pedido: Pedido, campo: string): string {
+function valorExibicao(pedido: Pedido, campo: string, local?: string): string {
   const bruto = (pedido as unknown as Record<string, unknown>)[campo];
 
+  if (campo === 'local') return local ?? '';
   if (campo === 'flbloqueio') return bruto ? 'SIM' : '';
   if (campo === 'status') return DS_STATUS[Number(bruto ?? 0)] ?? String(bruto ?? '');
 
@@ -88,12 +91,19 @@ function valorExibicao(pedido: Pedido, campo: string): string {
 /**
  * Colunas do grid conforme o PERFIL do usuário logado:
  *  - a ETIQUETA (código de barras) só aparece para ADMIN;
- *  - ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC não aparecem para ninguém.
+ *  - ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC não aparecem para ninguém;
+ *  - LOCAL não vem do pedido: é o local do estágio, calculado pela tela.
  */
-function montarColunas(perfil: string): Array<ColumnDef<typeof features, Pedido>> {
+function montarColunas(
+  perfil: string,
+  localDe: (pedido: Pedido) => string,
+): Array<ColumnDef<typeof features, Pedido>> {
   return colunasVisiveis(perfil).map((coluna) => ({
     id: coluna.campo,
-    accessorFn: (linha: Pedido) => valorExibicao(linha, coluna.campo),
+    accessorFn: (linha: Pedido) =>
+      coluna.campo === 'local'
+        ? localDe(linha)
+        : valorExibicao(linha, coluna.campo),
     header: coluna.titulo,
   }));
 }
@@ -146,13 +156,18 @@ export default function Conferencia({
   onAbrirFabricas,
   onAbrirImportacoes,
   onAbrirLogs,
+  onAbrirLocais,
+  onAbrirLocaisPecas,
   onSair,
 }: Props) {
   const administrador = usuario.perfil === PERFIL.ADMIN;
-  const columns = useMemo(() => montarColunas(usuario.perfil), [usuario.perfil]);
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [boxes, setBoxes] = useState<Array<{ idbox: number; nmbox: string }>>([]);
+  /**
+   * LOCAL de cada peça por estágio (migração 00110): id do pedido → estágio → nome do local.
+   * Sem a migração o mapa fica vazio e a tela mostra "sem local" (não quebra nada).
+   */
+  const [locais, setLocais] = useState<Map<string, Map<number, string>>>(new Map());
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
   const [filtroUsado, setFiltroUsado] = useState('');
@@ -171,7 +186,7 @@ export default function Conferencia({
   const [etiquetaLida, setEtiquetaLida] = useState('');
   const [info, setInfo] = useState<InfoBipagem | null>(null);
   const [mensagem, setMensagem] = useState('');
-  const [anunciarBox, setAnunciarBox] = useState(true);
+  const [anunciarLocal, setAnunciarLocal] = useState(true);
   const [gravando, setGravando] = useState(false);
 
   const inputEtiqueta = useRef<HTMLInputElement>(null);
@@ -214,10 +229,32 @@ export default function Conferencia({
   }, [fabricaId, carregarPedidos]);
 
   useEffect(() => {
-    listarBoxes()
-      .then(setBoxes)
-      .catch(() => setBoxes([]));
-  }, []);
+    if (fabricaId === null) {
+      setLocais(new Map());
+      return;
+    }
+
+    let cancelado = false;
+    locaisDosPedidos(fabricaId)
+      .then((lista) => {
+        if (cancelado) return;
+        const mapa = new Map<string, Map<number, string>>();
+        lista.forEach((item) => {
+          const chave = String(item.pedido_id);
+          const porEstagio = mapa.get(chave) ?? new Map<number, string>();
+          porEstagio.set(Number(item.estagio), item.nmbox);
+          mapa.set(chave, porEstagio);
+        });
+        setLocais(mapa);
+      })
+      .catch(() => {
+        if (!cancelado) setLocais(new Map());
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [fabricaId]);
 
   useEffect(() => {
     function fecharMenu() {
@@ -243,9 +280,26 @@ export default function Conferencia({
   }, [alvo]);
 
   /* ------------------------------------------------------------ derivados -- */
-  const nomeDoBox = useCallback(
-    (pedido: Pedido) => boxes.find((b) => b.idbox === Number(pedido.idbox))?.nmbox,
-    [boxes],
+  /** Nome do local de uma peça em um estágio ('' quando ainda não foi definido). */
+  const localDoEstagio = useCallback(
+    (pedido: Pedido, estagio: number) => locais.get(String(pedido.id))?.get(estagio) ?? '',
+    [locais],
+  );
+
+  /**
+   * O que a coluna LOCAL mostra: o local do estágio em que o operador está
+   * bipando (painel aberto) ou, com o painel fechado, o do próximo passo da
+   * peça (status + 1) — que é onde ela precisa ser colocada agora.
+   */
+  const localDaColuna = useCallback(
+    (pedido: Pedido) =>
+      localDoEstagio(pedido, alvo ?? Math.min(statusDe(pedido) + 1, 3)) || 'sem local',
+    [alvo, localDoEstagio],
+  );
+
+  const columns = useMemo(
+    () => montarColunas(usuario.perfil, localDaColuna),
+    [usuario.perfil, localDaColuna],
   );
 
   const contadores = useMemo(() => {
@@ -344,7 +398,7 @@ export default function Conferencia({
     if (resultado.tipo === 'jaLida') {
       tocarSom(resultado.som);
       setEtiquetaLida(String(resultado.linha.etiqueta ?? '').trim());
-      setInfo(montarInfoBipagem(resultado.linha, nomeDoBox(resultado.linha)));
+      setInfo(montarInfoBipagem(resultado.linha, localDoEstagio(resultado.linha, alvo)));
       setMensagem(resultado.mensagem);
       registrarLeitura(valor, 'ja_lida', Number(resultado.linha.id), resultado.mensagem);
       return;
@@ -353,7 +407,7 @@ export default function Conferencia({
     if (resultado.tipo === 'bloqueada') {
       tocarSom(resultado.som);
       setEtiquetaLida(String(resultado.linha.etiqueta ?? '').trim());
-      setInfo(montarInfoBipagem(resultado.linha, nomeDoBox(resultado.linha)));
+      setInfo(montarInfoBipagem(resultado.linha, localDoEstagio(resultado.linha, alvo)));
       setMensagem(resultado.mensagem);
       registrarLeitura(valor, 'bloqueada', Number(resultado.linha.id), resultado.mensagem);
       return;
@@ -369,16 +423,16 @@ export default function Conferencia({
         atual.map((linha) => (linha.id === resultado.linha.id ? resultado.linhaAtualizada : linha)),
       );
 
-      const box = nomeDoBox(resultado.linhaAtualizada);
+      const local = localDoEstagio(resultado.linhaAtualizada, alvo);
       setEtiquetaLida(String(resultado.linhaAtualizada.etiqueta ?? '').trim());
-      setInfo(montarInfoBipagem(resultado.linhaAtualizada, box));
+      setInfo(montarInfoBipagem(resultado.linhaAtualizada, local));
       setMensagem(resultado.mensagem);
 
       tocarSom(resultado.som);
 
-      // O legado toca o recurso "BOX"; aqui mostramos e (opcionalmente) falamos o box.
+      // O legado toca o recurso "BOX"; aqui mostramos o LOCAL do estágio e (opcionalmente) falamos.
       tocarSom('box');
-      if (anunciarBox && box) falarBox(box);
+      if (anunciarLocal && local) falarBox(local);
     } catch (falha) {
       tocarSom('error');
       setMensagem(falha instanceof Error ? falha.message : 'Falha ao gravar a bipagem.');
@@ -489,7 +543,13 @@ export default function Conferencia({
     const visiveis = colunasVisiveis(usuario.perfil);
     const linhas = [
       visiveis.map((c) => c.titulo).join(';'),
-      ...pedidos.map((p) => visiveis.map((c) => valorExibicao(p, c.campo).replace(/;/g, ',')).join(';')),
+      ...pedidos.map((p) =>
+        visiveis
+          .map((c) =>
+            (c.campo === 'local' ? localDaColuna(p) : valorExibicao(p, c.campo)).replace(/;/g, ','),
+          )
+          .join(';'),
+      ),
     ];
 
     const blob = new Blob([`\uFEFF${linhas.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
@@ -552,6 +612,22 @@ export default function Conferencia({
               className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
             >
               Fábricas
+            </button>
+          )}
+          {administrador && (
+            <button
+              onClick={onAbrirLocais}
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
+            >
+              Locais
+            </button>
+          )}
+          {administrador && (
+            <button
+              onClick={onAbrirLocaisPecas}
+              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
+            >
+              Locais das peças
             </button>
           )}
           {administrador && (
@@ -848,10 +924,10 @@ export default function Conferencia({
               <label className="flex items-center gap-1 text-xs text-slate-300">
                 <input
                   type="checkbox"
-                  checked={anunciarBox}
-                  onChange={(e) => setAnunciarBox(e.target.checked)}
+                  checked={anunciarLocal}
+                  onChange={(e) => setAnunciarLocal(e.target.checked)}
                 />
-                anunciar box (voz)
+                anunciar local (voz)
               </label>
               <button
                 onClick={fecharPainel}
@@ -863,13 +939,16 @@ export default function Conferencia({
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-3 gap-4 pt-4">
-            {/* BOX de destino */}
+            {/* LOCAL de destino do estágio */}
             <div className="flex flex-col items-center justify-center rounded-lg bg-slate-900/60 px-2">
-              <span className="text-xs tracking-widest text-slate-400">BOX</span>
-              <span className="truncate text-center text-[64px] leading-none font-bold" title={info?.box ?? ''}>
-                {info?.box ?? '—'}
+              <span className="text-xs tracking-widest text-slate-400">LOCAL — {TITULO_BOX[alvo]}</span>
+              <span
+                className={`truncate text-center leading-none font-bold ${info?.box ? 'text-[56px]' : 'text-[28px]'}`}
+                title={info?.box ?? 'Nenhum local definido para este estágio'}
+              >
+                {info?.box || 'SEM LOCAL DEFINIDO'}
               </span>
-              <span className="mt-2 text-xs text-slate-400">
+              <span className="mt-2 text-center text-xs text-slate-400">
                 {restante?.concluido ? 'conferência concluída' : 'aguardando bipagem'}
               </span>
             </div>
