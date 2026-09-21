@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   atualizarFabrica,
   criarFabrica,
@@ -12,6 +12,7 @@ import {
   type LayoutSalvo,
 } from '../lib/api';
 import { PERFIL } from '../lib/config';
+import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 import ConfigLayoutFabrica from './ConfigLayoutFabrica';
 
 type Props = {
@@ -31,6 +32,17 @@ type Props = {
  */
 export default function Fabricas({ usuarioLogado, onVoltar }: Props) {
   const [fabricas, setFabricas] = useState<FabricaAdmin[]>([]);
+
+  /** Colunas ordenáveis (clique no cabeçalho: asc → desc → sem ordenação). */
+  const campos = useMemo<Record<string, CampoOrdenavel<FabricaAdmin>>>(() => ({
+    controle: { titulo: 'Controle', valor: (f) => f.controle, tipo: 'numero' },
+    nome: { titulo: 'Fábrica', valor: (f) => f.nome },
+    situacao: { titulo: 'Situação', valor: (f) => f.ativo, tipo: 'numero' },
+    pedidos: { titulo: 'Pedidos', valor: (f) => f.pedidos, tipo: 'numero' },
+    layout: { titulo: 'Layout do arquivo', valor: (f) => (f.tem_layout ? 1 : 0), tipo: 'numero' },
+  }), []);
+
+  const { linhas: fabricasOrdenadas, ordem, alternar } = useOrdenacao(fabricas, campos);
   const [layouts, setLayouts] = useState<Record<number, LayoutSalvo | null>>({});
   const [novaFabrica, setNovaFabrica] = useState('');
   const [editando, setEditando] = useState<{ controle: number; nome: string } | null>(null);
@@ -176,11 +188,11 @@ export default function Fabricas({ usuarioLogado, onVoltar }: Props) {
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-slate-100 text-left text-slate-600">
             <tr>
-              <th className="px-3 py-2">Controle</th>
-              <th className="px-3 py-2">Fábrica</th>
-              <th className="px-3 py-2">Situação</th>
-              <th className="px-3 py-2">Pedidos</th>
-              <th className="px-3 py-2">Layout do arquivo</th>
+              <ThOrdenavel campo="controle" titulo="Controle" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="nome" titulo="Fábrica" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="situacao" titulo="Situação" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="pedidos" titulo="Pedidos" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="layout" titulo="Layout do arquivo" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
               <th className="px-3 py-2 text-right">Ações</th>
             </tr>
           </thead>
@@ -192,7 +204,7 @@ export default function Fabricas({ usuarioLogado, onVoltar }: Props) {
                 </td>
               </tr>
             )}
-            {fabricas.map((f) => {
+            {fabricasOrdenadas.map((f) => {
               const layout = layouts[f.controle];
               return (
                 <tr key={f.controle} className="border-t border-slate-200 hover:bg-slate-50">

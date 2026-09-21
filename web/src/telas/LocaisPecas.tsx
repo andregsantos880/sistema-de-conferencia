@@ -13,6 +13,7 @@ import {
 } from '../lib/api';
 import { PERFIL, ROTULO_ESTAGIO } from '../lib/config';
 import { DS_STATUS } from '../lib/regrasConferencia';
+import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 
 type Props = {
   empresa: Empresa;
@@ -115,6 +116,22 @@ export default function LocaisPecas({
     () => pecas.filter((peca) => !locaisDoEstagio(peca)[estagio - 1]).length,
     [pecas, estagio],
   );
+
+  /** Colunas ordenáveis (clique no cabeçalho: asc → desc → sem ordenação). */
+  const campos = useMemo<Record<string, CampoOrdenavel<PecaComLocal>>>(() => ({
+    etiqueta: { titulo: 'Etiqueta', valor: (p) => p.etiqueta },
+    ordcompra: { titulo: 'ORD.COMPRA', valor: (p) => p.ordcompra },
+    cliente: { titulo: 'Cliente', valor: (p) => p.cliente },
+    produto: { titulo: 'Produto', valor: (p) => p.produto },
+    descricao: { titulo: 'Descrição', valor: (p) => p.descricao1 },
+    qtde: { titulo: 'Qtde', valor: (p) => p.qtde, tipo: 'numero' },
+    status: { titulo: 'Situação', valor: (p) => p.status, tipo: 'numero' },
+    local1: { titulo: ROTULO_ESTAGIO[1], valor: (p) => p.local_conf },
+    local2: { titulo: ROTULO_ESTAGIO[2], valor: (p) => p.local_saida },
+    local3: { titulo: ROTULO_ESTAGIO[3], valor: (p) => p.local_entrega },
+  }), []);
+
+  const { linhas: pecasOrdenadas, ordem, alternar } = useOrdenacao(pecas, campos);
 
   async function aplicar() {
     if (fabricaId === null || idbox === '') {
@@ -358,17 +375,22 @@ export default function LocaisPecas({
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-slate-100 text-left text-slate-600">
             <tr>
-              <th className="px-2 py-2">Etiqueta</th>
-              <th className="px-2 py-2">ORD.COMPRA</th>
-              <th className="px-2 py-2">Cliente</th>
-              <th className="px-2 py-2">Produto</th>
-              <th className="px-2 py-2">Descrição</th>
-              <th className="px-2 py-2 text-right">Qtde</th>
-              <th className="px-2 py-2">Situação</th>
+              <ThOrdenavel campo="etiqueta" titulo="Etiqueta" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="ordcompra" titulo="ORD.COMPRA" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="cliente" titulo="Cliente" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="produto" titulo="Produto" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="descricao" titulo="Descrição" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="qtde" titulo="Qtde" ordem={ordem} aoAlternar={alternar} className="px-2 py-2 text-right" />
+              <ThOrdenavel campo="status" titulo="Situação" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
               {ESTAGIOS.map((valor) => (
-                <th key={valor} className="px-2 py-2">
-                  {ROTULO_ESTAGIO[valor]}
-                </th>
+                <ThOrdenavel
+                  key={valor}
+                  campo={`local${valor}`}
+                  titulo={ROTULO_ESTAGIO[valor]}
+                  ordem={ordem}
+                  aoAlternar={alternar}
+                  className="px-2 py-2"
+                />
               ))}
             </tr>
           </thead>
@@ -384,7 +406,7 @@ export default function LocaisPecas({
                 </td>
               </tr>
             )}
-            {pecas.map((peca) => (
+            {pecasOrdenadas.map((peca) => (
               <tr key={peca.pedido_id} className="border-t border-slate-200">
                 <td className="px-2 py-1 font-mono">{peca.etiqueta ?? '—'}</td>
                 <td className="px-2 py-1">{peca.ordcompra ?? '—'}</td>

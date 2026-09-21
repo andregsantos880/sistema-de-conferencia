@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AVISO_IMPORTACOES,
   excluirImportacao,
@@ -9,6 +9,7 @@ import {
   type Importacao,
 } from '../lib/api';
 import { baixarBase64, tamanhoLegivel } from '../lib/arquivo';
+import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 import { PERFIL } from '../lib/config';
 
 type Props = {
@@ -68,6 +69,21 @@ export default function Importacoes({ usuarioLogado, onVoltar }: Props) {
   const visiveis = filtroFabrica
     ? importacoes.filter((i) => i.fabrica === filtroFabrica)
     : importacoes;
+
+  /** Colunas ordenáveis (clique no cabeçalho: asc → desc → sem ordenação). */
+  const campos = useMemo<Record<string, CampoOrdenavel<Importacao>>>(() => ({
+    data: { titulo: 'Data / hora', valor: (i) => i.criado_em },
+    fabrica: { titulo: 'Fábrica', valor: (i) => i.fabrica },
+    arquivo: { titulo: 'Arquivo', valor: (i) => i.nome_arquivo },
+    tamanho: { titulo: 'Tamanho', valor: (i) => i.tamanho_bytes, tipo: 'numero' },
+    codificacao: { titulo: 'Codificação', valor: (i) => i.codificacao },
+    linhas: { titulo: 'Linhas', valor: (i) => i.linhas_importadas, tipo: 'numero' },
+    descartadas: { titulo: 'Descartadas', valor: (i) => i.linhas_descartadas, tipo: 'numero' },
+    pedidos: { titulo: 'Pedidos', valor: (i) => i.pedidos, tipo: 'numero' },
+    usuario: { titulo: 'Importado por', valor: (i) => i.usuario_login },
+  }), []);
+
+  const { linhas: importacoesOrdenadas, ordem, alternar } = useOrdenacao(visiveis, campos);
 
   const totais = visiveis.reduce(
     (soma, i) => ({
@@ -205,15 +221,15 @@ export default function Importacoes({ usuarioLogado, onVoltar }: Props) {
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-slate-100 text-left text-slate-600">
             <tr>
-              <th className="px-3 py-2">Data / hora</th>
-              <th className="px-3 py-2">Fábrica</th>
-              <th className="px-3 py-2">Arquivo</th>
-              <th className="px-3 py-2">Tamanho</th>
-              <th className="px-3 py-2">Codificação</th>
-              <th className="px-3 py-2 text-right">Linhas</th>
-              <th className="px-3 py-2 text-right">Descartadas</th>
-              <th className="px-3 py-2 text-right">Pedidos</th>
-              <th className="px-3 py-2">Importado por</th>
+              <ThOrdenavel campo="data" titulo="Data / hora" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="fabrica" titulo="Fábrica" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="arquivo" titulo="Arquivo" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="tamanho" titulo="Tamanho" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="codificacao" titulo="Codificação" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="linhas" titulo="Linhas" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-right" />
+              <ThOrdenavel campo="descartadas" titulo="Descartadas" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-right" />
+              <ThOrdenavel campo="pedidos" titulo="Pedidos" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-right" />
+              <ThOrdenavel campo="usuario" titulo="Importado por" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
               <th className="px-3 py-2 text-right">Ações</th>
             </tr>
           </thead>
@@ -227,7 +243,7 @@ export default function Importacoes({ usuarioLogado, onVoltar }: Props) {
                 </td>
               </tr>
             )}
-            {visiveis.map((item) => (
+            {importacoesOrdenadas.map((item) => (
               <tr
                 key={item.id}
                 onClick={() => setSelecionada(item)}

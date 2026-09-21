@@ -35,6 +35,9 @@ const SECOES: Secao[] = [
       'O painel mostra o LOCAL onde a peça deve ficar, a peça, a quantidade e o pedido.',
       'O administrador acompanha tudo pela tela de Logs e ajusta os locais das peças.',
     ],
+    dicas: [
+      'Em qualquer lista do sistema (conferência, logs, importações, locais, usuários) clique no TÍTULO da coluna para ordenar: ▲ do menor para o maior, ▼ do maior para o menor. Um terceiro clique tira a ordenação.',
+    ],
   },
   {
     id: 'entrar',
@@ -62,6 +65,7 @@ const SECOES: Secao[] = [
       'Os contadores mostram Normal, Conferido, Saída, Entrega e o Total.',
       'As linhas vêm coloridas pela situação: branco = normal, verde = conferido, vermelho = saída, azul = entrega.',
       'A coluna LOCAL mostra onde a peça deve ficar no próximo passo (ou no estágio em que você está bipando).',
+      'Para ordenar, clique no título de uma coluna: ▲ menor → maior, ▼ maior → menor, terceiro clique volta ao normal.',
       'Importar (abre a importação), Conferência / Saída / Entrega (abrem o painel de bipagem), Exportar CSV (baixa o grid em planilha).',
     ],
     imagem: { arquivo: '/manual/02-conferencia-grid.png', legenda: 'Grid da conferência, com a coluna LOCAL' },
@@ -191,6 +195,7 @@ const SECOES: Secao[] = [
       'Registro de cada leitura feita pelos operadores, nos três estágios: o que deu certo e o que deu errado (etiqueta já lida, fora de ordem, não encontrada) e também as alterações em massa.',
     passos: [
       'Filtre por período, fábrica, usuário, desfecho, pedido (ORD.COMPRA) ou texto.',
+      'Clique no título de uma coluna para ordenar (ex.: “Desfecho” para juntar as não encontradas).',
       'Clique na linha para ver o detalhe (peça, cliente, box, horário exato).',
       'Exportar CSV gera a planilha do resultado filtrado.',
       'Retenção: quantos dias de log guardar (0 = guardar para sempre). A limpeza roda toda vez que a tela é aberta.',

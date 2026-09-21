@@ -14,6 +14,7 @@ import {
 } from '../lib/api';
 import type { Empresa, Fabrica, UsuarioLogado } from '../lib/api';
 import { baixarCsv } from '../lib/arquivo';
+import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 import { PERFIL } from '../lib/config';
 import { DS_STATUS } from '../lib/regrasConferencia';
 
@@ -84,6 +85,25 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
   });
 
   const [logs, setLogs] = useState<LogConferencia[]>([]);
+
+  /** Colunas ordenáveis: o clique no cabeçalho alterna asc → desc → sem ordenação. */
+  const campos = useMemo<Record<string, CampoOrdenavel<LogConferencia>>>(() => ({
+    data: { titulo: 'Data / hora', valor: (l) => l.criado_em },
+    fabrica: { titulo: 'Fábrica', valor: (l) => l.fabrica },
+    estagio: { titulo: 'Estágio', valor: (l) => l.estagio, tipo: 'numero' },
+    desfecho: { titulo: 'Desfecho', valor: (l) => DESFECHOS[l.desfecho]?.rotulo ?? l.desfecho },
+    lido: { titulo: 'Lido', valor: (l) => l.valor_lido },
+    etiqueta: { titulo: 'Etiqueta', valor: (l) => l.etiqueta },
+    pedido: { titulo: 'Pedido', valor: (l) => l.ordcompra },
+    produto: { titulo: 'Produto', valor: (l) => l.produto },
+    qtde: { titulo: 'Qtde', valor: (l) => l.qtde, tipo: 'numero' },
+    cliente: { titulo: 'Cliente', valor: (l) => l.cliente },
+    box: { titulo: 'Box', valor: (l) => l.nmbox },
+    status: { titulo: 'Status', valor: (l) => l.status_antes, tipo: 'numero' },
+    usuario: { titulo: 'Usuário', valor: (l) => l.usuario_login },
+  }), []);
+
+  const { linhas: logsOrdenados, ordem, alternar } = useOrdenacao(logs, campos);
   const [resumo, setResumo] = useState<ResumoLogs | null>(null);
   const [retencao, setRetencao] = useState<number | null>(null);
   const [retencaoEditada, setRetencaoEditada] = useState('');
@@ -210,7 +230,7 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
         'STATUS DEPOIS',
         'MENSAGEM',
       ],
-      logs.map((l) => [
+      logsOrdenados.map((l) => [
         dataHora(l.criado_em),
         l.fabrica ?? '',
         ROTULO_ESTAGIO[l.estagio] ?? String(l.estagio),
@@ -440,19 +460,19 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-slate-100 text-left text-slate-600">
             <tr>
-              <th className="px-2 py-2">Data / hora</th>
-              <th className="px-2 py-2">Fábrica</th>
-              <th className="px-2 py-2">Estágio</th>
-              <th className="px-2 py-2">Desfecho</th>
-              <th className="px-2 py-2">Lido</th>
-              <th className="px-2 py-2">Etiqueta</th>
-              <th className="px-2 py-2">Pedido</th>
-              <th className="px-2 py-2">Produto</th>
-              <th className="px-2 py-2 text-right">Qtde</th>
-              <th className="px-2 py-2">Cliente</th>
-              <th className="px-2 py-2">Box</th>
-              <th className="px-2 py-2">Status</th>
-              <th className="px-2 py-2">Usuário</th>
+              <ThOrdenavel campo="data" titulo="Data / hora" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="fabrica" titulo="Fábrica" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="estagio" titulo="Estágio" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="desfecho" titulo="Desfecho" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="lido" titulo="Lido" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="etiqueta" titulo="Etiqueta" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="pedido" titulo="Pedido" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="produto" titulo="Produto" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="qtde" titulo="Qtde" ordem={ordem} aoAlternar={alternar} className="px-2 py-2 text-right" />
+              <ThOrdenavel campo="cliente" titulo="Cliente" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="box" titulo="Box" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="status" titulo="Status" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
+              <ThOrdenavel campo="usuario" titulo="Usuário" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
             </tr>
           </thead>
           <tbody>
@@ -467,7 +487,7 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
                 </td>
               </tr>
             )}
-            {logs.map((log) => (
+            {logsOrdenados.map((log) => (
               <tr
                 key={log.id}
                 onClick={() => setSelecionado(log)}

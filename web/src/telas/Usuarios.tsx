@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   atualizarUsuario,
   criarUsuario,
@@ -8,6 +8,7 @@ import {
   type UsuarioEmpresa,
 } from '../lib/api';
 import { PERFIL } from '../lib/config';
+import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 
 type Props = {
   empresa: Empresa;
@@ -25,6 +26,16 @@ const FORM_VAZIO: Formulario = { login: '', nome: '', senha: '', perfil: PERFIL.
  */
 export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
   const [usuarios, setUsuarios] = useState<UsuarioEmpresa[]>([]);
+
+  /** Colunas ordenáveis (clique no cabeçalho: asc → desc → sem ordenação). */
+  const campos = useMemo<Record<string, CampoOrdenavel<UsuarioEmpresa>>>(() => ({
+    login: { titulo: 'Login', valor: (u) => u.login },
+    nome: { titulo: 'Nome', valor: (u) => u.nome },
+    perfil: { titulo: 'Perfil', valor: (u) => u.perfil },
+    situacao: { titulo: 'Situação', valor: (u) => u.ativo, tipo: 'numero' },
+  }), []);
+
+  const { linhas: usuariosOrdenados, ordem, alternar } = useOrdenacao(usuarios, campos);
   const [form, setForm] = useState<Formulario>(FORM_VAZIO);
   const [editando, setEditando] = useState<UsuarioEmpresa | null>(null);
   const [senhaNova, setSenhaNova] = useState('');
@@ -199,15 +210,15 @@ export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
             <table className="w-full border-collapse text-xs">
               <thead className="bg-slate-700 text-white">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold">Login</th>
-                  <th className="px-3 py-2 text-left font-semibold">Nome</th>
-                  <th className="px-3 py-2 text-left font-semibold">Perfil</th>
-                  <th className="px-3 py-2 text-left font-semibold">Situação</th>
+                  <ThOrdenavel campo="login" titulo="Login" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-left font-semibold" />
+                  <ThOrdenavel campo="nome" titulo="Nome" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-left font-semibold" />
+                  <ThOrdenavel campo="perfil" titulo="Perfil" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-left font-semibold" />
+                  <ThOrdenavel campo="situacao" titulo="Situação" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-left font-semibold" />
                   <th className="px-3 py-2 text-right font-semibold">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {usuarios.map((usuario) => (
+                {usuariosOrdenados.map((usuario) => (
                   <tr key={usuario.id} className="border-b border-slate-200 last:border-0">
                     <td className="px-3 py-2 font-mono">{usuario.login}</td>
                     <td className="px-3 py-2">{usuario.nome ?? '—'}</td>

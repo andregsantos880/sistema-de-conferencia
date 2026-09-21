@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   atualizarLocal,
   criarLocal,
@@ -11,6 +11,7 @@ import {
   type UsuarioLogado,
 } from '../lib/api';
 import { PERFIL } from '../lib/config';
+import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 
 type Props = {
   empresa: Empresa;
@@ -29,6 +30,15 @@ type Props = {
  */
 export default function Locais({ usuarioLogado, onVoltar }: Props) {
   const [locais, setLocais] = useState<Local[]>([]);
+
+  /** Colunas ordenáveis (clique no cabeçalho: asc → desc → sem ordenação). */
+  const campos = useMemo<Record<string, CampoOrdenavel<Local>>>(() => ({
+    nome: { titulo: 'Local', valor: (l) => l.nmbox },
+    situacao: { titulo: 'Situação', valor: (l) => l.ativo, tipo: 'numero' },
+    pecas: { titulo: 'Peças usando', valor: (l) => l.pecas, tipo: 'numero' },
+  }), []);
+
+  const { linhas: locaisOrdenados, ordem, alternar } = useOrdenacao(locais, campos);
   const [novo, setNovo] = useState('');
   const [editando, setEditando] = useState<{ idbox: number; nome: string } | null>(null);
   const [erro, setErro] = useState('');
@@ -201,9 +211,9 @@ export default function Locais({ usuarioLogado, onVoltar }: Props) {
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-slate-100 text-left text-slate-600">
             <tr>
-              <th className="px-3 py-2">Local</th>
-              <th className="px-3 py-2">Situação</th>
-              <th className="px-3 py-2 text-right">Peças usando</th>
+              <ThOrdenavel campo="nome" titulo="Local" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="situacao" titulo="Situação" ordem={ordem} aoAlternar={alternar} className="px-3 py-2" />
+              <ThOrdenavel campo="pecas" titulo="Peças usando" ordem={ordem} aoAlternar={alternar} className="px-3 py-2 text-right" />
               <th className="px-3 py-2 text-right">Ações</th>
             </tr>
           </thead>
@@ -217,7 +227,7 @@ export default function Locais({ usuarioLogado, onVoltar }: Props) {
                 </td>
               </tr>
             )}
-            {locais.map((local) => (
+            {locaisOrdenados.map((local) => (
               <tr key={local.idbox} className="border-t border-slate-200">
                 <td className="px-3 py-1.5">
                   {editando?.idbox === local.idbox ? (

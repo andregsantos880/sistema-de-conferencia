@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  createSortedRowModel,
   rowSelectionFeature,
+  rowSortingFeature,
   tableFeatures,
   useTable,
   type ColumnDef,
   type RowSelectionState,
+  type SortingState,
 } from '@tanstack/react-table';
 import {
   atualizarStatusPorEtiquetas,
@@ -41,6 +44,7 @@ import {
   type InfoBipagem,
   type Som,
 } from '../lib/regrasConferencia';
+import { compararValores } from '../lib/ordenacao';
 import {
   falarBox,
   somAirHorn,
@@ -71,8 +75,29 @@ type Props = {
 
 type MenuContexto = { x: number; y: number; id: string } | null;
 
-/* TanStack Table v9: as features precisam ser registradas explicitamente. */
-const features = tableFeatures({ rowSelectionFeature });
+/*
+ * TanStack Table v9: as features precisam ser registradas explicitamente — e o
+ * ROW MODEL da ordenação também (`sortedRowModel`). Sem ele o cabeçalho até
+ * mostra ▲/▼, mas as linhas não mudam de lugar.
+ */
+const features = tableFeatures({
+  rowSelectionFeature,
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+});
+
+/**
+ * Colunas que ordenam como NÚMERO (as outras ordenam como texto, em pt-BR).
+ * O `status` ordena pelo número do estágio (NORMAL → CONFERÊNCIA → SAÍDA →
+ * ENTREGA) e não pelo rótulo.
+ */
+const COLUNAS_NUMERO = new Set(['qtde', 'volume', 'sequencia', 'idbox', 'status']);
+
+/** Valor cru usado na ordenação (a coluna LOCAL não existe no pedido). */
+function valorParaOrdenar(pedido: LinhaGrid, campo: string): unknown {
+  if (campo === 'local') return pedido.local ?? '';
+  return (pedido as unknown as Record<string, unknown>)[campo];
+}
 
 /**
  * Valor como aparece na tela (usado no grid e na exportação).
@@ -103,6 +128,13 @@ function montarColunas(perfil: string): Array<ColumnDef<typeof features, LinhaGr
     accessorFn: (linha: LinhaGrid) =>
       coluna.campo === 'local' ? (linha.local ?? '') : valorExibicao(linha, coluna.campo),
     header: coluna.titulo,
+    /* ordena pelo valor CRU do pedido (número como número, não como texto) */
+    sortFn: (linhaA, linhaB) =>
+      compararValores(
+        valorParaOrdenar(linhaA.original, coluna.campo),
+        valorParaOrdenar(linhaB.original, coluna.campo),
+        COLUNAS_NUMERO.has(coluna.campo) ? 'numero' : 'texto',
+      ),
   }));
 }
 
@@ -172,6 +204,8 @@ export default function Conferencia({
   const [filtroUsado, setFiltroUsado] = useState('');
 
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  /** Ordenação das colunas (clique no cabeçalho: asc → desc → sem ordenação). */
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [menu, setMenu] = useState<MenuContexto>(null);
 
   const [colunaBusca, setColunaBusca] = useState<string>('ORDCOMPRA');
@@ -335,8 +369,9 @@ export default function Conferencia({
     columns,
     data: linhasDoGrid,
     getRowId: (linha: LinhaGrid) => String(linha.id),
-    state: { rowSelection },
+    state: { rowSelection, sorting },
     onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
   });
 
   /* -------------------------------------------------------- conferência ---- */
@@ -547,12 +582,14 @@ export default function Conferencia({
     }
 
     const visiveis = colunasVisiveis(usuario.perfil);
+    /* exporta na MESMA ordem que está no grid (a ordenação escolhida no cabeçalho) */
+    const paraExportar = table.getSortedRowModel().rows.map((row) => row.original);
     const linhas = [
       visiveis.map((c) => c.titulo).join(';'),
-      ...pedidos.map((p) =>
+      ...paraExportar.map((p) =>
         visiveis
           .map((c) =>
-            (c.campo === 'local' ? localDaColuna(p) : valorExibicao(p, c.campo)).replace(/;/g, ','),
+            (c.campo === 'local' ? (p.local ?? '') : valorExibicao(p, c.campo)).replace(/;/g, ','),
           )
           .join(';'),
       ),
@@ -803,20 +840,37 @@ export default function Conferencia({
           <thead className="sticky top-0 z-10 bg-slate-700 text-white">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    style={{ minWidth: LARGURAS[header.column.id] }}
-                    className="border border-slate-600 px-2 py-1.5 text-left font-semibold"
-                  >
-                    {header.isPlaceholder ? null : <table.FlexRender header={header} />}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const direcao = header.column.getIsSorted();
+
+                  return (
+                    <th
+                      key={header.id}
+                      style={{ minWidth: LARGURAS[header.column.id] }}
+                      onClick={header.column.getToggleSortingHandler() as undefined | (() => void)}
+                      title={
+                        direcao
+                          ? direcao === 'asc'
+                            ? 'Ordenado do menor para o maior (clique para inverter)'
+                            : 'Ordenado do maior para o menor (clique para tirar a ordenação)'
+                          : 'Clique para ordenar'
+                      }
+                      className="cursor-pointer select-none border border-slate-600 px-2 py-1.5 text-left font-semibold hover:bg-slate-600"
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {header.isPlaceholder ? null : <table.FlexRender header={header} />}
+                        <span className={direcao ? 'text-emerald-300' : 'text-slate-400'}>
+                          {direcao === 'asc' ? '▲' : direcao === 'desc' ? '▼' : '↕'}
+                        </span>
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => {
+            {table.getSortedRowModel().rows.map((row) => {
               const status = statusDe(row.original);
               const classe = STATUS[status]?.classe ?? 'linha-0';
 
