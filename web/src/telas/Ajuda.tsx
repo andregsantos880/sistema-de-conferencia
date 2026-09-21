@@ -153,14 +153,16 @@ const SECOES: Secao[] = [
     passos: [
       'Escolha a FÁBRICA e clique em Arquivo..., selecionando o txt/csv recebido.',
       'O sistema mostra quantas linhas leu e descartou, e lista os PEDIDOS agrupados pela ORD.COMPRA (a ordem de compra inteira é o agrupamento, não o cliente).',
-      'Desmarque os pedidos que NÃO devem entrar.',
+      'Arquivo grande? Use o filtro: o combo Lojas mostra só os pedidos das lojas marcadas (com a quantidade ao lado de cada uma) e o campo de busca procura por ORD.COMPRA, peça ou produto.',
+      'Desmarque os pedidos que NÃO devem entrar. Para marcar ou desmarcar tudo o que está na lista filtrada, use “Marcar exibidos” / “Desmarcar exibidos”.',
       'Clique em “Incluir lojas selecionadas”. As peças entram na situação NORMAL, prontas para a conferência.',
     ],
     dicas: [
+      'O filtro só esconde pedidos da lista — o que ficou escondido continua com a marcação que já tinha.',
       'A importação NÃO define o local das peças — isso é feito depois, na tela “Locais das peças” (seção 12), inclusive em massa por ORD.COMPRA.',
       'Cada importação fica registrada (arquivo, quem importou, linhas) na tela Importações.',
     ],
-    imagem: { arquivo: '/manual/04-importacao-grupos.png', legenda: 'Importação: pedidos por ORD.COMPRA, para marcar o que entra' },
+    imagem: { arquivo: '/manual/04-importacao-grupos.png', legenda: 'Importação: filtro de lojas e os pedidos (ORD.COMPRA) que vão entrar' },
   },
   {
     id: 'importacoes',

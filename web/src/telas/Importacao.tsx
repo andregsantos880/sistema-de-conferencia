@@ -13,6 +13,28 @@ import {
 import { analisarArquivo, comoLayoutFabrica, PARSERS, rotuloSeparador } from '../lib/parsers';
 import { arquivoParaBase64, lerTextoDoArquivo } from '../lib/arquivo';
 import { somErro, somOk } from '../lib/audio';
+import { ComboboxMultiplo } from '../lib/multiselecao';
+
+/**
+ * Grupo do arquivo: a ORD.COMPRA inteira (é o que a importação trata como
+ * “loja”). `texto` acumula o que o filtro procura e vira `busca` sem acento.
+ */
+type GrupoDoArquivo = {
+  ordcompra: string;
+  quantidade: number;
+  cliente: string;
+  loja: string;
+  busca: string;
+  texto: string;
+};
+
+/** Compara textos sem acento e sem diferenciar maiúsculas (filtro da lista). */
+function semAcento(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
 
 type Props = {
   empresa: Empresa;
@@ -55,6 +77,9 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
   const [descartadas, setDescartadas] = useState(0);
   const [gruposMarcados, setGruposMarcados] = useState<Set<string>>(new Set());
   const [progresso, setProgresso] = useState(0);
+  /** Filtro da lista de pedidos do arquivo: lojas (cliente) e busca livre. */
+  const [lojasFiltradas, setLojasFiltradas] = useState<string[]>([]);
+  const [filtroPedido, setFiltroPedido] = useState('');
   const [etapa, setEtapa] = useState('');
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
@@ -97,28 +122,85 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
 
   /**
    * Grupos do arquivo: a ORD.COMPRA inteira é o agrupamento (não o CLIENTE, que
-   * na maioria dos arquivos vem "NÃO INFORMADO").
+   * na maioria dos arquivos vem "NÃO INFORMADO"). Cada grupo guarda a LOJA (o
+   * cliente) e um texto normalizado que alimenta o filtro da lista.
    */
-  const grupos = useMemo(() => {
-    const mapa = new Map<string, { ordcompra: string; quantidade: number; cliente: string }>();
+  const grupos = useMemo<GrupoDoArquivo[]>(() => {
+    const mapa = new Map<string, GrupoDoArquivo>();
     linhas.forEach((linha) => {
       const ordcompra = String(linha.ordcompra ?? '');
+      const cliente = String(linha.cliente ?? '').trim();
+      const produto = String(linha.produto ?? '');
+      const descricao = String(linha.descricao1 ?? '');
       const atual = mapa.get(ordcompra);
+
       if (atual) {
         atual.quantidade += 1;
-        if (!atual.cliente) atual.cliente = String(linha.cliente ?? '');
+        if (!atual.cliente) atual.cliente = cliente;
+        atual.texto += ` ${produto} ${descricao}`;
       } else {
         mapa.set(ordcompra, {
           ordcompra,
           quantidade: 1,
-          cliente: String(linha.cliente ?? ''),
+          cliente,
+          loja: '',
+          busca: '',
+          texto: `${String(linha.pecliente ?? '')} ${produto} ${descricao}`,
         });
       }
     });
-    return [...mapa.values()].sort((a, b) => a.ordcompra.localeCompare(b.ordcompra, 'pt-BR'));
+
+    return [...mapa.values()]
+      .map((grupo) => {
+        /* “NÃO INFORMADO” é o que os arquivos mandam quando a loja não vem */
+        const informado = grupo.cliente && grupo.cliente.toUpperCase() !== 'NÃO INFORMADO';
+        const loja = informado ? grupo.cliente : '(sem loja)';
+        return {
+          ...grupo,
+          loja,
+          busca: semAcento(`${grupo.ordcompra} ${loja} ${grupo.texto}`),
+        };
+      })
+      .sort((a, b) => a.ordcompra.localeCompare(b.ordcompra, 'pt-BR'));
   }, [linhas]);
 
+  /** Lojas encontradas no arquivo, com quantos pedidos cada uma tem. */
+  const lojasDoArquivo = useMemo(() => {
+    const contagem = new Map<string, number>();
+    grupos.forEach((grupo) => contagem.set(grupo.loja, (contagem.get(grupo.loja) ?? 0) + 1));
+    return [...contagem.entries()]
+      .map(([loja, pedidos]) => ({ valor: loja, rotulo: loja, contagem: pedidos }))
+      .sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR'));
+  }, [grupos]);
+
+  /**
+   * Pedidos que a lista mostra. Filtrar NÃO mexe no que está marcado: o que
+   * ficar escondido continua com a marcação anterior.
+   */
+  const gruposExibidos = useMemo(() => {
+    const alvo = semAcento(filtroPedido.trim());
+    return grupos.filter((grupo) => {
+      if (lojasFiltradas.length > 0 && !lojasFiltradas.includes(grupo.loja)) return false;
+      return !alvo || grupo.busca.includes(alvo);
+    });
+  }, [grupos, lojasFiltradas, filtroPedido]);
+
+  /** Pedidos exibidos que estão marcados para importar. */
+  const marcadosNaLista = gruposExibidos.filter((grupo) => gruposMarcados.has(grupo.ordcompra)).length;
+
   const selecionadas = linhas.filter((l) => gruposMarcados.has(String(l.ordcompra ?? ''))).length;
+
+  /** Marca (ou desmarca) de uma vez os pedidos que estão na lista filtrada. */
+  function marcarExibidos(marcar: boolean) {
+    setGruposMarcados((atual) => {
+      const novo = new Set(atual);
+      gruposExibidos.forEach((grupo) => {
+        if (marcar) novo.add(grupo.ordcompra);
+        else novo.delete(grupo.ordcompra);
+      });
+      return novo;
+    });
+  }
 
   async function lerArquivo(arquivo: File) {
     setErro('');
@@ -151,6 +233,9 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       setArquivo(arquivo);
       setDescartadas(resultado.descartadas);
       setGruposMarcados(new Set(resultado.linhas.map((l) => String(l.ordcompra ?? ''))));
+      /* arquivo novo, filtro velho: limpa para não esconder pedido sem querer */
+      setLojasFiltradas([]);
+      setFiltroPedido('');
       setLayoutEmUso({
         origem: resultado.origem,
         separador: resultado.separador,
@@ -359,11 +444,75 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
               Selecionar os pedidos (ORD.COMPRA) que devem entrar:
             </p>
 
+            {/* Filtro de lojas: o arquivo da fábrica pode trazer centenas de
+                pedidos e a equipe costuma importar uma loja por vez. */}
+            {grupos.length > 0 && (
+              <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-50 px-2 py-1.5">
+                <ComboboxMultiplo
+                  rotulo="Lojas"
+                  titulo="Mostrar só os pedidos destas lojas"
+                  placeholder="todas"
+                  largura="w-64"
+                  selecionados={lojasFiltradas}
+                  aoMudar={setLojasFiltradas}
+                  opcoes={lojasDoArquivo}
+                />
+
+                <input
+                  value={filtroPedido}
+                  onChange={(e) => setFiltroPedido(e.target.value)}
+                  placeholder="Filtrar por ORD.COMPRA, peça ou produto..."
+                  className="min-w-[190px] flex-1 rounded border border-slate-300 px-2 py-1 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                />
+
+                <button
+                  onClick={() => marcarExibidos(true)}
+                  disabled={gruposExibidos.length === 0}
+                  title="Marcar todos os pedidos que estão na lista agora"
+                  className="rounded border border-slate-400 bg-white px-2 py-1 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Marcar exibidos
+                </button>
+                <button
+                  onClick={() => marcarExibidos(false)}
+                  disabled={gruposExibidos.length === 0}
+                  title="Desmarcar todos os pedidos que estão na lista agora"
+                  className="rounded border border-slate-400 bg-white px-2 py-1 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Desmarcar exibidos
+                </button>
+
+                {(lojasFiltradas.length > 0 || filtroPedido.trim() !== '') && (
+                  <button
+                    onClick={() => {
+                      setLojasFiltradas([]);
+                      setFiltroPedido('');
+                    }}
+                    className="rounded border border-blue-500 bg-blue-50 px-2 py-1 font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    Limpar filtro
+                  </button>
+                )}
+              </div>
+            )}
+
+            {grupos.length > 0 && (
+              <p className="mb-1 text-[11px] text-slate-500">
+                Mostrando {gruposExibidos.length} de {grupos.length} pedido(s) · {marcadosNaLista}{' '}
+                marcado(s) na lista
+              </p>
+            )}
+
             <div className="max-h-72 overflow-auto rounded border border-slate-300 p-2">
               {grupos.length === 0 && (
                 <p className="text-slate-500">Escolha um arquivo para listar os pedidos encontrados.</p>
               )}
-              {grupos.map((grupo) => (
+              {grupos.length > 0 && gruposExibidos.length === 0 && (
+                <p className="text-slate-500">
+                  Nenhum pedido com esse filtro — ajuste as lojas ou a busca.
+                </p>
+              )}
+              {gruposExibidos.map((grupo) => (
                 <div
                   key={grupo.ordcompra}
                   className="flex flex-wrap items-center gap-2 border-b border-slate-100 py-1 last:border-b-0"
@@ -384,9 +533,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                     <span className="font-medium">{grupo.ordcompra || '(sem ORD.COMPRA)'}</span>
                     <span className="text-slate-500">
                       {grupo.quantidade} item(ns)
-                      {grupo.cliente && grupo.cliente !== 'NÃO INFORMADO'
-                        ? ` · ${grupo.cliente}`
-                        : ''}
+                      {grupo.loja !== '(sem loja)' ? ` · ${grupo.loja}` : ''}
                     </span>
                   </label>
                 </div>
