@@ -167,6 +167,50 @@ export async function listarEmpresas(): Promise<EmpresaPublica[]> {
   return rpc<EmpresaPublica[]>('empresas_publicas', {}, false);
 }
 
+/** Dados cadastrais da empresa logada (tela "Dados da empresa"). */
+export type DadosEmpresa = {
+  id: number;
+  /** Link de acesso: /sysconf/<slug> — NÃO é alterável pela tela. */
+  slug: string;
+  nome: string;
+  ativo: number;
+  criado_em: string | null;
+  responsavel: string | null;
+  email_contato: string | null;
+  trial_ate: string | null;
+  log_retencao_dias: number | null;
+  usuarios: number;
+  fabricas: number;
+  pedidos: number;
+};
+
+/** Aviso quando a migração 00113 ainda não foi aplicada no banco. */
+export const AVISO_EMPRESA =
+  'Os dados da empresa precisam da migração 00113 aplicada no banco. Rode o arquivo ' +
+  'supabase/migrations/20260921000113_empresa_dados.sql no SQL Editor do Supabase.';
+
+/** Dados da empresa da sessão (só ADMIN). */
+export async function dadosDaEmpresa(): Promise<DadosEmpresa> {
+  const linhas = await rpc<DadosEmpresa[]>('empresa_dados');
+  return linhas[0];
+}
+
+/**
+ * Grava nome, responsável e e-mail de contato. O SLUG (link de acesso) não é
+ * enviado de propósito: o endereço da empresa não muda.
+ */
+export async function atualizarDadosEmpresa(dados: {
+  nome: string;
+  responsavel: string;
+  emailContato: string;
+}): Promise<void> {
+  await rpc<number>('empresa_atualizar', {
+    p_nome: dados.nome,
+    p_responsavel: dados.responsavel,
+    p_email_contato: dados.emailContato,
+  });
+}
+
 /* -------------------------------------------------------------------- login -- */
 
 /** Login validado dentro da empresa; guarda o token da sessão. */

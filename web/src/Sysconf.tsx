@@ -10,6 +10,7 @@ import Locais from './telas/Locais';
 import LocaisPecas from './telas/LocaisPecas';
 import Ajuda from './telas/Ajuda';
 import Estagios from './telas/Estagios';
+import EmpresaDados from './telas/EmpresaDados';
 import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
@@ -304,6 +305,25 @@ export default function Sysconf() {
     );
   }
 
+  /*
+   * Dados da empresa: o ADMIN corrige nome, responsável e e-mail de contato. O
+   * link de acesso (/sysconf/<slug>) NÃO muda. A tela avisa o app quando o nome
+   * muda, para o topo da conferência já mostrar o nome novo.
+   */
+  if (rota.tela === 'empresa') {
+    return (
+      <EmpresaDados
+        empresa={empresa}
+        usuarioLogado={usuario}
+        onVoltar={() => navegar('conferencia')}
+        onAtualizada={(nome) => {
+          setEmpresa((atual) => (atual ? { ...atual, nome } : atual));
+          setUsuario((atual) => (atual ? { ...atual, empresa_nome: nome } : atual));
+        }}
+      />
+    );
+  }
+
   if (rota.tela === 'locais-pecas') {
     return (
       <LocaisPecas
@@ -356,6 +376,7 @@ export default function Sysconf() {
       onAbrirLocais={() => navegar('locais')}
       onAbrirLocaisPecas={() => navegar('locais-pecas')}
       onAbrirEstagios={() => navegar('estagios')}
+      onAbrirEmpresa={() => navegar('empresa')}
       onAbrirAjuda={() => navegar('ajuda')}
       onSair={sair}
     />

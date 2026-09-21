@@ -133,7 +133,7 @@ const SECOES: Secao[] = [
     resumo:
       'O botão ☰ Menu, no alto à direita, abre as demais telas do sistema. Ele só aparece para o administrador; o operador trabalha apenas com a conferência e a importação.',
     passos: [
-      'CADASTROS: Fábricas e layout, Estágios da conferência, Locais, Locais das peças e Usuários.',
+      'CADASTROS: Fábricas e layout, Estágios da conferência, Locais, Locais das peças, Usuários e Dados da empresa.',
       'OPERAÇÃO: Arquivos importados e Logs de conferência.',
       'AJUDA: este Manual do sistema.',
       'O menu fecha ao clicar fora dele ou ao escolher uma tela.',
@@ -255,8 +255,26 @@ const SECOES: Secao[] = [
     somenteAdmin: true,
   },
   {
+    id: 'empresa',
+    titulo: '16. Dados da empresa',
+    resumo:
+      'O administrador corrige o cadastro da própria empresa: nome, responsável e e-mail de contato. O LINK DE ACESSO (/sysconf/<empresa>) não muda — é o endereço que a equipe já tem salvo e enviado.',
+    passos: [
+      'Menu ☰ → Dados da empresa. Ajuste o nome, o responsável e o e-mail de contato.',
+      'Clique em Salvar: o nome novo passa a valer em todo o sistema, na hora.',
+      'Use “Copiar link” para enviar o endereço de acesso a alguém da equipe.',
+      'A caixa “Informações da conta” mostra situação, prazo do teste, cliente desde, usuários, fábricas e peças na base.',
+    ],
+    dicas: [
+      'O endereço (/sysconf/sua-empresa) é fixo de propósito: se ele mudasse, todos os atalhos e links enviados parariam de funcionar.',
+      'Situação da conta e prazo do teste são ajustados pelo suporte. A retenção dos logs fica na tela “Logs de conferência”.',
+    ],
+    imagem: { arquivo: '/manual/17-empresa.png', legenda: 'Dados da empresa, com o link de acesso fixo' },
+    somenteAdmin: true,
+  },
+  {
     id: 'logs',
-    titulo: '16. Logs de conferência (auditoria)',
+    titulo: '17. Logs de conferência (auditoria)',
     resumo:
       'Registro de cada leitura feita pelos operadores, em cada estágio: o que deu certo e o que deu errado (etiqueta já lida, fora de ordem, não encontrada) e também as alterações em massa.',
     passos: [
@@ -272,14 +290,14 @@ const SECOES: Secao[] = [
   },
   {
     id: 'site',
-    titulo: '17. Site público e teste grátis',
+    titulo: '18. Site público e teste grátis',
     resumo:
       'O site apresenta o sistema e permite criar uma empresa para testar (30 dias). Quem se cadastra recebe as fábricas do catálogo e entra como administrador.',
     imagem: { arquivo: '/manual/13-site.png', legenda: 'Página inicial do site' },
   },
   {
     id: 'faq',
-    titulo: '18. Perguntas frequentes',
+    titulo: '19. Perguntas frequentes',
     passos: [
       'A etiqueta não é aceita e diz “está para SAÍDA”: a peça já passou daquele estágio — estágio errado ou peça repetida.',
       'A etiqueta não é aceita e diz “Não pode pular estágio”: falta passar pelo estágio anterior (a peça precisa estar no estágio imediatamente anterior).',

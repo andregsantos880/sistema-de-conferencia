@@ -71,6 +71,7 @@ type Props = {
   onAbrirLocais: () => void;
   onAbrirLocaisPecas: () => void;
   onAbrirEstagios: () => void;
+  onAbrirEmpresa: () => void;
   onAbrirAjuda: () => void;
   onSair: () => void;
 };
@@ -213,6 +214,7 @@ export default function Conferencia({
   onAbrirLocais,
   onAbrirLocaisPecas,
   onAbrirEstagios,
+  onAbrirEmpresa,
   onAbrirAjuda,
   onSair,
 }: Props) {
@@ -862,6 +864,7 @@ export default function Conferencia({
                   <ItemMenuTopo rotulo="Locais" aoClicar={aoClicarMenu(onAbrirLocais)} />
                   <ItemMenuTopo rotulo="Locais das peças" aoClicar={aoClicarMenu(onAbrirLocaisPecas)} />
                   <ItemMenuTopo rotulo="Usuários" aoClicar={aoClicarMenu(onAbrirUsuarios)} />
+                  <ItemMenuTopo rotulo="Dados da empresa" aoClicar={aoClicarMenu(onAbrirEmpresa)} />
 
                   <p className="mt-1 border-t border-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                     Operação
