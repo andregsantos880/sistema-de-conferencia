@@ -8,6 +8,7 @@ import {
   type UsuarioEmpresa,
 } from '../lib/api';
 import { PERFIL } from '../lib/config';
+import { Marca } from '../lib/marca';
 import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 
 type Props = {
@@ -134,7 +135,7 @@ export default function Usuarios({ empresa, usuarioLogado, onVoltar }: Props) {
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100">
       <header className="flex shrink-0 items-center justify-between bg-slate-900 px-4 py-2 text-white">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold">SysConf</span>
+          <Marca />
           <span className="rounded bg-slate-700 px-2 py-0.5 text-[11px]">{empresa.nome}</span>
           <span className="text-xs text-slate-300">Usuários e perfis</span>
         </div>

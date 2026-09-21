@@ -43,6 +43,8 @@ import {
   type Som,
 } from '../lib/regrasConferencia';
 import { compararValores } from '../lib/ordenacao';
+import { ComboboxMultiplo } from '../lib/multiselecao';
+import { Marca } from '../lib/marca';
 import { useEstagios } from '../lib/estagios';
 import {
   falarBox,
@@ -518,13 +520,22 @@ export default function Conferencia({
   );
 
   const contadores = useMemo(() => {
-    const por = (s: number) => pedidos.filter((p) => statusDe(p) === s).length;
+    /* quantidade por situação (0 = NORMAL, 1..N = estágios cadastrados) */
+    const porStatus = new Map<number, number>();
+    pedidos.forEach((pedido) => {
+      const situacao = statusDe(pedido);
+      porStatus.set(situacao, (porStatus.get(situacao) ?? 0) + 1);
+    });
+
+    const doEstagio = (s: number) => porStatus.get(s) ?? 0;
+
     return {
       total: pedidos.length,
-      normal: por(0),
-      conferido: por(1),
-      saida: por(2),
-      entrega: por(3),
+      porStatus,
+      normal: porStatus.get(0) ?? 0,
+      conferido: doEstagio(1),
+      saida: doEstagio(2),
+      entrega: doEstagio(3),
     };
   }, [pedidos]);
 
@@ -782,7 +793,7 @@ export default function Conferencia({
     <div className="flex h-screen flex-col overflow-hidden bg-slate-100">
       <header className="flex shrink-0 items-center justify-between bg-slate-900 px-4 py-2 text-white">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold tracking-wide">SysConf</span>
+          <Marca />
           <span className="rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-semibold" title={`/sysconf/${empresa.slug}`}>
             {empresa.nome}
           </span>
@@ -1007,22 +1018,29 @@ export default function Conferencia({
           )}
         </label>
 
-        <label className="flex items-center gap-1">
-          Situação
-          {[0, ...ativos.map((estagio) => estagio.numero)].map((situacao) => {
-            const ativa = filtros.situacoes.includes(situacao);
-            return (
-              <button
-                key={situacao}
-                onClick={() => alternarSituacao(situacao)}
-                title={`Mostrar somente ${nomeEstagio(situacao)}`}
-                className={`rounded border px-2 py-1 ${ativa ? 'border-slate-700 bg-slate-700 font-semibold text-white' : 'border-slate-400 bg-white hover:bg-slate-50'}`}
-              >
-                {nomeEstagio(situacao)}
-              </button>
-            );
-          })}
-        </label>
+        {/* Situação/estágios: combobox de múltipla seleção (padrão = todos) */}
+        <ComboboxMultiplo
+          rotulo="Situação"
+          titulo="Filtrar por situação/estágio (pode marcar vários)"
+          placeholder="todos"
+          largura="w-64"
+          selecionados={filtros.situacoes}
+          aoMudar={(novos) => setFiltros((f) => ({ ...f, situacoes: novos }))}
+          opcoes={[
+            {
+              valor: 0,
+              rotulo: nomeEstagio(0),
+              contagem: contadores.porStatus.get(0) ?? 0,
+              cor: '#ffffff',
+            },
+            ...ativos.map((estagio) => ({
+              valor: estagio.numero,
+              rotulo: estagio.nome,
+              cor: corEstagio(estagio.numero),
+              contagem: contadores.porStatus.get(estagio.numero) ?? 0,
+            })),
+          ]}
+        />
 
         <label className="flex items-center gap-1">
           Cliente
@@ -1115,10 +1133,7 @@ export default function Conferencia({
 
       <div className="flex shrink-0 flex-wrap items-center gap-4 border-b border-slate-300 bg-white px-4 py-2 text-xs font-semibold">
             {[0, ...ativos.map((estagio) => estagio.numero)].map((situacao) => {
-              const quantidade =
-                situacao === 0
-                  ? contadores.normal
-                  : pedidos.filter((p) => statusDe(p) === situacao).length;
+              const quantidade = contadores.porStatus.get(situacao) ?? 0;
               const ativa = filtros.situacoes.includes(situacao);
               const cor = situacao === 0 ? null : corEstagio(situacao);
               const classe = cor ? '' : (STATUS[situacao]?.contador ?? '');
