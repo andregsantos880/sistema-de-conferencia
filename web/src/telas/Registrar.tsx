@@ -1,30 +1,17 @@
 import { useMemo, useState } from 'react';
 import { registrarEmpresa, type UsuarioLogado } from '../lib/api';
-import { MARCA, TRIAL_DIAS, sugerirEndereco } from '../lib/config';
+import {
+  MARCA,
+  TRIAL_DIAS,
+  ENDERECO_VALIDO,
+  ENDERECOS_RESERVADOS,
+  sugerirEndereco,
+} from '../lib/config';
 
 type Props = {
   onEntrar: (usuario: UsuarioLogado, memorizar: boolean) => void;
 };
 
-/** Mesma lista do RPC registrar_empresa (endereços que não podem ser usados). */
-const RESERVADOS = [
-  'sysconf',
-  'entrar',
-  'registrar',
-  'login',
-  'api',
-  'admin',
-  'www',
-  'app',
-  'suporte',
-  'contato',
-  'painel',
-  'conferencia',
-  'importacao',
-  'usuarios',
-];
-
-const ENDERECO_VALIDO = /^[a-z0-9]([a-z0-9-]{1,28})[a-z0-9]$/;
 const LOGIN_VALIDO = /^[A-Z0-9][A-Z0-9._-]*$/;
 const EMAIL_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -65,7 +52,7 @@ export default function Registrar({ onEntrar }: Props) {
     if (empresa.trim().length < 2) return 'Informe o nome da empresa (mínimo 2 caracteres).';
     if (!ENDERECO_VALIDO.test(endereco))
       return 'O endereço deve ter de 3 a 30 caracteres, usando letras sem acento, números e hífen (não pode começar nem terminar com hífen).';
-    if (RESERVADOS.includes(endereco)) return 'Este endereço é reservado pelo sistema. Escolha outro.';
+    if (ENDERECOS_RESERVADOS.includes(endereco)) return 'Este endereço é reservado pelo sistema. Escolha outro.';
     if (login.trim().length < 3) return 'O usuário deve ter no mínimo 3 caracteres.';
     if (login.trim().length > 30) return 'O usuário deve ter no máximo 30 caracteres.';
     if (!LOGIN_VALIDO.test(login.trim())) return 'O usuário aceita apenas letras, números, ponto, hífen e sublinhado.';

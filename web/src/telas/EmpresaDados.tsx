@@ -8,7 +8,7 @@ import {
   type Empresa,
   type UsuarioLogado,
 } from '../lib/api';
-import { PERFIL } from '../lib/config';
+import { PERFIL, erroDoEndereco } from '../lib/config';
 
 type Props = {
   empresa: Empresa;
@@ -44,6 +44,8 @@ export default function EmpresaDados({ empresa, usuarioLogado, onVoltar, onAtual
   const [ocupado, setOcupado] = useState(false);
   const [migracaoOk, setMigracaoOk] = useState(true);
   const [copiado, setCopiado] = useState(false);
+  /** Endereço novo (o campo começa com o endereço atual). */
+  const [endereco, setEndereco] = useState('');
 
   const administrador = usuarioLogado.perfil === PERFIL.ADMIN;
 
@@ -56,6 +58,7 @@ export default function EmpresaDados({ empresa, usuarioLogado, onVoltar, onAtual
       setNome(encontrados.nome ?? '');
       setResponsavel(encontrados.responsavel ?? '');
       setEmail(encontrados.email_contato ?? '');
+      setEndereco(encontrados.slug ?? '');
       setMigracaoOk(true);
     } catch (falha) {
       if (migracaoPendente(falha)) setMigracaoOk(false);
@@ -102,6 +105,50 @@ export default function EmpresaDados({ empresa, usuarioLogado, onVoltar, onAtual
     }
   }
 
+  /**
+   * Troca o ENDEREÇO da empresa. Depois de gravar, o próprio app recarrega no
+   * endereço novo (o link antigo passa a redirecionar para ele).
+   */
+  async function trocarEndereco() {
+    setErro('');
+    setMensagem('');
+
+    const novo = endereco.trim().toLowerCase();
+    if (!dados || novo === dados.slug.toLowerCase()) {
+      setErro('O endereço informado é o mesmo que já está em uso.');
+      return;
+    }
+
+    const problema = erroDoEndereco(novo);
+    if (problema) {
+      setErro(problema);
+      return;
+    }
+
+    const confirmado = confirm(
+      `Trocar o endereço de /sysconf/${dados.slug} para /sysconf/${novo}?\n\n` +
+        'Quem usar o endereço antigo será levado para o novo automaticamente, mas divulgue o endereço ' +
+        'novo para a equipe.',
+    );
+    if (!confirmado) return;
+
+    setOcupado(true);
+    try {
+      await atualizarDadosEmpresa({
+        nome: nome.trim(),
+        responsavel,
+        emailContato: email,
+        slug: novo,
+      });
+      setMensagem(`Endereço alterado para /sysconf/${novo}. Recarregando...`);
+      /* recarrega no endereço novo: a empresa é resolvida pela URL */
+      window.location.href = `${window.location.origin}/sysconf/${novo}/empresa`;
+    } catch (falha) {
+      setErro(falha instanceof Error ? falha.message : 'Falha ao trocar o endereço.');
+      setOcupado(false);
+    }
+  }
+
   if (!administrador) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-200 p-6">
@@ -127,7 +174,7 @@ export default function EmpresaDados({ empresa, usuarioLogado, onVoltar, onAtual
         <h1 className="text-sm font-semibold text-slate-700">
           Dados da empresa
           <span className="ml-2 text-[11px] font-normal text-slate-500">
-            {dados?.nome ?? ''} · o link de acesso não muda
+            {dados ? `${dados.nome} · /sysconf/${dados.slug}` : ''}
           </span>
         </h1>
         <div className="flex items-center gap-2">
@@ -223,7 +270,7 @@ export default function EmpresaDados({ empresa, usuarioLogado, onVoltar, onAtual
 
           {/* ------------------------------------------- link de acesso -- */}
           <div className="rounded border border-slate-300 bg-white p-4 text-xs">
-            <p className="mb-2 font-semibold text-slate-700">Link de acesso (não muda)</p>
+            <p className="mb-2 font-semibold text-slate-700">Link de acesso (endereço da empresa)</p>
             <div className="flex flex-wrap items-center gap-2">
               <code className="flex-1 rounded border border-slate-200 bg-slate-50 px-2 py-1.5 break-all text-slate-700">
                 {window.location.origin}/sysconf/{dados?.slug ?? empresa.slug}
@@ -235,11 +282,38 @@ export default function EmpresaDados({ empresa, usuarioLogado, onVoltar, onAtual
                 {copiado ? 'Copiado!' : 'Copiar link'}
               </button>
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">
-              É o endereço que a sua equipe já usa. Ele é fixo: se o endereço mudasse, todos os links
-              salvos e enviados parariam de funcionar. Para divulgar, envie este link e cada usuário
-              entra com o próprio login.
-            </p>
+
+            <div className="mt-3 border-t border-slate-200 pt-3">
+              <span className="mb-1 block text-slate-700">Trocar o endereço</span>
+              <div className="flex flex-wrap items-stretch gap-2">
+                <div className="flex flex-1 items-stretch overflow-hidden rounded border border-slate-300">
+                  <span className="flex items-center bg-slate-100 px-2 text-[11px] text-slate-500">
+                    /sysconf/
+                  </span>
+                  <input
+                    value={endereco}
+                    maxLength={30}
+                    onChange={(e) =>
+                      setEndereco(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30))
+                    }
+                    className="w-full px-2 py-1.5 outline-none focus:bg-emerald-50"
+                  />
+                </div>
+                <button
+                  onClick={() => void trocarEndereco()}
+                  disabled={ocupado || !dados || endereco.trim().toLowerCase() === dados?.slug?.toLowerCase()}
+                  className="rounded border border-blue-600 bg-blue-600 px-3 py-1.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Trocar endereço
+                </button>
+              </div>
+              <p className="mt-2 text-[11px] text-amber-700">
+                Atenção: o endereço é o link que a equipe usa para entrar. Quem abrir o endereço antigo
+                continua entrando — o sistema redireciona para o endereço novo —, mas os atalhos, e-mails
+                e documentos já enviados devem ser atualizados e o endereço novo é o que vale daqui para
+                frente. De 3 a 30 caracteres: letras sem acento, números e hífen.
+              </p>
+            </div>
           </div>
 
           {/* --------------------------------------------- só informativo -- */}

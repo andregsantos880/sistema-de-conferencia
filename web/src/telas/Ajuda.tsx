@@ -258,18 +258,20 @@ const SECOES: Secao[] = [
     id: 'empresa',
     titulo: '16. Dados da empresa',
     resumo:
-      'O administrador corrige o cadastro da própria empresa: nome, responsável e e-mail de contato. O LINK DE ACESSO (/sysconf/<empresa>) não muda — é o endereço que a equipe já tem salvo e enviado.',
+      'O administrador corrige o cadastro da própria empresa: nome, responsável, e-mail de contato e o ENDEREÇO de acesso (/sysconf/<empresa>). Quando o endereço muda, o link antigo continua funcionando: o sistema redireciona quem entrar por ele para o endereço novo.',
     passos: [
       'Menu ☰ → Dados da empresa. Ajuste o nome, o responsável e o e-mail de contato.',
       'Clique em Salvar: o nome novo passa a valer em todo o sistema, na hora.',
       'Use “Copiar link” para enviar o endereço de acesso a alguém da equipe.',
+      'Para trocar o endereço: escreva o novo no campo “Trocar o endereço” e clique no botão. O sistema confirma o aviso e recarrega a página já no endereço novo.',
       'A caixa “Informações da conta” mostra situação, prazo do teste, cliente desde, usuários, fábricas e peças na base.',
     ],
     dicas: [
-      'O endereço (/sysconf/sua-empresa) é fixo de propósito: se ele mudasse, todos os atalhos e links enviados parariam de funcionar.',
+      'O endereço antigo fica guardado como apelido: atalhos, e-mails e documentos que apontam para ele continuam abrindo o sistema (com redirecionamento). Mesmo assim, atualize os atalhos e avise a equipe.',
+      'O endereço é único no sistema e tem de 3 a 30 caracteres: letras sem acento, números e hífen (não pode começar nem terminar com hífen).',
       'Situação da conta e prazo do teste são ajustados pelo suporte. A retenção dos logs fica na tela “Logs de conferência”.',
     ],
-    imagem: { arquivo: '/manual/17-empresa.png', legenda: 'Dados da empresa, com o link de acesso fixo' },
+    imagem: { arquivo: '/manual/17-empresa.png', legenda: 'Dados da empresa, com o endereço de acesso e a troca de endereço' },
     somenteAdmin: true,
   },
   {

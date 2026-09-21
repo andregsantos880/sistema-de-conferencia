@@ -158,3 +158,46 @@ export function sugerirEndereco(nome: string): string {
     .slice(0, 30)
     .replace(/-+$/g, '');
 }
+
+/**
+ * ENDERECO DA EMPRESA (o que vai na URL: /sysconf/<endereco>).
+ *
+ * As regras ficam aqui para o autocadastro (/registrar) e a tela "Dados da
+ * empresa" validarem IGUAL — e iguais também às do banco
+ * (`registrar_empresa` e `empresa_atualizar`).
+ */
+export const ENDERECO_VALIDO = /^[a-z0-9]([a-z0-9-]{1,28})[a-z0-9]$/;
+
+/** Nomes que o sistema usa em rota própria — não podem virar endereço de empresa. */
+export const ENDERECOS_RESERVADOS = [
+  'sysconf',
+  'entrar',
+  'registrar',
+  'login',
+  'api',
+  'admin',
+  'www',
+  'app',
+  'suporte',
+  'contato',
+  'painel',
+  'conferencia',
+  'importacao',
+  'usuarios',
+  'empresa',
+  'estagios',
+  'locais',
+  'logs',
+];
+
+/** Devolve a mensagem do problema do endereço ('' quando está válido). */
+export function erroDoEndereco(valor: string): string {
+  const endereco = valor.trim().toLowerCase();
+  if (!ENDERECO_VALIDO.test(endereco)) {
+    return 'O endereço deve ter de 3 a 30 caracteres, usando letras sem acento, números e hífen (não pode começar nem terminar com hífen).';
+  }
+  if (ENDERECOS_RESERVADOS.includes(endereco)) {
+    return `O endereço "${endereco}" é reservado pelo sistema. Escolha outro.`;
+  }
+  return '';
+}

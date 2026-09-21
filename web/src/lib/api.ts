@@ -196,18 +196,23 @@ export async function dadosDaEmpresa(): Promise<DadosEmpresa> {
 }
 
 /**
- * Grava nome, responsável e e-mail de contato. O SLUG (link de acesso) não é
- * enviado de propósito: o endereço da empresa não muda.
+ * Grava nome, responsável, e-mail de contato e, quando informado, o ENDEREÇO
+ * (slug). O endereço antigo fica como apelido no banco: o link velho continua
+ * abrindo o sistema (o app redireciona para o endereço novo).
+ * A RPC devolve 1 (dados) ou 2 (dados + endereço trocado).
  */
 export async function atualizarDadosEmpresa(dados: {
   nome: string;
   responsavel: string;
   emailContato: string;
-}): Promise<void> {
-  await rpc<number>('empresa_atualizar', {
+  /** Só quando o administrador trocou o endereço. */
+  slug?: string;
+}): Promise<number> {
+  return rpc<number>('empresa_atualizar', {
     p_nome: dados.nome,
     p_responsavel: dados.responsavel,
     p_email_contato: dados.emailContato,
+    p_slug: dados.slug ?? null,
   });
 }
 

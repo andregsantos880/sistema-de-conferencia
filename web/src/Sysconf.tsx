@@ -71,13 +71,27 @@ export default function Sysconf() {
 
     if (!rota.empresa) return;
 
-    obterEmpresa(rota.empresa)
+    const slugDaUrl = rota.empresa;
+
+    obterEmpresa(slugDaUrl)
       .then((encontrada) => {
         if (cancelado) return;
         if (!encontrada || Number(encontrada.ativo) !== 1) {
           setEmpresaErro('Empresa não encontrada ou inativa. Confira o link recebido.');
           return;
         }
+
+        /*
+         * Endereço ANTIGO da empresa (apelido): manda o navegador para o
+         * endereço atual, para o link velho nunca dar erro. O banco devolve
+         * sempre o slug de hoje em `encontrada.slug`.
+         */
+        if (encontrada.slug.toLowerCase() !== slugDaUrl.toLowerCase()) {
+          const tela = rota.tela === 'login' ? '/login' : `/${rota.tela}`;
+          window.location.replace(`/sysconf/${encontrada.slug}${tela}${window.location.search}`);
+          return;
+        }
+
         setEmpresa(encontrada);
       })
       .catch((falha) => {
