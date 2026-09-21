@@ -491,7 +491,14 @@ notify pgrst, 'reload schema';
 -- -----------------------------------------------------------------------------
 -- 9. TELAS AUXILIARES PASSAM A DEVOLVER OS ESTAGIOS EM JSON
 --    (antes eram colunas fixas estagio_1/2/3 e local_conf/saida/entrega)
+--
+--    O tipo de retorno MUDA, e o Postgres NAO aceita "create or replace" quando
+--    as colunas de saida sao outras (erro 42P13: cannot change return type of
+--    existing function). Por isso o DROP antes de recriar -- as duas funcoes so
+--    sao chamadas pelo app web, que usa exatamente esta lista de argumentos.
 -- -----------------------------------------------------------------------------
+drop function if exists public.logs_resumo(text, date, date, integer, text, text, text, text);
+
 /** Resumo dos logs: `estagios` = {"1": 12, "2": 3, ...} por número de estágio. */
 create or replace function public.logs_resumo(
     p_token     text,
@@ -560,6 +567,8 @@ begin
            (select count(distinct f.usuario_login) from filtrado f)::bigint;
 end;
 $$;
+
+drop function if exists public.locais_pecas_listar(text, integer, text, text, text, integer, bigint, integer, integer);
 
 /** Locais das peças: `locais` = {"1": "Box 01", "2": "Prateleira", ...} por estágio. */
 create or replace function public.locais_pecas_listar(
@@ -657,6 +666,8 @@ notify pgrst, 'reload schema';
 -- drop function if exists public.estagio_atualizar(text, integer, text, text, integer);
 -- drop function if exists public.estagio_criar(text, text, text);
 -- drop function if exists public.estagios_listar(text);
+-- drop function if exists public.logs_resumo(text, date, date, integer, text, text, text, text);
+-- drop function if exists public.locais_pecas_listar(text, integer, text, text, text, integer, bigint, integer, integer);
 -- alter table public.pedido_local drop constraint if exists ck_pedido_local_estagio;
 -- alter table public.pedido_local add constraint ck_pedido_local_estagio check (estagio between 1 and 3);
 -- drop table if exists public.estagio;
