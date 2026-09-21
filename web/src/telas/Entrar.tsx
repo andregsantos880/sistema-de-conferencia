@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listarEmpresas, login, type EmpresaPublica, type UsuarioLogado } from '../lib/api';
-import { CHAVE_SESSAO, MARCA } from '../lib/config';
+import { CHAVE_SESSAO } from '../lib/config';
+import { CampoLogin, ChaveLigada, TelaLogin } from '../lib/telaLogin';
 
 type Props = {
   onEntrar: (usuario: UsuarioLogado, memorizar: boolean) => void;
@@ -100,116 +101,96 @@ export default function Entrar({ onEntrar }: Props) {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 p-6">
-      <div className="w-full max-w-[460px] overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl">
-        <div className="bg-slate-900 px-6 py-5 text-white">
-          <h1 className="text-lg font-semibold">{MARCA.produto}</h1>
-          <p className="text-xs text-slate-300">Entrar no sistema de conferência</p>
-        </div>
-
-        <form onSubmit={confirmar} className="space-y-4 p-6">
-          <div>
-            <label className="mb-1 block text-xs text-slate-700" htmlFor="empresa">
-              Empresa
-            </label>
-            <input
-              id="empresa"
-              autoFocus
-              list="lista-empresas"
-              autoComplete="organization"
-              value={empresaTexto}
-              onChange={(e) => setEmpresaTexto(e.target.value)}
-              placeholder="Nome da sua empresa"
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-            />
-            <datalist id="lista-empresas">
-              {empresas.map((empresa) => (
-                <option key={empresa.slug} value={empresa.nome}>
-                  {empresa.slug}
-                </option>
-              ))}
-            </datalist>
-            <p className="mt-1 text-[11px] text-slate-500">
-              Não precisa do endereço exato: o nome da empresa já basta.
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs text-slate-700" htmlFor="usuario">
-              Usuário
-            </label>
-            <input
-              id="usuario"
-              autoComplete="username"
-              maxLength={30}
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value.toUpperCase())}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs text-slate-700" htmlFor="senha">
-              Senha
-            </label>
-            <div className="relative">
-              <input
-                id="senha"
-                type={mostrarSenha ? 'text' : 'password'}
-                autoComplete="current-password"
-                maxLength={15}
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="w-full rounded border border-slate-300 px-3 py-2 pr-16 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-              />
-              <button
-                type="button"
-                onClick={() => setMostrarSenha((v) => !v)}
-                className="absolute top-1/2 right-2 -translate-y-1/2 text-[11px] text-slate-500 hover:text-slate-800"
-              >
-                {mostrarSenha ? 'ocultar' : 'mostrar'}
-              </button>
-            </div>
-          </div>
-
-          {erro && (
-            <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{erro}</div>
-          )}
-
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 text-xs text-slate-700">
-              <input
-                type="checkbox"
-                checked={memorizar}
-                onChange={(e) => setMemorizar(e.target.checked)}
-                className="h-3.5 w-3.5"
-              />
-              Memorizar senha
-            </label>
-            <button
-              type="submit"
-              disabled={carregando}
-              className="rounded bg-emerald-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-60"
-            >
-              {carregando ? 'Conectando...' : 'Entrar'}
-            </button>
-          </div>
-        </form>
-
-        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-3 text-[11px] text-slate-600">
-          <a href="/registrar" className="font-semibold text-emerald-700 underline">
+    <TelaLogin
+      titulo="Bem-vindo de volta"
+      subtitulo="Entre com os dados da sua empresa para conferir as cargas."
+      empresa={acharEmpresa() ? { nome: acharEmpresa()!.nome, slug: acharEmpresa()!.slug } : null}
+      rodape={
+        <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-4 text-[11px] text-slate-500">
+          <a href="/registrar" className="font-semibold text-emerald-700 hover:underline">
             Criar conta grátis
           </a>
-          <a href="/" className="text-slate-500 hover:text-slate-800">
+          <a href="/" className="hover:text-slate-800">
             ← Voltar ao site
           </a>
         </div>
-      </div>
+      }
+      nota={
+        <>
+          Sua empresa tem um endereço próprio: <strong>/sysconf/sua-empresa</strong>. Se a equipe recebeu
+          esse link, pode entrar por ele — é o mesmo sistema.
+        </>
+      }
+    >
+      <form onSubmit={confirmar} className="mt-7 space-y-4">
+        <div>
+          <CampoLogin
+            id="empresa"
+            rotulo="Empresa"
+            autoFocus
+            list="lista-empresas"
+            autoComplete="organization"
+            value={empresaTexto}
+            onChange={(e) => setEmpresaTexto(e.target.value)}
+            placeholder="Nome da sua empresa"
+          />
+          <datalist id="lista-empresas">
+            {empresas.map((empresa) => (
+              <option key={empresa.slug} value={empresa.nome}>
+                {empresa.slug}
+              </option>
+            ))}
+          </datalist>
+          <p className="mt-1.5 text-[11px] text-slate-500">
+            Não precisa do endereço exato: o nome da empresa já basta.
+          </p>
+        </div>
 
-      <p className="mt-4 max-w-[460px] text-center text-[11px] text-slate-500">
-        Sua empresa tem um endereço próprio: <strong>/sysconf/sua-empresa</strong>. Se a equipe recebeu esse
-        link, pode entrar por ele — é o mesmo sistema.
-      </p>
-    </div>
+        <CampoLogin
+          id="usuario"
+          rotulo="Usuário"
+          autoComplete="username"
+          maxLength={30}
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value.toUpperCase())}
+          className="uppercase"
+        />
+
+        <CampoLogin
+          id="senha"
+          rotulo="Senha"
+          type={mostrarSenha ? 'text' : 'password'}
+          autoComplete="current-password"
+          maxLength={15}
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          sufixo={
+            <button
+              type="button"
+              onClick={() => setMostrarSenha((v) => !v)}
+              className="text-[11px] font-medium text-slate-500 hover:text-slate-800"
+            >
+              {mostrarSenha ? 'ocultar' : 'mostrar'}
+            </button>
+          }
+        />
+
+        {erro && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {erro}
+          </div>
+        )}
+
+        <ChaveLigada rotulo="Memorizar senha" marcado={memorizar} aoMudar={setMemorizar} />
+
+        <button
+          type="submit"
+          disabled={carregando}
+          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {carregando ? 'Conectando...' : 'Entrar'}
+        </button>
+      </form>
+    </TelaLogin>
   );
 }

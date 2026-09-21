@@ -5,21 +5,14 @@ import {
   registrarImportacao,
   migracaoPendente,
   AVISO_IMPORTACOES,
-  AVISO_LOCAIS,
-  definirLocaisLote,
-  listarLocais,
-  locaisPorGrupo,
   type Empresa,
   type Fabrica,
   type LayoutSalvo,
-  type Local,
-  type LocalEscolhido,
   type PedidoNovo,
 } from '../lib/api';
 import { analisarArquivo, comoLayoutFabrica, PARSERS, rotuloSeparador } from '../lib/parsers';
 import { arquivoParaBase64, lerTextoDoArquivo } from '../lib/arquivo';
 import { somErro, somOk } from '../lib/audio';
-import { useEstagios } from '../lib/estagios';
 
 type Props = {
   empresa: Empresa;
@@ -55,28 +48,12 @@ function mensagemDeImportacao(falha: unknown): string {
  * Os pedidos importados ficam vinculados à empresa logada.
  */
 export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabrica, onConcluir, onVoltar }: Props) {
-  /* Estágios cadastrados pela empresa (sem o cadastro, valem os três de sempre). */
-  const { ativos, nome: nomeEstagio } = useEstagios();
-  const numerosDosEstagios = ativos.map((estagio) => estagio.numero);
   const [linhas, setLinhas] = useState<PedidoNovo[]>([]);
   const [nomeArquivo, setNomeArquivo] = useState('');
   /** O File escolhido: guardado para registrar a importação (com o original) e baixar depois. */
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [descartadas, setDescartadas] = useState(0);
   const [gruposMarcados, setGruposMarcados] = useState<Set<string>>(new Set());
-  /** Locais cadastrados (tabela `box`), só os ativos. */
-  const [locais, setLocais] = useState<Local[]>([]);
-  /**
-   * Local escolhido por grupo → estágio → idbox. A chave do grupo é a
-   * ORD.COMPRA inteira (decisão do cliente: um cliente pode ter vários pedidos e
-   * a ordem de compra é o que os agrupa). Já vem preenchido com o local que o
-   * grupo tem hoje na base, quando existe.
-   */
-  const [locaisEscolhidos, setLocaisEscolhidos] = useState<
-    Record<string, Record<number, number>>
-  >({});
-  /** Combos de "aplicar aos selecionados". */
-  const [emLote, setEmLote] = useState<Record<number, number | ''>>({});
   const [progresso, setProgresso] = useState(0);
   const [etapa, setEtapa] = useState('');
   const [erro, setErro] = useState('');
@@ -90,42 +67,6 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
     codificacao?: string;
   } | null>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
-
-  /**
-   * LOCAIS: cadastro da empresa + o local que cada grupo (ORD.COMPRA) já tem na
-   * base. Sem a migração 00110 a lista vem vazia e a importação segue normal.
-   */
-  useEffect(() => {
-    let cancelado = false;
-    setLocais([]);
-    setLocaisEscolhidos({});
-
-    if (fabricaId === null) return;
-
-    Promise.all([listarLocais(), locaisPorGrupo(fabricaId)])
-      .then(([cadastro, porGrupo]) => {
-        if (cancelado) return;
-        setLocais(cadastro.filter((local) => Number(local.ativo) === 1));
-
-        const mapa: Record<string, Record<number, number>> = {};
-        porGrupo.forEach((item) => {
-          mapa[item.ordcompra] = {
-            ...(mapa[item.ordcompra] ?? {}),
-            [Number(item.estagio)]: Number(item.idbox),
-          };
-        });
-        setLocaisEscolhidos(mapa);
-      })
-      .catch(() => {
-        if (cancelado) return;
-        setLocais([]);
-        setLocaisEscolhidos({});
-      });
-
-    return () => {
-      cancelado = true;
-    };
-  }, [fabricaId]);
 
   /* Ao trocar de fábrica, busca o layout dela. Sem migração 00104 (ou sem layout
      configurado) segue o caminho antigo: detecção automática + PARSERS. */
@@ -178,50 +119,6 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
   }, [linhas]);
 
   const selecionadas = linhas.filter((l) => gruposMarcados.has(String(l.ordcompra ?? ''))).length;
-
-  /** Grupos selecionados que ainda estão sem local em algum estágio. */
-  const semLocal = useMemo(() => {
-    const faltando: Array<{ ordcompra: string; estagios: string[]; quantidade: number }> = [];
-    grupos
-      .filter((grupo) => gruposMarcados.has(grupo.ordcompra))
-      .forEach((grupo) => {
-        const escolha = locaisEscolhidos[grupo.ordcompra] ?? {};
-        const estagios = numerosDosEstagios
-          .filter((estagio) => !escolha[estagio])
-          .map((estagio) => nomeEstagio(estagio));
-        if (estagios.length > 0) {
-          faltando.push({ ordcompra: grupo.ordcompra, estagios, quantidade: grupo.quantidade });
-        }
-      });
-    return faltando;
-  }, [grupos, gruposMarcados, locaisEscolhidos]);
-
-  const pecasSemLocal = semLocal.reduce((soma, item) => soma + item.quantidade, 0);
-
-  /** Escolhe o local de um grupo em um estágio. */
-  function escolherLocal(ordcompra: string, estagio: number, idbox: number) {
-    setLocaisEscolhidos((atual) => ({
-      ...atual,
-      [ordcompra]: { ...(atual[ordcompra] ?? {}), [estagio]: idbox },
-    }));
-  }
-
-  /** "Aplicar aos selecionados": joga os três combos em todos os grupos marcados. */
-  function aplicarEmLote() {
-    const escolhidos = numerosDosEstagios.filter((estagio) => emLote[estagio]);
-    if (escolhidos.length === 0) return;
-
-    setLocaisEscolhidos((atual) => {
-      const novo = { ...atual };
-      gruposMarcados.forEach((ordcompra) => {
-        novo[ordcompra] = { ...(novo[ordcompra] ?? {}) };
-        escolhidos.forEach((estagio) => {
-          novo[ordcompra][estagio] = Number(emLote[estagio]);
-        });
-      });
-      return novo;
-    });
-  }
 
   async function lerArquivo(arquivo: File) {
     setErro('');
@@ -326,40 +223,6 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
         await inserirPedidos(fabricaId, bloco, importacaoId);
         enviados += bloco.length;
         setProgresso(Math.round((enviados / total) * 100));
-      }
-
-      /*
-       * LOCAIS: depois de inserir, aplica os locais escolhidos na lista de
-       * grupos. O banco casa pela ORD.COMPRA DENTRO desta importação, então só
-       * as peças que acabaram de entrar recebem o local.
-       */
-      if (importacaoId !== null) {
-        const escolhas: LocalEscolhido[] = [];
-        paraImportar.forEach((linha) => {
-          const grupo = String(linha.ordcompra ?? '');
-          const doGrupo = locaisEscolhidos[grupo] ?? {};
-          numerosDosEstagios.forEach((estagio) => {
-            const idbox = doGrupo[estagio];
-            if (idbox) escolhas.push({ ordcompra: grupo, estagio, idbox });
-          });
-        });
-
-        /* a mesma ORD.COMPRA se repete em várias linhas: manda uma vez só */
-        const unicas = [...
-          new Map(escolhas.map((item) => [`${item.ordcompra}|${item.estagio}`, item])).values()];
-
-        if (unicas.length > 0) {
-          try {
-            await definirLocaisLote(fabricaId, importacaoId, unicas);
-          } catch (falha) {
-            setAviso(
-              migracaoPendente(falha)
-                ? AVISO_LOCAIS
-                : 'Os pedidos foram importados, mas não foi possível gravar os locais: ' +
-                  (falha instanceof Error ? falha.message : String(falha)),
-            );
-          }
-        }
       }
 
       somOk();
@@ -493,123 +356,51 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
 
           <div>
             <p className="mb-1 text-slate-700">
-              Selecionar os pedidos (ORD.COMPRA) e definir onde as peças ficam em cada estágio:
+              Selecionar os pedidos (ORD.COMPRA) que devem entrar:
             </p>
 
-            {/* aplicar o mesmo local em todos os grupos marcados */}
-            <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-50 px-2 py-1.5">
-              <span className="text-slate-600">Aplicar aos selecionados:</span>
-              {numerosDosEstagios.map((estagio) => (
-                <label key={estagio} className="flex items-center gap-1">
-                  {nomeEstagio(estagio)}
-                  <select
-                    value={emLote[estagio] ?? ''}
-                    onChange={(e) =>
-                      setEmLote((atual) => ({
-                        ...atual,
-                        [estagio]: e.target.value ? Number(e.target.value) : '',
-                      }))
-                    }
-                    className="rounded border border-slate-300 px-1 py-1"
-                  >
-                    <option value="">—</option>
-                    {locais.map((local) => (
-                      <option key={local.idbox} value={local.idbox}>
-                        {local.nmbox}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ))}
-              <button
-                onClick={aplicarEmLote}
-                disabled={gruposMarcados.size === 0}
-                className="rounded border border-slate-400 bg-white px-2 py-1 hover:bg-slate-100 disabled:opacity-50"
-              >
-                Aplicar
-              </button>
-              <span className="text-[11px] text-slate-500">
-                {locais.length === 0
-                  ? 'Nenhum local cadastrado — o administrador cadastra na tela "Locais".'
-                  : `${locais.length} local(is) disponível(is)`}
-              </span>
-            </div>
-
-            <div className="max-h-56 overflow-auto rounded border border-slate-300 p-2">
+            <div className="max-h-72 overflow-auto rounded border border-slate-300 p-2">
               {grupos.length === 0 && (
                 <p className="text-slate-500">Escolha um arquivo para listar os pedidos encontrados.</p>
               )}
-              {grupos.map((grupo) => {
-                const escolha = locaisEscolhidos[grupo.ordcompra] ?? {};
-
-                return (
-                  <div
-                    key={grupo.ordcompra}
-                    className="flex flex-wrap items-center gap-2 border-b border-slate-100 py-1 last:border-b-0"
-                  >
-                    <label className="flex min-w-[190px] flex-1 items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={gruposMarcados.has(grupo.ordcompra)}
-                        onChange={(e) => {
-                          setGruposMarcados((atual) => {
-                            const novo = new Set(atual);
-                            if (e.target.checked) novo.add(grupo.ordcompra);
-                            else novo.delete(grupo.ordcompra);
-                            return novo;
-                          });
-                        }}
-                      />
-                      <span className="font-medium">{grupo.ordcompra || '(sem ORD.COMPRA)'}</span>
-                      <span className="text-slate-500">
-                        {grupo.quantidade} item(ns)
-                        {grupo.cliente && grupo.cliente !== 'NÃO INFORMADO'
-                          ? ` · ${grupo.cliente}`
-                          : ''}
-                      </span>
-                    </label>
-
-                    {numerosDosEstagios.map((estagio) => (
-                      <label
-                        key={estagio}
-                        className="flex items-center gap-1 text-[11px] text-slate-500"
-                      >
-                        {nomeEstagio(estagio)}
-                        <select
-                          value={escolha[estagio] ?? ''}
-                          onChange={(e) =>
-                            escolherLocal(grupo.ordcompra, estagio, Number(e.target.value))
-                          }
-                          className={`rounded border px-1 py-1 ${
-                            escolha[estagio]
-                              ? 'border-slate-300'
-                              : 'border-amber-400 bg-amber-50 text-amber-800'
-                          }`}
-                        >
-                          <option value="">sem local</option>
-                          {locais.map((local) => (
-                            <option key={local.idbox} value={local.idbox}>
-                              {local.nmbox}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    ))}
-                  </div>
-                );
-              })}
+              {grupos.map((grupo) => (
+                <div
+                  key={grupo.ordcompra}
+                  className="flex flex-wrap items-center gap-2 border-b border-slate-100 py-1 last:border-b-0"
+                >
+                  <label className="flex min-w-[190px] flex-1 items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={gruposMarcados.has(grupo.ordcompra)}
+                      onChange={(e) => {
+                        setGruposMarcados((atual) => {
+                          const novo = new Set(atual);
+                          if (e.target.checked) novo.add(grupo.ordcompra);
+                          else novo.delete(grupo.ordcompra);
+                          return novo;
+                        });
+                      }}
+                    />
+                    <span className="font-medium">{grupo.ordcompra || '(sem ORD.COMPRA)'}</span>
+                    <span className="text-slate-500">
+                      {grupo.quantidade} item(ns)
+                      {grupo.cliente && grupo.cliente !== 'NÃO INFORMADO'
+                        ? ` · ${grupo.cliente}`
+                        : ''}
+                    </span>
+                  </label>
+                </div>
+              ))}
             </div>
           </div>
 
-          {pecasSemLocal > 0 && (
-            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800">
-              {pecasSemLocal} peça(s) selecionada(s) ainda sem local definido em algum estágio:{' '}
-              {semLocal
-                .slice(0, 4)
-                .map((item) => `${item.ordcompra || '(sem ORD.COMPRA)'} (${item.estagios.join('/')})`)
-                .join(' · ')}
-              {semLocal.length > 4 ? ` e mais ${semLocal.length - 4} pedido(s)` : ''}.<br />
-              As peças entram assim mesmo — o local pode ser definido depois em “Locais das peças”.
+          {/* O local das peças NÃO é definido na importação: a importação só
+              coloca os pedidos na base. O local é definido depois, peça a peça
+              ou em massa, na tela "Locais das peças". */}
+          {grupos.length > 0 && (
+            <div className="rounded border border-sky-200 bg-sky-50 px-3 py-2 text-[11px] text-sky-900">
+              O local das peças (box, prateleira, piso) é definido depois da importação, em
+              “Locais das peças” — inclusive em massa, por ORD.COMPRA.
             </div>
           )}
 

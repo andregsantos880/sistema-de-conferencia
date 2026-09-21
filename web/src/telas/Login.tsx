@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { login, type Empresa, type UsuarioLogado } from '../lib/api';
 import { CHAVE_SESSAO, MARCA } from '../lib/config';
 import { somErro, somOk } from '../lib/audio';
+import { CampoLogin, ChaveLigada, TelaLogin } from '../lib/telaLogin';
 
 type Props = {
   empresa: Empresa;
@@ -70,119 +71,22 @@ export default function Login({ empresa, onEntrar }: Props) {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 p-6">
-      <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-slate-300 bg-white shadow-2xl">
-        <div className="flex items-center gap-3 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-500 text-xl font-bold text-white shadow-lg">
-            S
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-wide text-white">SysConf</h1>
-            <p className="text-xs text-slate-300">Conferência de pedidos</p>
-          </div>
-          <div className="ml-auto text-right">
-            <div className="text-[10px] tracking-widest text-slate-400">EMPRESA</div>
-            <div className="text-sm font-semibold text-white">{empresa.nome}</div>
-            <div className="text-[10px] text-slate-400">/{empresa.slug}</div>
-          </div>
-        </div>
-
-        <div className="flex gap-5 p-6">
-          <div className="hidden h-[144px] w-[163px] shrink-0 items-center justify-center rounded-md border-2 border-slate-800 bg-slate-900 sm:flex">
-            <div className="text-center leading-tight">
-              <div className="text-4xl font-bold text-red-500">SIS</div>
-              <div className="text-2xl font-bold text-white">CONF</div>
-              <div className="mt-1 text-[10px] text-slate-400">warehouse</div>
-            </div>
-          </div>
-
-          <form onSubmit={confirmar} className="flex-1">
-            <fieldset className="rounded-md border border-slate-300 p-4">
-              <legend className="px-1 text-xs font-semibold text-slate-600">Entre com suas credenciais</legend>
-
-              <label className="mb-1 block text-xs text-slate-700" htmlFor="usuario">
-                Usuário
-              </label>
-              <div className="mb-3 flex items-center gap-2">
-                <input
-                  id="usuario"
-                  autoFocus
-                  autoComplete="username"
-                  maxLength={30}
-                  value={usuario}
-                  onChange={(e) => setUsuario(e.target.value.toUpperCase())}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm uppercase outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-                />
-                <span
-                  className={`h-2.5 w-2.5 shrink-0 rounded-full ${usuario ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                  title={usuario ? 'Usuário informado' : 'Informe o usuário'}
-                />
-              </div>
-
-              <label className="mb-1 block text-xs text-slate-700" htmlFor="senha">
-                Senha
-              </label>
-              <div className="relative">
-                <input
-                  id="senha"
-                  type={mostrarSenha ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  maxLength={15}
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 pr-16 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => setMostrarSenha((v) => !v)}
-                  className="absolute top-1/2 right-2 -translate-y-1/2 text-[11px] text-slate-500 hover:text-slate-800"
-                >
-                  {mostrarSenha ? 'ocultar' : 'mostrar'}
-                </button>
-              </div>
-            </fieldset>
-
-            {erro && (
-              <div className="mt-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{erro}</div>
-            )}
-
-            <div className="mt-4 flex items-center justify-between">
-              <label className="flex items-center gap-2 text-xs text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={memorizar}
-                  onChange={(e) => setMemorizar(e.target.checked)}
-                  className="h-3.5 w-3.5"
-                />
-                Memorizar senha
-              </label>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={cancelar}
-                  className="rounded border border-slate-300 bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={carregando}
-                  className="rounded bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {carregando ? 'Conectando...' : 'Confirmar'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-2 text-[11px] text-slate-500">
+    <TelaLogin
+      empresa={{ nome: empresa.nome, slug: empresa.slug }}
+      titulo="Bem-vindo de volta"
+      subtitulo={
+        <>
+          Entre com as suas credenciais para conferir as cargas
+          {empresa.nome ? ` da ${empresa.nome}` : ''}.
+        </>
+      }
+      rodape={
+        <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-4 text-[11px] text-slate-500">
           <a
             href={MARCA.siteUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-blue-600 underline hover:text-blue-800"
+            className="font-medium text-emerald-700 hover:underline"
           >
             {MARCA.site}
           </a>
@@ -190,7 +94,65 @@ export default function Login({ empresa, onEntrar }: Props) {
             ← Voltar ao site
           </a>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <form onSubmit={confirmar} className="mt-7 space-y-4">
+        <CampoLogin
+          id="usuario"
+          rotulo="Usuário"
+          autoFocus
+          autoComplete="username"
+          maxLength={30}
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value.toUpperCase())}
+          className="uppercase"
+        />
+
+        <CampoLogin
+          id="senha"
+          rotulo="Senha"
+          type={mostrarSenha ? 'text' : 'password'}
+          autoComplete="current-password"
+          maxLength={15}
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          sufixo={
+            <button
+              type="button"
+              onClick={() => setMostrarSenha((v) => !v)}
+              className="text-[11px] font-medium text-slate-500 hover:text-slate-800"
+            >
+              {mostrarSenha ? 'ocultar' : 'mostrar'}
+            </button>
+          }
+        />
+
+        {erro && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {erro}
+          </div>
+        )}
+
+        <ChaveLigada rotulo="Memorizar senha" marcado={memorizar} aoMudar={setMemorizar} />
+
+        <button
+          type="submit"
+          disabled={carregando}
+          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {carregando ? 'Conectando...' : 'Confirmar'}
+        </button>
+
+        <p className="text-center">
+          <button
+            type="button"
+            onClick={cancelar}
+            className="text-[11px] text-slate-500 underline hover:text-slate-800"
+          >
+            Limpar os campos
+          </button>
+        </p>
+      </form>
+    </TelaLogin>
   );
 }

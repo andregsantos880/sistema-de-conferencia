@@ -34,7 +34,7 @@ const PASSOS = [
   {
     titulo: 'Troque o estágio',
     texto:
-      'Conferência, Saída e Entrega. Cada bipe já grava no banco — o que está na tela é o que está no servidor.',
+      'Cada etapa da empresa tem o seu estágio, com nome e cor próprios. Cada bipe já grava no banco — o que está na tela é o que está no servidor.',
   },
   {
     titulo: 'Feche e exporte',
@@ -47,7 +47,7 @@ const RECURSOS = [
   {
     titulo: 'Estágios de conferência',
     texto:
-      'Conferência, Saída e Entrega com cores e contadores próprios, iguais aos da conferência de papel.',
+      'Os estágios da sua operação (por padrão Conferência, Saída e Entrega), com nome, cor e contadores próprios. O administrador cadastra até 9.',
   },
   {
     titulo: 'Som e voz na bipagem',
@@ -127,12 +127,12 @@ const PERGUNTAS = [
   },
 ] as const;
 
+import { IconeSistema } from '../lib/marca';
+
 function Logo({ claro = true }: { claro?: boolean }) {
   return (
-    <span className="flex items-center gap-2">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white shadow">
-        S
-      </span>
+    <span className="flex items-center gap-2.5">
+      <IconeSistema tamanho={34} />
       <span className={`text-base font-semibold tracking-wide ${claro ? 'text-white' : 'text-slate-900'}`}>
         {MARCA.produto}
       </span>
@@ -146,7 +146,7 @@ export default function Landing() {
   return (
     <div className="min-h-full bg-white">
       {/* ------------------------------------------------------------- topo -- */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-900/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Logo />
           <nav className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
@@ -169,13 +169,13 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <a
               href="/entrar"
-              className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
+              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800"
             >
               Entrar
             </a>
             <a
               href="/registrar"
-              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Criar conta
             </a>
@@ -184,13 +184,17 @@ export default function Landing() {
       </header>
 
       {/* ------------------------------------------------------------- hero -- */}
-      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-14 text-white sm:py-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2">
+      <section className="relative overflow-hidden bg-slate-900 px-4 py-16 text-white sm:py-20">
+        {/* os mesmos brilhos da tela de login: identidade sem virar imagem */}
+        <div className="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 bottom-[-8rem] h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
               {TRIAL_DIAS} dias grátis • sem cartão de crédito
             </span>
-            <h1 className="mt-4 text-3xl leading-tight font-bold sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 text-3xl leading-tight font-bold tracking-tight sm:text-4xl lg:text-5xl">
               Sua conferência de cargas inteira no navegador
             </h1>
             <p className="mt-4 max-w-xl text-base text-slate-300">
@@ -220,7 +224,7 @@ export default function Landing() {
           </div>
 
           {/* prévia da tela de conferência */}
-          <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4 shadow-2xl">
+          <div className="rounded-2xl border border-slate-700/70 bg-slate-950/60 p-4">
             <div className="flex items-center gap-2 border-b border-slate-800 pb-3 text-[11px] text-slate-300">
               <span className="rounded bg-emerald-700 px-2 py-0.5 font-semibold">Sua Empresa</span>
               <span className="rounded bg-slate-700 px-2 py-0.5">★ Criare</span>
@@ -228,14 +232,14 @@ export default function Landing() {
             </div>
 
             <div className="mt-3 flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900 p-3">
-              <div className="flex h-14 w-16 shrink-0 items-center justify-center rounded border-2 border-emerald-500 bg-black text-lg font-bold text-emerald-400">
-                BOX 3
+              <div className="flex h-14 w-16 shrink-0 items-center justify-center rounded border-2 border-emerald-500 bg-black text-sm font-bold text-emerald-400">
+                PISO
               </div>
               <div className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-300">
                 <div className="truncate text-white">BANCADA GRANITO 120CM</div>
                 <div>
-                  Quantidade: <strong className="text-white">3</strong> · Box:{' '}
-                  <strong className="text-white">3</strong>
+                  Quantidade: <strong className="text-white">3</strong> · Local:{' '}
+                  <strong className="text-white">Piso</strong>
                 </div>
                 <div className="truncate">
                   Pedido: <strong className="text-white">OC-1001</strong> / LOJA CENTRO
@@ -270,14 +274,14 @@ export default function Landing() {
       {/* ------------------------------------------------------------- dores -- */}
       <section className="border-b border-slate-200 bg-slate-50 px-4 py-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-slate-900">O que a conferência em papel custa</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">O que a conferência em papel custa</h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">
             Os três problemas que aparecem em toda operação que confere carga com romaneio impresso e
             planilha na mão.
           </p>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {DORES.map((dor) => (
-              <div key={dor.titulo} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <div key={dor.titulo} className="rounded-xl border border-slate-200 bg-white p-6">
                 <h3 className="text-sm font-semibold text-slate-900">{dor.titulo}</h3>
                 <p className="mt-2 text-sm text-slate-600">{dor.texto}</p>
               </div>
@@ -289,14 +293,14 @@ export default function Landing() {
       {/* ----------------------------------------------------- como funciona -- */}
       <section id="como-funciona" className="px-4 py-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-slate-900">Como funciona na prática</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Como funciona na prática</h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">
             Do arquivo da fábrica até a carga liberada para a saída, em quatro passos que a equipe aprende
             no mesmo dia.
           </p>
           <ol className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {PASSOS.map((passo, indice) => (
-              <li key={passo.titulo} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <li key={passo.titulo} className="rounded-xl border border-slate-200 bg-white p-6">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
                   {indice + 1}
                 </span>
@@ -311,13 +315,13 @@ export default function Landing() {
       {/* --------------------------------------------------------- recursos -- */}
       <section id="recursos" className="border-y border-slate-200 bg-slate-50 px-4 py-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-slate-900">Todo o controle que a carga precisa</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Todo o controle que a carga precisa</h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">
             Recursos que já estão no ar e em uso — nada de promessa de roadmap.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {RECURSOS.map((recurso) => (
-              <div key={recurso.titulo} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+              <div key={recurso.titulo} className="rounded-xl border border-slate-200 bg-white p-6">
                 <h3 className="text-sm font-semibold text-slate-900">{recurso.titulo}</h3>
                 <p className="mt-2 text-sm text-slate-600">{recurso.texto}</p>
               </div>
@@ -329,7 +333,7 @@ export default function Landing() {
       {/* --------------------------------------------------------- as telas -- */}
       <section id="telas" className="px-4 py-14">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-2xl font-bold text-slate-900">Veja por dentro</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Veja por dentro</h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">
             Telas reais do sistema em uso — nenhuma maquete. É assim que a equipe vê a carga na
             conferência, na bipagem e na importação do arquivo da fábrica.
@@ -340,7 +344,7 @@ export default function Landing() {
               src={telaConferencia}
               alt="Tela de conferência do SysConf com a lista de pedidos, contadores por estágio e as linhas destacadas por situação"
               loading="lazy"
-              className="w-full rounded-lg border border-slate-300 shadow-lg"
+              className="w-full rounded-xl border border-slate-300 shadow-sm"
             />
             <figcaption className="mt-2 text-xs text-slate-500">
               Conferência: contadores por estágio e cada linha colorida conforme a situação do pedido.
@@ -353,7 +357,7 @@ export default function Landing() {
                 src={telaBipagem}
                 alt="Painel de bipagem do SysConf mostrando o box de destino, a peça, a quantidade e o pedido encontrado pela etiqueta"
                 loading="lazy"
-                className="w-full rounded-lg border border-slate-300 shadow-lg"
+                className="w-full rounded-xl border border-slate-300 shadow-sm"
               />
               <figcaption className="mt-2 text-xs text-slate-500">
                 A cada leitura: box, peça, quantidade e pedido. A baixa é gravada na hora.
@@ -365,10 +369,10 @@ export default function Landing() {
                 src={telaImportacao}
                 alt="Tela de importação do SysConf listando as lojas encontradas no arquivo da fábrica antes de importar"
                 loading="lazy"
-                className="w-full rounded-lg border border-slate-300 shadow-lg"
+                className="w-full rounded-xl border border-slate-300 shadow-sm"
               />
               <figcaption className="mt-2 text-xs text-slate-500">
-                Importação: confira as lojas do arquivo antes de gravar a carga.
+                Importação: confira os pedidos do arquivo antes de gravar a carga.
               </figcaption>
             </figure>
           </div>
@@ -377,9 +381,9 @@ export default function Landing() {
 
       {/* ------------------------------------------------------- teste grátis -- */}
       <section id="teste" className="px-4 py-14">
-        <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-slate-200 shadow-lg">
+        <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl border border-slate-200">
           <div className="bg-slate-900 px-6 py-6 text-white sm:px-8">
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-2xl font-bold tracking-tight">
               Comece com {TRIAL_DIAS} dias grátis
             </h2>
             <p className="mt-2 text-sm text-slate-300">
@@ -433,7 +437,7 @@ export default function Landing() {
       {/* ----------------------------------------------------------- dúvidas -- */}
       <section id="duvidas" className="border-t border-slate-200 bg-slate-50 px-4 py-14">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-slate-900">Dúvidas frequentes</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Dúvidas frequentes</h2>
           <div className="mt-6 space-y-3">
             {PERGUNTAS.map((item) => (
               <details
