@@ -583,9 +583,8 @@ export type ResumoLogs = {
   bloqueada: number;
   nao_encontrada: number;
   massa: number;
-  estagio_1: number;
-  estagio_2: number;
-  estagio_3: number;
+  /** Leituras por estágio: {"1": 12, "2": 3, ...} (só estágios cadastrados). */
+  estagios: Record<string, number>;
   operadores: number;
 };
 
@@ -694,6 +693,57 @@ export type LocalGrupo = {
   pecas: number;
 };
 
+/* ------------------------------------------------------------- estágios --- */
+
+/**
+ * Estágio da conferência, cadastrado pela empresa. `numero` é a ORDEM do fluxo
+ * (1, 2, 3...) e é o que fica gravado em PEDIDO.STATUS (0 = NORMAL, ainda não
+ * bipado). Os três estágios que já existiam vêm pré-cadastrados.
+ */
+export type Estagio = {
+  numero: number;
+  nome: string;
+  cor: string | null;
+  ativo: number;
+  /** Quantas peças estão paradas neste estágio hoje. */
+  pecas: number;
+};
+
+/** A tela de estágios precisa da migração 00111 aplicada no banco. */
+export const AVISO_ESTAGIOS =
+  'O cadastro de estágios precisa da migração 00111 aplicada no banco. Rode o arquivo ' +
+  'supabase/migrations/20260921000111_estagios.sql no SQL Editor do Supabase.';
+
+export async function listarEstagios(): Promise<Estagio[]> {
+  const linhas = await rpc<Estagio[]>('estagios_listar');
+  return linhas ?? [];
+}
+
+/** Cria um estágio no FIM da sequência e devolve o número dele. Somente ADMIN. */
+export async function criarEstagio(nome: string, cor: string | null): Promise<number> {
+  return rpc<number>('estagio_criar', { p_nome: nome, p_cor: cor });
+}
+
+/** Renomeia / troca a cor / ativa / desativa. Somente ADMIN. */
+export async function atualizarEstagio(
+  numero: number,
+  nome: string,
+  cor: string | null,
+  ativo: number,
+): Promise<number> {
+  return rpc<number>('estagio_atualizar', {
+    p_numero: numero,
+    p_nome: nome,
+    p_cor: cor,
+    p_ativo: ativo,
+  });
+}
+
+/** Exclui o estágio (só o último da sequência, sem peças). Somente ADMIN. */
+export async function excluirEstagio(numero: number): Promise<number> {
+  return rpc<number>('estagio_excluir', { p_numero: numero });
+}
+
 /** Uma definição de local escolhida na importação (grupo + estágio + local). */
 export type LocalEscolhido = { ordcompra: string; estagio: number; idbox: number };
 
@@ -794,9 +844,8 @@ export type PecaComLocal = {
   descricao1: string | null;
   qtde: number | string | null;
   status: number;
-  local_conf: string | null;
-  local_saida: string | null;
-  local_entrega: string | null;
+  /** Local de cada estágio: {"1": "Box 01", "2": "Prateleira", ...}. */
+  locais: Record<string, string> | null;
 };
 
 /** Peças da fábrica com os locais (somente ADMIN). */

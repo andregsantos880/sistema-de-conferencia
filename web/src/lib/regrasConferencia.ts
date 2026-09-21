@@ -16,7 +16,7 @@
  */
 import type { Pedido } from './api';
 
-export type Alvo = 1 | 2 | 3;
+export type Alvo = number;
 
 export type Som = 'success' | 'exclamation' | 'air_horn' | 'ringout' | 'error' | 'box';
 
@@ -81,8 +81,20 @@ function comStatus(pedido: Pedido, status: number): Pedido {
 /**
  * Classifica a leitura de uma etiqueta e devolve o desfecho do legado.
  * Não altera a lista — quem chama decide o que persistir.
+ *
+ * REGRA (decisão do cliente): a etiqueta anda UM estágio por vez. A única
+ * transição válida é `status` = `alvo - 1` (e NORMAL -> primeiro estágio). Não
+ * pode pular (1 -> 3, 2 -> 4) nem voltar (3 -> 2).
+ *
+ * `nomeDoEstagio` é opcional: sem ele usa os rótulos legados (CONFERENCIA...).
  */
-export function classificarLeitura(linhas: Pedido[], etiqueta: string, alvo: Alvo): ResultadoLeitura {
+export function classificarLeitura(
+  linhas: Pedido[],
+  etiqueta: string,
+  alvo: Alvo,
+  nomeDoEstagio?: (numero: number) => string,
+): ResultadoLeitura {
+  const nome = nomeDoEstagio ?? ((numero: number) => DS_STATUS[numero] ?? String(numero));
   const texto = etiqueta.trim();
   if (!texto) return { tipo: 'vazio' };
 
@@ -114,15 +126,26 @@ export function classificarLeitura(linhas: Pedido[], etiqueta: string, alvo: Alv
       linhaAtualizada,
       som: restante.concluido ? 'air_horn' : 'success',
       concluido: restante.concluido,
-      mensagem: `${DS_STATUS[alvo]} registrado.`,
+      mensagem: `${nome(alvo)} registrado.`,
     };
   }
 
+  /* já passou do estágio escolhido: não volta */
+  if (status > alvo) {
+    return {
+      tipo: 'bloqueada',
+      linha,
+      som: 'ringout',
+      mensagem: `Esta etiqueta está para ${nome(status)}`,
+    };
+  }
+
+  /* ainda está atrás: não pode pular estágio */
   return {
     tipo: 'bloqueada',
     linha,
     som: 'ringout',
-    mensagem: `Esta etiqueta está para ${DS_STATUS[status] ?? status}`,
+    mensagem: `Não pode pular estágio — a etiqueta está em ${nome(status)}`,
   };
 }
 

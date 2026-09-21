@@ -19,9 +19,7 @@ import {
 import { analisarArquivo, comoLayoutFabrica, PARSERS, rotuloSeparador } from '../lib/parsers';
 import { arquivoParaBase64, lerTextoDoArquivo } from '../lib/arquivo';
 import { somErro, somOk } from '../lib/audio';
-import { ROTULO_ESTAGIO } from '../lib/config';
-
-const ESTAGIOS = [1, 2, 3] as const;
+import { useEstagios } from '../lib/estagios';
 
 type Props = {
   empresa: Empresa;
@@ -57,6 +55,9 @@ function mensagemDeImportacao(falha: unknown): string {
  * Os pedidos importados ficam vinculados à empresa logada.
  */
 export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabrica, onConcluir, onVoltar }: Props) {
+  /* Estágios cadastrados pela empresa (sem o cadastro, valem os três de sempre). */
+  const { ativos, nome: nomeEstagio } = useEstagios();
+  const numerosDosEstagios = ativos.map((estagio) => estagio.numero);
   const [linhas, setLinhas] = useState<PedidoNovo[]>([]);
   const [nomeArquivo, setNomeArquivo] = useState('');
   /** O File escolhido: guardado para registrar a importação (com o original) e baixar depois. */
@@ -185,9 +186,9 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
       .filter((grupo) => gruposMarcados.has(grupo.ordcompra))
       .forEach((grupo) => {
         const escolha = locaisEscolhidos[grupo.ordcompra] ?? {};
-        const estagios = ESTAGIOS.filter((estagio) => !escolha[estagio]).map(
-          (estagio) => ROTULO_ESTAGIO[estagio],
-        );
+        const estagios = numerosDosEstagios
+          .filter((estagio) => !escolha[estagio])
+          .map((estagio) => nomeEstagio(estagio));
         if (estagios.length > 0) {
           faltando.push({ ordcompra: grupo.ordcompra, estagios, quantidade: grupo.quantidade });
         }
@@ -207,7 +208,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
 
   /** "Aplicar aos selecionados": joga os três combos em todos os grupos marcados. */
   function aplicarEmLote() {
-    const escolhidos = ESTAGIOS.filter((estagio) => emLote[estagio]);
+    const escolhidos = numerosDosEstagios.filter((estagio) => emLote[estagio]);
     if (escolhidos.length === 0) return;
 
     setLocaisEscolhidos((atual) => {
@@ -337,7 +338,7 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
         paraImportar.forEach((linha) => {
           const grupo = String(linha.ordcompra ?? '');
           const doGrupo = locaisEscolhidos[grupo] ?? {};
-          ESTAGIOS.forEach((estagio) => {
+          numerosDosEstagios.forEach((estagio) => {
             const idbox = doGrupo[estagio];
             if (idbox) escolhas.push({ ordcompra: grupo, estagio, idbox });
           });
@@ -498,9 +499,9 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
             {/* aplicar o mesmo local em todos os grupos marcados */}
             <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-slate-300 bg-slate-50 px-2 py-1.5">
               <span className="text-slate-600">Aplicar aos selecionados:</span>
-              {ESTAGIOS.map((estagio) => (
+              {numerosDosEstagios.map((estagio) => (
                 <label key={estagio} className="flex items-center gap-1">
-                  {ROTULO_ESTAGIO[estagio]}
+                  {nomeEstagio(estagio)}
                   <select
                     value={emLote[estagio] ?? ''}
                     onChange={(e) =>
@@ -568,12 +569,12 @@ export default function Importacao({ empresa, fabricas, fabricaId, onTrocarFabri
                       </span>
                     </label>
 
-                    {ESTAGIOS.map((estagio) => (
+                    {numerosDosEstagios.map((estagio) => (
                       <label
                         key={estagio}
                         className="flex items-center gap-1 text-[11px] text-slate-500"
                       >
-                        {ROTULO_ESTAGIO[estagio]}
+                        {nomeEstagio(estagio)}
                         <select
                           value={escolha[estagio] ?? ''}
                           onChange={(e) =>

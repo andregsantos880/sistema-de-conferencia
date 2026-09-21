@@ -18,6 +18,7 @@
  *   /sysconf/<empresa>/locais
  *   /sysconf/<empresa>/locais-pecas
  *   /sysconf/<empresa>/ajuda
+ *   /sysconf/<empresa>/estagios
  *
  * Nao ha router de terceiros: sao poucas telas e o estado e simples.
  */
@@ -32,6 +33,7 @@ export type Tela =
   | 'logs'
   | 'locais'
   | 'locais-pecas'
+  | 'estagios'
   | 'ajuda';
 
 /** Paginas publicas do site (fora do escopo de empresa). */
@@ -49,6 +51,7 @@ const TELAS: Tela[] = [
   'logs',
   'locais',
   'locais-pecas',
+  'estagios',
   'ajuda',
 ];
 

@@ -11,8 +11,9 @@ import {
   type PecaComLocal,
   type UsuarioLogado,
 } from '../lib/api';
-import { PERFIL, ROTULO_ESTAGIO } from '../lib/config';
+import { PERFIL } from '../lib/config';
 import { DS_STATUS } from '../lib/regrasConferencia';
+import { useEstagios } from '../lib/estagios';
 import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 
 type Props = {
@@ -23,8 +24,6 @@ type Props = {
   onTrocarFabrica: (id: number) => void;
   onVoltar: () => void;
 };
-
-const ESTAGIOS = [1, 2, 3] as const;
 
 const nomeLocal = (valor: string | null | undefined): string => valor?.trim() || 'sem local';
 
@@ -106,30 +105,40 @@ export default function LocaisPecas({
       .catch(() => setLocais([]));
   }, [administrador]);
 
-  const locaisDoEstagio = (peca: PecaComLocal): Array<string | null | undefined> => [
-    peca.local_conf,
-    peca.local_saida,
-    peca.local_entrega,
-  ];
+  const locaisDoEstagio = (peca: PecaComLocal, numero: number): string | null =>
+    peca.locais?.[String(numero)] ?? null;
 
   const semLocalNoEstagio = useMemo(
-    () => pecas.filter((peca) => !locaisDoEstagio(peca)[estagio - 1]).length,
+    () => pecas.filter((peca) => !locaisDoEstagio(peca, estagio)).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pecas, estagio],
   );
 
-  /** Colunas ordenáveis (clique no cabeçalho: asc → desc → sem ordenação). */
-  const campos = useMemo<Record<string, CampoOrdenavel<PecaComLocal>>>(() => ({
-    etiqueta: { titulo: 'Etiqueta', valor: (p) => p.etiqueta },
-    ordcompra: { titulo: 'ORD.COMPRA', valor: (p) => p.ordcompra },
-    cliente: { titulo: 'Cliente', valor: (p) => p.cliente },
-    produto: { titulo: 'Produto', valor: (p) => p.produto },
-    descricao: { titulo: 'Descrição', valor: (p) => p.descricao1 },
-    qtde: { titulo: 'Qtde', valor: (p) => p.qtde, tipo: 'numero' },
-    status: { titulo: 'Situação', valor: (p) => p.status, tipo: 'numero' },
-    local1: { titulo: ROTULO_ESTAGIO[1], valor: (p) => p.local_conf },
-    local2: { titulo: ROTULO_ESTAGIO[2], valor: (p) => p.local_saida },
-    local3: { titulo: ROTULO_ESTAGIO[3], valor: (p) => p.local_entrega },
-  }), []);
+  const { ativos, nome: nomeEstagio } = useEstagios();
+
+  /** Colunas ordenáveis, incluindo uma por estágio cadastrado. */
+  const campos = useMemo<Record<string, CampoOrdenavel<PecaComLocal>>>(() => {
+    const dasEtapas = Object.fromEntries(
+      ativos.map((item) => [
+        `local-${item.numero}`,
+        {
+          titulo: item.nome,
+          valor: (peca: PecaComLocal) => peca.locais?.[String(item.numero)] ?? '',
+        },
+      ]),
+    );
+
+    return {
+      etiqueta: { titulo: 'Etiqueta', valor: (p) => p.etiqueta },
+      ordcompra: { titulo: 'ORD.COMPRA', valor: (p) => p.ordcompra },
+      cliente: { titulo: 'Cliente', valor: (p) => p.cliente },
+      produto: { titulo: 'Produto', valor: (p) => p.produto },
+      descricao: { titulo: 'Descrição', valor: (p) => p.descricao1 },
+      qtde: { titulo: 'Qtde', valor: (p) => p.qtde, tipo: 'numero' },
+      status: { titulo: 'Situação', valor: (p) => p.status, tipo: 'numero' },
+      ...dasEtapas,
+    };
+  }, [ativos]);
 
   const { linhas: pecasOrdenadas, ordem, alternar } = useOrdenacao(pecas, campos);
 
@@ -144,7 +153,7 @@ export default function LocaisPecas({
 
     if (
       !confirm(
-        `Definir "${nome}" como o local de ${ROTULO_ESTAGIO[estagio]} para ${quantas} peça(s) ` +
+        `Definir "${nome}" como o local de ${nomeEstagio(estagio)} para ${quantas} peça(s) ` +
           `${soSemLocal ? 'sem local nesse estágio ' : ''}que estão no filtro atual?`,
       )
     ) {
@@ -165,7 +174,7 @@ export default function LocaisPecas({
         status: filtro.status === '' ? null : Number(filtro.status),
         semLocal: soSemLocal,
       });
-      setMensagem(`${total} peça(s) com o local de ${ROTULO_ESTAGIO[estagio]} definido como "${nome}".`);
+      setMensagem(`${total} peça(s) com o local de ${nomeEstagio(estagio)} definido como "${nome}".`);
       await carregar();
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Falha ao definir o local.');
@@ -283,9 +292,9 @@ export default function LocaisPecas({
               className="rounded border border-slate-300 px-2 py-1 text-xs"
             >
               <option value="">—</option>
-              {ESTAGIOS.map((valor) => (
-                <option key={valor} value={valor}>
-                  {ROTULO_ESTAGIO[valor]}
+              {ativos.map((item) => (
+                <option key={item.numero} value={item.numero}>
+                  {item.nome}
                 </option>
               ))}
             </select>
@@ -327,9 +336,9 @@ export default function LocaisPecas({
             onChange={(e) => setEstagio(Number(e.target.value))}
             className="rounded border border-slate-300 px-2 py-1 text-xs"
           >
-            {ESTAGIOS.map((valor) => (
-              <option key={valor} value={valor}>
-                {ROTULO_ESTAGIO[valor]}
+            {ativos.map((item) => (
+              <option key={item.numero} value={item.numero}>
+                {item.nome}
               </option>
             ))}
           </select>
@@ -382,11 +391,11 @@ export default function LocaisPecas({
               <ThOrdenavel campo="descricao" titulo="Descrição" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
               <ThOrdenavel campo="qtde" titulo="Qtde" ordem={ordem} aoAlternar={alternar} className="px-2 py-2 text-right" />
               <ThOrdenavel campo="status" titulo="Situação" ordem={ordem} aoAlternar={alternar} className="px-2 py-2" />
-              {ESTAGIOS.map((valor) => (
+              {ativos.map((item) => (
                 <ThOrdenavel
-                  key={valor}
-                  campo={`local${valor}`}
-                  titulo={ROTULO_ESTAGIO[valor]}
+                  key={item.numero}
+                  campo={`local-${item.numero}`}
+                  titulo={item.nome}
                   ordem={ordem}
                   aoAlternar={alternar}
                   className="px-2 py-2"
@@ -421,14 +430,17 @@ export default function LocaisPecas({
                 </td>
                 <td className="px-2 py-1 text-right">{peca.qtde ?? '—'}</td>
                 <td className="px-2 py-1">{DS_STATUS[Number(peca.status ?? 0)] ?? peca.status}</td>
-                {locaisDoEstagio(peca).map((nome, indice) => (
-                  <td
-                    key={indice}
-                    className={`px-2 py-1 ${nome ? 'text-slate-700' : 'bg-amber-50 text-amber-800'}`}
-                  >
-                    {nomeLocal(nome)}
-                  </td>
-                ))}
+                {ativos.map((item) => {
+                  const nome = locaisDoEstagio(peca, item.numero);
+                  return (
+                    <td
+                      key={item.numero}
+                      className={`px-2 py-1 ${nome ? 'text-slate-700' : 'bg-amber-50 text-amber-800'}`}
+                    >
+                      {nomeLocal(nome)}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

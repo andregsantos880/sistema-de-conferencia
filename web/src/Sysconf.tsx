@@ -9,12 +9,14 @@ import Logs from './telas/Logs';
 import Locais from './telas/Locais';
 import LocaisPecas from './telas/LocaisPecas';
 import Ajuda from './telas/Ajuda';
+import Estagios from './telas/Estagios';
 import SemEmpresa from './telas/SemEmpresa';
 import Landing from './telas/Landing';
 import Entrar from './telas/Entrar';
 import Registrar from './telas/Registrar';
 import Juridico from './telas/Juridico';
-import { listarFabricas, obterEmpresa, restaurarSessao, sair as sairSessao, type Empresa, type Fabrica, type UsuarioLogado } from './lib/api';
+import { listarEstagios, listarFabricas, obterEmpresa, restaurarSessao, sair as sairSessao, type Empresa, type Fabrica, type UsuarioLogado } from './lib/api';
+import { definirEstagios } from './lib/estagios';
 import { irPara, lerRota, type Rota, type Tela } from './lib/rota';
 import { CHAVE_SESSAO } from './lib/config';
 
@@ -64,6 +66,7 @@ export default function Sysconf() {
     );
     setFabricas([]);
     setFabricaId(null);
+    definirEstagios([]);
 
     if (!rota.empresa) return;
 
@@ -98,6 +101,27 @@ export default function Sysconf() {
   useEffect(() => {
     if (usuario) void carregarFabricas();
   }, [usuario, carregarFabricas]);
+
+  /*
+   * Estágios da empresa. Se a migração 00111 ainda não foi aplicada, a RPC não
+   * existe: seguimos com os três estágios padrão (a tela continua funcionando).
+   */
+  useEffect(() => {
+    if (!usuario) return;
+
+    let cancelado = false;
+    listarEstagios()
+      .then((lista) => {
+        if (!cancelado) definirEstagios(lista);
+      })
+      .catch(() => {
+        if (!cancelado) definirEstagios([]);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [usuario]);
 
   /*
    * Retoma a sessão guardada (token em sessionStorage): o F5 não desloga mais.
@@ -274,6 +298,12 @@ export default function Sysconf() {
     );
   }
 
+  if (rota.tela === 'estagios') {
+    return (
+      <Estagios empresa={empresa} usuarioLogado={usuario} onVoltar={() => navegar('conferencia')} />
+    );
+  }
+
   if (rota.tela === 'locais-pecas') {
     return (
       <LocaisPecas
@@ -325,6 +355,7 @@ export default function Sysconf() {
       onAbrirLogs={() => navegar('logs')}
       onAbrirLocais={() => navegar('locais')}
       onAbrirLocaisPecas={() => navegar('locais-pecas')}
+      onAbrirEstagios={() => navegar('estagios')}
       onAbrirAjuda={() => navegar('ajuda')}
       onSair={sair}
     />

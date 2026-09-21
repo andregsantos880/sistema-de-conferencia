@@ -17,6 +17,13 @@ import { baixarCsv } from '../lib/arquivo';
 import { ThOrdenavel, useOrdenacao, type CampoOrdenavel } from '../lib/ordenacao';
 import { PERFIL } from '../lib/config';
 import { DS_STATUS } from '../lib/regrasConferencia';
+import { useEstagios } from '../lib/estagios';
+
+/** Rótulo do status pelo cadastro de estágios (0 = NORMAL); DS_STATUS é o fallback. */
+function rotuloStatus(valor: number | null | undefined, rotulos: Record<number, string>): string {
+  if (valor === null || valor === undefined) return '—';
+  return rotulos[Number(valor)] ?? DS_STATUS[Number(valor)] ?? String(valor);
+}
 
 type Props = {
   empresa: Empresa;
@@ -59,9 +66,6 @@ function periodoInicial(): { de: string; ate: string } {
   return { de: comoDataIso(inicio), ate: comoDataIso(hoje) };
 }
 
-const statusTexto = (valor: number | null): string =>
-  valor === null || valor === undefined ? '—' : (DS_STATUS[Number(valor)] ?? String(valor));
-
 /**
  * Tela de Logs de Conferência (só administrador).
  *
@@ -74,6 +78,7 @@ const statusTexto = (valor: number | null): string =>
  * (0 = para sempre). A limpeza roda ao abrir a tela e no botão "Limpar agora".
  */
 export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
+  const { rotulos: rotulosEstagio, ativos } = useEstagios();
   const inicial = useMemo(periodoInicial, []);
   const [filtro, setFiltro] = useState({
     ...inicial,
@@ -246,8 +251,8 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
         l.pecliente ?? '',
         l.nmbox ?? '',
         l.usuario_login ?? '',
-        statusTexto(l.status_antes),
-        statusTexto(l.status_novo),
+        rotuloStatus(l.status_antes, rotulosEstagio),
+        rotuloStatus(l.status_novo, rotulosEstagio),
         l.mensagem ?? '',
       ]),
     );
@@ -442,9 +447,12 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
         </span>
         <span className="text-slate-400">|</span>
         <span>
-          Estágios — CONF <strong>{resumo?.estagio_1 ?? 0}</strong> · SAÍDA{' '}
-          <strong>{resumo?.estagio_2 ?? 0}</strong> · ENTREGA{' '}
-          <strong>{resumo?.estagio_3 ?? 0}</strong>
+          Estágios
+          {ativos.map((estagio) => (
+            <span key={estagio.numero} className="ml-2">
+              {estagio.nome} <strong>{resumo?.estagios?.[String(estagio.numero)] ?? 0}</strong>
+            </span>
+          ))}
         </span>
         <span className="text-slate-400">|</span>
         <span>
@@ -531,9 +539,11 @@ export default function Logs({ usuarioLogado, fabricas, onVoltar }: Props) {
                 </td>
                 <td className="px-2 py-1">{log.nmbox ?? '—'}</td>
                 <td className="whitespace-nowrap px-2 py-1 text-slate-600">
-                  {log.status_antes === null ? '—' : statusTexto(log.status_antes)}
+                  {log.status_antes === null ? '—' : rotuloStatus(log.status_antes, rotulosEstagio)}
                   <span className="text-slate-400">
-                    {log.status_novo === null ? '' : ` → ${statusTexto(log.status_novo)}`}
+                    {log.status_novo === null
+                      ? ''
+                      : ` → ${rotuloStatus(log.status_novo, rotulosEstagio)}`}
                   </span>
                 </td>
                 <td className="px-2 py-1 text-slate-500">{log.usuario_login ?? '—'}</td>

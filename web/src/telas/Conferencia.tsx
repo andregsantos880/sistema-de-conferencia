@@ -30,9 +30,7 @@ import {
   diasRestantesTeste,
   OPCOES_BUSCA,
   PERFIL,
-  ROTULO_MENU,
   STATUS,
-  TITULO_BOX,
 } from '../lib/config';
 import {
   calcularRestante,
@@ -45,6 +43,7 @@ import {
   type Som,
 } from '../lib/regrasConferencia';
 import { compararValores } from '../lib/ordenacao';
+import { useEstagios } from '../lib/estagios';
 import {
   falarBox,
   somAirHorn,
@@ -69,11 +68,32 @@ type Props = {
   onAbrirLogs: () => void;
   onAbrirLocais: () => void;
   onAbrirLocaisPecas: () => void;
+  onAbrirEstagios: () => void;
   onAbrirAjuda: () => void;
   onSair: () => void;
 };
 
 type MenuContexto = { x: number; y: number; id: string } | null;
+
+/** Item do menu hambúrguer do topo (telas de administração). */
+function ItemMenuTopo({
+  rotulo,
+  aoClicar,
+  className = '',
+}: {
+  rotulo: string;
+  aoClicar: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      onClick={aoClicar}
+      className={`block w-full px-3 py-1.5 text-left text-xs hover:bg-slate-100 ${className}`}
+    >
+      {rotulo}
+    </button>
+  );
+}
 
 /*
  * TanStack Table v9: as features precisam ser registradas explicitamente — e o
@@ -104,12 +124,15 @@ function valorParaOrdenar(pedido: LinhaGrid, campo: string): unknown {
  * A coluna STATUS mostra o ESTÁGIO da conferência em vez do número:
  * 0 = NORMAL, 1 = CONFERÊNCIA (entrada), 2 = SAÍDA, 3 = ENTREGA.
  */
-function valorExibicao(pedido: Pedido, campo: string, local?: string): string {
+function valorExibicao(pedido: LinhaGrid, campo: string): string {
   const bruto = (pedido as unknown as Record<string, unknown>)[campo];
 
-  if (campo === 'local') return local ?? '';
+  /* LOCAL e o nome do ESTÁGIO vêm do cadastro, não da coluna crua do pedido */
+  if (campo === 'local') return pedido.local ?? '';
+  if (campo === 'status') {
+    return pedido.statusNome ?? DS_STATUS[Number(bruto ?? 0)] ?? String(bruto ?? '');
+  }
   if (campo === 'flbloqueio') return bruto ? 'SIM' : '';
-  if (campo === 'status') return DS_STATUS[Number(bruto ?? 0)] ?? String(bruto ?? '');
 
   return String(bruto ?? '');
 }
@@ -120,13 +143,12 @@ function valorExibicao(pedido: Pedido, campo: string, local?: string): string {
  *  - ID, FÁBRICA, ID LAYOUT, ID BOX, BLOQUEIO e PC não aparecem para ninguém;
  *  - LOCAL não vem do pedido: é o local do estágio, calculado pela tela.
  */
-type LinhaGrid = Pedido & { local?: string };
+type LinhaGrid = Pedido & { local?: string; statusNome?: string };
 
 function montarColunas(perfil: string): Array<ColumnDef<typeof features, LinhaGrid>> {
   return colunasVisiveis(perfil).map((coluna) => ({
     id: coluna.campo,
-    accessorFn: (linha: LinhaGrid) =>
-      coluna.campo === 'local' ? (linha.local ?? '') : valorExibicao(linha, coluna.campo),
+    accessorFn: (linha: LinhaGrid) => valorExibicao(linha, coluna.campo),
     header: coluna.titulo,
     /* ordena pelo valor CRU do pedido (número como número, não como texto) */
     sortFn: (linhaA, linhaB) =>
@@ -188,10 +210,13 @@ export default function Conferencia({
   onAbrirLogs,
   onAbrirLocais,
   onAbrirLocaisPecas,
+  onAbrirEstagios,
   onAbrirAjuda,
   onSair,
 }: Props) {
   const administrador = usuario.perfil === PERFIL.ADMIN;
+  /* Estágios cadastrados pela empresa (sem o cadastro, valem os três de sempre). */
+  const { ativos, nome: nomeEstagio, cor: corEstagio } = useEstagios();
 
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   /**
@@ -206,6 +231,9 @@ export default function Conferencia({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   /** Ordenação das colunas (clique no cabeçalho: asc → desc → sem ordenação). */
   const [sorting, setSorting] = useState<SortingState>([]);
+  /** Menu hambúrguer do topo (fecha ao clicar fora). */
+  const [menuTopo, setMenuTopo] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<MenuContexto>(null);
 
   const [colunaBusca, setColunaBusca] = useState<string>('ORDCOMPRA');
@@ -215,6 +243,32 @@ export default function Conferencia({
   const [campoBusca, setCampoBusca] = useState('');
 
   const [alvo, setAlvo] = useState<Alvo | null>(null);
+  /** Estágio escolhido no seletor do topo — é o que o botão Conferir abre. */
+  const [estagioEscolhido, setEstagioEscolhido] = useState(1);
+
+  /**
+   * FILTROS RÁPIDOS do grid. São aplicados na hora, no navegador, sobre a carga
+   * que já está carregada — não consultam o banco de novo.
+   * ATENÇÃO: a bipagem continua considerando TODAS as peças da carga; o filtro
+   * é só o que a tela mostra (senão uma peça filtrada "não seria encontrada").
+   */
+  const [filtros, setFiltros] = useState<{
+    texto: string;
+    cliente: string;
+    local: string;
+    estagioLocal: number;
+    situacoes: number[];
+    semLocal: boolean;
+    periodo: string;
+  }>({
+    texto: '',
+    cliente: '',
+    local: '',
+    estagioLocal: 1,
+    situacoes: [],
+    semLocal: false,
+    periodo: '',
+  });
   const [campoEtiqueta, setCampoEtiqueta] = useState('');
   const [etiquetaLida, setEtiquetaLida] = useState('');
   const [info, setInfo] = useState<InfoBipagem | null>(null);
@@ -260,6 +314,39 @@ export default function Conferencia({
   useEffect(() => {
     if (fabricaId !== null) void carregarPedidos(fabricaId);
   }, [fabricaId, carregarPedidos]);
+
+  /* troca de fábrica começa com o grid limpo (filtros são da carga anterior) */
+  useEffect(() => {
+    setFiltros((atual) => ({
+      ...atual,
+      texto: '',
+      cliente: '',
+      local: '',
+      situacoes: [],
+      semLocal: false,
+      periodo: '',
+    }));
+  }, [fabricaId]);
+
+  /* fecha o menu do topo ao clicar fora dele */
+  useEffect(() => {
+    function fechar(evento: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(evento.target as Node)) {
+        setMenuTopo(false);
+      }
+    }
+
+    document.addEventListener('mousedown', fechar);
+    return () => document.removeEventListener('mousedown', fechar);
+  }, []);
+
+  /* o estágio escolhido precisa existir (cadastro pode mudar) */
+  useEffect(() => {
+    if (ativos.length === 0) return;
+    if (!ativos.some((estagio) => estagio.numero === estagioEscolhido)) {
+      setEstagioEscolhido(ativos[0].numero);
+    }
+  }, [ativos, estagioEscolhido]);
 
   useEffect(() => {
     if (fabricaId === null) {
@@ -332,14 +419,102 @@ export default function Conferencia({
 
   const columns = useMemo(() => montarColunas(usuario.perfil), [usuario.perfil]);
 
+  /** Clientes (lojas) que vieram na carga — alimenta o filtro de cliente. */
+  const clientesDaCarga = useMemo(
+    () =>
+      [...new Set(pedidos.map((p) => String(p.cliente ?? '')))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [pedidos],
+  );
+
+  /** Nomes de local usados no estágio escolhido para o filtro de local. */
+  const locaisDoFiltro = useMemo(
+    () =>
+      [...new Set(pedidos.map((p) => localDoEstagio(p, filtros.estagioLocal)))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+    [pedidos, localDoEstagio, filtros.estagioLocal],
+  );
+
+  /** As peças que passam nos filtros (é isto que o grid mostra). */
+  const pedidosFiltrados = useMemo(() => {
+    const texto = filtros.texto.trim().toLowerCase();
+    const dias = filtros.periodo ? Number(filtros.periodo) : 0;
+    const limite = dias > 0 ? Date.now() - dias * 24 * 60 * 60 * 1000 : null;
+
+    return pedidos.filter((pedido) => {
+      if (filtros.situacoes.length > 0 && !filtros.situacoes.includes(statusDe(pedido))) {
+        return false;
+      }
+      if (filtros.cliente && String(pedido.cliente ?? '') !== filtros.cliente) return false;
+
+      const local = localDoEstagio(pedido, filtros.estagioLocal);
+      if (filtros.local && local !== filtros.local) return false;
+      if (filtros.semLocal && local) return false;
+
+      if (limite !== null) {
+        const entrada = Date.parse(String(pedido.datainc ?? ''));
+        if (Number.isFinite(entrada) && entrada < limite) return false;
+      }
+
+      if (texto) {
+        const campos = [
+          pedido.etiqueta,
+          pedido.produto,
+          pedido.descricao1,
+          pedido.ordcompra,
+          pedido.pecliente,
+          pedido.cliente,
+        ]
+          .map((valor) => String(valor ?? '').toLowerCase())
+          .join(' ');
+        if (!campos.includes(texto)) return false;
+      }
+
+      return true;
+    });
+  }, [pedidos, filtros, localDoEstagio]);
+
+  const filtrosAtivos =
+    (filtros.texto.trim() ? 1 : 0) +
+    (filtros.cliente ? 1 : 0) +
+    (filtros.local ? 1 : 0) +
+    (filtros.semLocal ? 1 : 0) +
+    (filtros.periodo ? 1 : 0) +
+    (filtros.situacoes.length > 0 ? 1 : 0);
+
+  /** Filtro por situação: usado nos botões da barra e nos contadores do topo. */
+  function alternarSituacao(situacao: number) {
+    setFiltros((f) => ({
+      ...f,
+      situacoes: f.situacoes.includes(situacao)
+        ? f.situacoes.filter((s) => s !== situacao)
+        : [...f.situacoes, situacao],
+    }));
+  }
+
+  /** Ação do menu do topo: fecha o menu e abre a tela. */
+  function aoClicarMenu(acao: () => void) {
+    return () => {
+      setMenuTopo(false);
+      acao();
+    };
+  }
+
   /**
    * O grid recebe os pedidos JÁ com o local calculado. O valor precisa vir pelo
    * `data`: o TanStack v9 não recalcula as células quando só as colunas mudam
    * (era o sintoma de a coluna LOCAL ficar "sem local" até a próxima interação).
    */
   const linhasDoGrid = useMemo<LinhaGrid[]>(
-    () => pedidos.map((pedido) => ({ ...pedido, local: localDaColuna(pedido) })),
-    [pedidos, localDaColuna],
+    () =>
+      pedidosFiltrados.map((pedido) => ({
+        ...pedido,
+        local: localDaColuna(pedido),
+        statusNome: nomeEstagio(statusDe(pedido)),
+      })),
+    [pedidosFiltrados, localDaColuna, nomeEstagio],
   );
 
   const contadores = useMemo(() => {
@@ -422,7 +597,7 @@ export default function Conferencia({
   async function conferirEtiqueta(valor: string) {
     if (alvo === null) return;
 
-    const resultado = classificarLeitura(pedidos, valor, alvo);
+    const resultado = classificarLeitura(pedidos, valor, alvo, nomeEstagio);
 
     if (resultado.tipo === 'vazio') return;
 
@@ -497,7 +672,7 @@ export default function Conferencia({
     try {
       await atualizarStatusPorEtiquetas(etiquetas, status); // legado: UPDATE ... WHERE ETIQUETA IN(...)
       tocarSom('success');
-      setMensagem(`${etiquetas.length} etiqueta(s) alterada(s) para ${STATUS[status].rotulo}.`);
+      setMensagem(`${etiquetas.length} etiqueta(s) alterada(s) para ${nomeEstagio(status)}.`);
     } catch (falha) {
       tocarSom('error');
       setErro(falha instanceof Error ? falha.message : 'Falha ao alterar o status.');
@@ -588,9 +763,7 @@ export default function Conferencia({
       visiveis.map((c) => c.titulo).join(';'),
       ...paraExportar.map((p) =>
         visiveis
-          .map((c) =>
-            (c.campo === 'local' ? (p.local ?? '') : valorExibicao(p, c.campo)).replace(/;/g, ','),
-          )
+          .map((c) => valorExibicao(p, c.campo).replace(/;/g, ','))
           .join(';'),
       ),
     ];
@@ -645,67 +818,59 @@ export default function Conferencia({
         <div className="flex items-center gap-3 text-xs">
           <span className="text-slate-300">
             Usuário: <strong className="text-white">{usuario.login}</strong>
-            <span className="ml-2 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] uppercase">
+            <span className="ml-2 hidden rounded bg-slate-700 px-1.5 py-0.5 text-[10px] uppercase sm:inline">
               {usuario.perfil === PERFIL.ADMIN ? 'Administrador' : 'Operador'}
             </span>
           </span>
+
+          {/* As telas de administração ficam no menu (☰), para o topo ficar enxuto. */}
           {administrador && (
-            <button
-              onClick={onAbrirFabricas}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
-            >
-              Fábricas
-            </button>
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuTopo((aberto) => !aberto)}
+                title="Telas de administração"
+                className={`rounded border px-2 py-1 ${
+                  menuTopo ? 'border-white bg-slate-700' : 'border-slate-600 hover:bg-slate-700'
+                }`}
+              >
+                ☰ Menu
+              </button>
+
+              {menuTopo && (
+                <div className="absolute right-0 top-full z-40 mt-1 w-56 overflow-hidden rounded border border-slate-300 bg-white py-1 text-left text-slate-700 shadow-xl">
+                  <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Cadastros
+                  </p>
+                  <ItemMenuTopo rotulo="Fábricas e layout" aoClicar={aoClicarMenu(onAbrirFabricas)} />
+                  {administrador && (
+                    <ItemMenuTopo
+                      rotulo="Estágios da conferência"
+                      aoClicar={aoClicarMenu(onAbrirEstagios)}
+                    />
+                  )}
+                  <ItemMenuTopo rotulo="Locais" aoClicar={aoClicarMenu(onAbrirLocais)} />
+                  <ItemMenuTopo rotulo="Locais das peças" aoClicar={aoClicarMenu(onAbrirLocaisPecas)} />
+                  <ItemMenuTopo rotulo="Usuários" aoClicar={aoClicarMenu(onAbrirUsuarios)} />
+
+                  <p className="mt-1 border-t border-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Operação
+                  </p>
+                  <ItemMenuTopo rotulo="Arquivos importados" aoClicar={aoClicarMenu(onAbrirImportacoes)} />
+                  <ItemMenuTopo rotulo="Logs de conferência" aoClicar={aoClicarMenu(onAbrirLogs)} />
+
+                  <p className="mt-1 border-t border-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Ajuda
+                  </p>
+                  <ItemMenuTopo
+                    rotulo="Manual do sistema"
+                    aoClicar={aoClicarMenu(onAbrirAjuda)}
+                    className="font-semibold text-emerald-800"
+                  />
+                </div>
+              )}
+            </div>
           )}
-          {administrador && (
-            <button
-              onClick={onAbrirLocais}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
-            >
-              Locais
-            </button>
-          )}
-          {administrador && (
-            <button
-              onClick={onAbrirLocaisPecas}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
-            >
-              Locais das peças
-            </button>
-          )}
-          {administrador && (
-            <button
-              onClick={onAbrirAjuda}
-              title="Manual do sistema"
-              className="rounded border border-emerald-500 bg-emerald-700 px-2 py-1 font-semibold hover:bg-emerald-600"
-            >
-              Ajuda
-            </button>
-          )}
-          {administrador && (
-            <button
-              onClick={onAbrirImportacoes}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
-            >
-              Importações
-            </button>
-          )}
-          {administrador && (
-            <button
-              onClick={onAbrirLogs}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
-            >
-              Logs
-            </button>
-          )}
-          {administrador && (
-            <button
-              onClick={onAbrirUsuarios}
-              className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700"
-            >
-              Usuários
-            </button>
-          )}
+
           <button onClick={onSair} className="rounded border border-slate-600 px-2 py-1 hover:bg-slate-700">
             Sair
           </button>
@@ -719,23 +884,27 @@ export default function Conferencia({
         >
           Importar
         </button>
+        <label className="flex items-center gap-1">
+          Estágio
+          <select
+            value={estagioEscolhido}
+            onChange={(e) => setEstagioEscolhido(Number(e.target.value))}
+            className="rounded border border-slate-400 bg-white px-2 py-1 font-semibold"
+            title="Estágio em que você vai bipar agora"
+          >
+            {ativos.map((estagio) => (
+              <option key={estagio.numero} value={estagio.numero}>
+                {estagio.nome}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
-          onClick={() => abrirPainel(1)}
+          onClick={() => abrirPainel(estagioEscolhido)}
           className="rounded border border-emerald-600 bg-emerald-600 px-3 py-1.5 font-semibold text-white hover:bg-emerald-700"
+          title="Abrir a bipagem no estágio escolhido"
         >
-          Conferência
-        </button>
-        <button
-          onClick={() => abrirPainel(2)}
-          className="rounded border border-orange-500 bg-white px-3 py-1.5 font-semibold text-orange-700 hover:bg-orange-50"
-        >
-          Saída
-        </button>
-        <button
-          onClick={() => abrirPainel(3)}
-          className="rounded border border-blue-600 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:bg-blue-50"
-        >
-          Entrega
+          Conferir
         </button>
         <button
           onClick={exportarCsv}
@@ -810,15 +979,164 @@ export default function Conferencia({
         )}
 
         <span className="ml-auto text-slate-600">
-          {carregando ? 'Carregando...' : `${pedidos.length} registro(s)`}
+          {carregando
+            ? 'Carregando...'
+            : pedidosFiltrados.length === pedidos.length
+              ? `${pedidos.length} registro(s)`
+              : `${pedidosFiltrados.length} de ${pedidos.length} registro(s)`}
         </span>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-5 border-b border-slate-300 bg-white px-4 py-2 text-xs font-semibold">
-        <span className="contador-normal">Normal: {contadores.normal}</span>
-        <span className="contador-conferido">Conferido: {contadores.conferido}</span>
-        <span className="contador-saida">Saída: {contadores.saida}</span>
-        <span className="contador-entrega">Entrega: {contadores.entrega}</span>
+      {/* ------------------------------------------------- filtros rápidos */}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-300 bg-white px-3 py-2 text-xs">
+        <label className="flex items-center gap-1">
+          <input
+            value={filtros.texto}
+            onChange={(e) => setFiltros((f) => ({ ...f, texto: e.target.value }))}
+            placeholder="procurar etiqueta, peça, ORD.COMPRA, cliente..."
+            className="w-64 rounded border border-slate-400 px-2 py-1"
+          />
+          {filtros.texto && (
+            <button
+              onClick={() => setFiltros((f) => ({ ...f, texto: '' }))}
+              title="Limpar a procura"
+              className="rounded border border-slate-300 px-1.5 hover:bg-slate-100"
+            >
+              ✕
+            </button>
+          )}
+        </label>
+
+        <label className="flex items-center gap-1">
+          Situação
+          {[0, ...ativos.map((estagio) => estagio.numero)].map((situacao) => {
+            const ativa = filtros.situacoes.includes(situacao);
+            return (
+              <button
+                key={situacao}
+                onClick={() => alternarSituacao(situacao)}
+                title={`Mostrar somente ${nomeEstagio(situacao)}`}
+                className={`rounded border px-2 py-1 ${ativa ? 'border-slate-700 bg-slate-700 font-semibold text-white' : 'border-slate-400 bg-white hover:bg-slate-50'}`}
+              >
+                {nomeEstagio(situacao)}
+              </button>
+            );
+          })}
+        </label>
+
+        <label className="flex items-center gap-1">
+          Cliente
+          <select
+            value={filtros.cliente}
+            onChange={(e) => setFiltros((f) => ({ ...f, cliente: e.target.value }))}
+            className="max-w-[220px] rounded border border-slate-400 bg-white px-2 py-1"
+          >
+            <option value="">todos</option>
+            {clientesDaCarga.map((cliente) => (
+              <option key={cliente} value={cliente}>
+                {cliente}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex items-center gap-1">
+          Local em
+          <select
+            value={filtros.estagioLocal}
+            onChange={(e) =>
+              setFiltros((f) => ({ ...f, estagioLocal: Number(e.target.value), local: '' }))
+            }
+            className="rounded border border-slate-400 bg-white px-2 py-1"
+          >
+            {ativos.map((estagio) => (
+              <option key={estagio.numero} value={estagio.numero}>
+                {estagio.nome}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filtros.local}
+            onChange={(e) => setFiltros((f) => ({ ...f, local: e.target.value }))}
+            className="max-w-[190px] rounded border border-slate-400 bg-white px-2 py-1"
+            title="Mostra só as peças que vão para este lugar"
+          >
+            <option value="">todos</option>
+            {locaisDoFiltro.map((local) => (
+              <option key={local} value={local}>
+                {local}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex items-center gap-1" title="Peças sem local definido no estágio escolhido">
+          <input
+            type="checkbox"
+            checked={filtros.semLocal}
+            onChange={(e) => setFiltros((f) => ({ ...f, semLocal: e.target.checked }))}
+          />
+          sem local
+        </label>
+
+        <label className="flex items-center gap-1">
+          Entrada
+          <select
+            value={filtros.periodo}
+            onChange={(e) => setFiltros((f) => ({ ...f, periodo: e.target.value }))}
+            className="rounded border border-slate-400 bg-white px-2 py-1"
+          >
+            <option value="">tudo</option>
+            <option value="1">hoje</option>
+            <option value="7">últimos 7 dias</option>
+            <option value="30">últimos 30 dias</option>
+          </select>
+        </label>
+
+        {filtrosAtivos > 0 && (
+          <button
+            onClick={() =>
+              setFiltros((f) => ({
+                ...f,
+                texto: '',
+                cliente: '',
+                local: '',
+                situacoes: [],
+                semLocal: false,
+                periodo: '',
+              }))
+            }
+            className="rounded border border-blue-500 bg-blue-50 px-2 py-1 font-semibold text-blue-700 hover:bg-blue-100"
+          >
+            Limpar filtros ({filtrosAtivos})
+          </button>
+        )}
+      </div>
+
+      <div className="flex shrink-0 flex-wrap items-center gap-4 border-b border-slate-300 bg-white px-4 py-2 text-xs font-semibold">
+            {[0, ...ativos.map((estagio) => estagio.numero)].map((situacao) => {
+              const quantidade =
+                situacao === 0
+                  ? contadores.normal
+                  : pedidos.filter((p) => statusDe(p) === situacao).length;
+              const ativa = filtros.situacoes.includes(situacao);
+              const cor = situacao === 0 ? null : corEstagio(situacao);
+              const classe = cor ? '' : (STATUS[situacao]?.contador ?? '');
+
+              return (
+                <button
+                  key={situacao}
+                  onClick={() => alternarSituacao(situacao)}
+                  title={`Clique para mostrar somente ${nomeEstagio(situacao)}`}
+                  style={cor ? { background: cor } : undefined}
+                  className={`${classe} rounded px-2 py-0.5 ${
+                    ativa ? 'ring-2 ring-slate-700' : 'hover:brightness-95'
+                  }`}
+                >
+                  {nomeEstagio(situacao)}: {quantidade}
+                </button>
+              );
+            })}
         <span className="text-slate-500">Total: {contadores.total}</span>
         <span className="ml-auto text-slate-500">
           {idsSelecionados.length > 0 ? `${idsSelecionados.length} selecionado(s)` : 'nenhum selecionado'}
@@ -872,11 +1190,13 @@ export default function Conferencia({
           <tbody>
             {table.getSortedRowModel().rows.map((row) => {
               const status = statusDe(row.original);
-              const classe = STATUS[status]?.classe ?? 'linha-0';
+              const cor = corEstagio(status);
+              const classe = cor ? '' : (STATUS[status]?.classe ?? 'linha-0');
 
               return (
                 <tr
                   key={row.id}
+                  style={cor ? { background: cor } : undefined}
                   className={`${classe} ${row.getIsSelected() ? 'selecionada' : ''} cursor-pointer`}
                   onClick={(e) => cliqueLinha(row.id, e, String(row.original.etiqueta ?? '').trim())}
                   onContextMenu={(e) => {
@@ -909,13 +1229,13 @@ export default function Conferencia({
           className="fixed z-30 w-60 rounded border border-slate-300 bg-white py-1 text-xs shadow-xl"
           style={{ left: menu.x, top: menu.y }}
         >
-          {[0, 1, 2].map((status) => (
+          {[0, ...ativos.map((estagio) => estagio.numero)].map((status) => (
             <button
               key={status}
               className="block w-full px-3 py-1.5 text-left hover:bg-slate-100"
               onClick={() => void alterarStatusSelecionados(status)}
             >
-              Alterar para {ROTULO_MENU[status]}
+              Alterar para {nomeEstagio(status)}
             </button>
           ))}
         </div>
@@ -983,7 +1303,7 @@ export default function Conferencia({
         <div className="fixed inset-0 z-50 flex flex-col bg-slate-800/95 p-4 text-white">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-600 pb-2">
             <div className="text-sm font-semibold">
-              {TITULO_BOX[alvo]} — {nomeFabrica}
+              {nomeEstagio(alvo)} — {nomeFabrica}
               <span className="ml-3 text-xs text-slate-300">
                 Restante: {restante?.texto.replace('Restante: ', '')} · Normal: {contadores.normal} · Conferido:{' '}
                 {contadores.conferido} · Saída: {contadores.saida} · Entrega: {contadores.entrega}
@@ -1010,7 +1330,7 @@ export default function Conferencia({
           <div className="grid min-h-0 flex-1 grid-cols-3 gap-4 pt-4">
             {/* LOCAL de destino do estágio */}
             <div className="flex flex-col items-center justify-center rounded-lg bg-slate-900/60 px-2">
-              <span className="text-xs tracking-widest text-slate-400">LOCAL — {TITULO_BOX[alvo]}</span>
+              <span className="text-xs tracking-widest text-slate-400">LOCAL — {nomeEstagio(alvo)}</span>
               <span
                 className={`truncate text-center leading-none font-bold ${info?.box ? 'text-[56px]' : 'text-[28px]'}`}
                 title={info?.box ?? 'Nenhum local definido para este estágio'}
@@ -1052,7 +1372,7 @@ export default function Conferencia({
             {/* leitura */}
             <div className="flex flex-col justify-center rounded-lg bg-slate-900/60 p-4">
               <label className="mb-2 text-xs tracking-widest text-slate-400" htmlFor="etiqueta">
-                LEITURA DA ETIQUETA ({TITULO_BOX[alvo]})
+                LEITURA DA ETIQUETA ({nomeEstagio(alvo)})
               </label>
               <input
                 id="etiqueta"
