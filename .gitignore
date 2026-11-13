@@ -398,3 +398,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Instaladores do app desktop (binários gerados, não versionar)
+desktop/release/
+web/public/downloads/*.msi
+web/public/downloads/*.exe
