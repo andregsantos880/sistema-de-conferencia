@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listarEmpresas, login, type EmpresaPublica, type UsuarioLogado } from '../lib/api';
-import { CHAVE_SESSAO } from '../lib/config';
+import { CHAVE_SESSAO, URL_INSTALADOR } from '../lib/config';
+import { estaNoDesktop } from '../lib/ambiente';
 import { CampoLogin, ChaveLigada, TelaLogin } from '../lib/telaLogin';
 
 type Props = {
@@ -106,14 +107,25 @@ export default function Entrar({ onEntrar }: Props) {
       subtitulo="Entre com os dados da sua empresa para conferir as cargas."
       empresa={acharEmpresa() ? { nome: acharEmpresa()!.nome, slug: acharEmpresa()!.slug } : null}
       rodape={
-        <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-4 text-[11px] text-slate-500">
-          <a href="/registrar" className="font-semibold text-emerald-700 hover:underline">
-            Criar conta grátis
-          </a>
-          <a href="/" className="hover:text-slate-800">
-            ← Voltar ao site
-          </a>
-        </div>
+        estaNoDesktop() ? null : (
+          <div className="mt-8 flex items-start justify-between gap-4 border-t border-slate-200 pt-4 text-[11px] text-slate-500">
+            <div className="flex flex-col gap-1">
+              <a href="/registrar" className="font-semibold text-emerald-700 hover:underline">
+                Criar conta grátis
+              </a>
+              <a
+                href={URL_INSTALADOR}
+                download
+                className="font-semibold text-emerald-700 hover:underline"
+              >
+                ⬇ Baixar aplicativo (Windows)
+              </a>
+            </div>
+            <a href="/" className="hover:text-slate-800">
+              ← Voltar ao site
+            </a>
+          </div>
+        )
       }
       nota={
         <>

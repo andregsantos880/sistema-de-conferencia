@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { login, type Empresa, type UsuarioLogado } from '../lib/api';
-import { CHAVE_SESSAO, MARCA } from '../lib/config';
+import { CHAVE_SESSAO, MARCA, URL_INSTALADOR } from '../lib/config';
+import { estaNoDesktop } from '../lib/ambiente';
 import { somErro, somOk } from '../lib/audio';
 import { CampoLogin, ChaveLigada, TelaLogin } from '../lib/telaLogin';
 
@@ -81,19 +82,26 @@ export default function Login({ empresa, onEntrar }: Props) {
         </>
       }
       rodape={
-        <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-4 text-[11px] text-slate-500">
-          <a
-            href={MARCA.siteUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-emerald-700 hover:underline"
-          >
-            {MARCA.site}
-          </a>
-          <a href="/" className="hover:text-slate-800">
-            ← Voltar ao site
-          </a>
-        </div>
+        estaNoDesktop() ? null : (
+          <div className="mt-8 flex items-start justify-between gap-4 border-t border-slate-200 pt-4 text-[11px] text-slate-500">
+            <a
+              href={MARCA.siteUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-emerald-700 hover:underline"
+            >
+              {MARCA.site}
+            </a>
+            <div className="flex flex-col items-end gap-1">
+              <a href={URL_INSTALADOR} download className="font-medium text-emerald-700 hover:underline">
+                ⬇ Baixar aplicativo
+              </a>
+              <a href="/" className="hover:text-slate-800">
+                ← Voltar ao site
+              </a>
+            </div>
+          </div>
+        )
       }
     >
       <form onSubmit={confirmar} className="mt-7 space-y-4">

@@ -26,6 +26,9 @@ export const STATUS: Record<number, { rotulo: string; classe: string; contador: 
 /** Chave usada no localStorage para memorizar o login (equivalente ao chkMemorizarSenha). */
 export const CHAVE_SESSAO = 'sysconf.sessao';
 
+/** Instalador Windows publicado junto ao site (usado na tela de login no navegador). */
+export const URL_INSTALADOR = '/downloads/SysConf-1.0.0.msi';
+
 /** Colunas do grid, na mesma ordem do DataGridView do Form1. */
 export const COLUNAS_GRID = [
   { campo: 'id', titulo: 'ID', largura: 70 },
